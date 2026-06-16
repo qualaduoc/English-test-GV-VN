@@ -385,17 +385,157 @@ const adaptiveDb = {
     speaking: [
         {
             id: "s1",
-            prompt: "How should high school curriculums adapt to the rapid advancements of Artificial Intelligence?",
-            promptTranslation: "Chương trình học cấp trung học phổ thông nên thích ứng thế nào trước những tiến bộ nhanh chóng của Trí tuệ Nhân tạo?",
-            answerText: "High schools should integrate AI as assistant learning tools while shifting assessments towards oral exams and critical thinking essays.",
-            transcript: "I believe high schools need to teach students how to use AI ethically and focus on critical thinking and analysis rather than simple memorization."
+            prompt: "What is your name and where do you live?",
+            promptTranslation: "Tên của bạn là gì và bạn đang sống ở đâu?",
+            start: 0,
+            end: 11
         },
         {
             id: "s2",
-            prompt: "Describe your personal teaching philosophy and how you apply it in your classroom.",
-            promptTranslation: "Hãy mô tả triết lý giảng dạy cá nhân của Thầy/Cô và cách Thầy/Cô áp dụng nó vào lớp học của mình.",
-            answerText: "My teaching philosophy is student-centered education, encouraging students to actively discover knowledge through interactive communication.",
-            transcript: "My philosophy is student-centered. I encourage my students to communicate and practice English in groups, making them active learners."
+            prompt: "What do you like to do in your free time?",
+            promptTranslation: "Bạn thích làm gì vào thời gian rảnh rỗi?",
+            start: 11,
+            end: 23
+        },
+        {
+            id: "s3",
+            prompt: "Can you talk about your family and your home?",
+            promptTranslation: "Bạn có thể kể về gia đình và ngôi nhà của bạn không?",
+            start: 23,
+            end: 35
+        },
+        {
+            id: "s4",
+            prompt: "What is your favorite food and how often do you eat it?",
+            promptTranslation: "Món ăn yêu thích của bạn là gì và bạn có thường xuyên ăn món đó không?",
+            start: 35,
+            end: 47
+        },
+        {
+            id: "s5",
+            prompt: "Describe your typical daily routine as a teacher.",
+            promptTranslation: "Hãy mô tả một thói quen hàng ngày điển hình của bạn với tư cách là một giáo viên.",
+            start: 47,
+            end: 59
+        },
+        {
+            id: "s6",
+            prompt: "Who is a teacher that inspired you the most in your life?",
+            promptTranslation: "Ai là giáo viên đã truyền cảm hứng nhiều nhất cho bạn trong cuộc sống?",
+            start: 59,
+            end: 71
+        },
+        {
+            id: "s7",
+            prompt: "What is your favorite season of the year and why?",
+            promptTranslation: "Mùa yêu thích nhất của bạn trong năm là gì và tại sao?",
+            start: 71,
+            end: 83
+        },
+        {
+            id: "s8",
+            prompt: "Tell me about a memorable holiday or trip that you had.",
+            promptTranslation: "Hãy kể cho tôi nghe về một kỳ nghỉ hoặc chuyến đi đáng nhớ mà bạn đã từng có.",
+            start: 83,
+            end: 95
+        },
+        {
+            id: "s9",
+            prompt: "Why did you choose to become a teacher instead of other professions?",
+            promptTranslation: "Tại sao bạn lại chọn trở thành giáo viên thay vì những ngành nghề khác?",
+            start: 95,
+            end: 107
+        },
+        {
+            id: "s10",
+            prompt: "What do you think are the greatest benefits of learning English today?",
+            promptTranslation: "Bạn nghĩ lợi ích lớn nhất của việc học tiếng Anh ngày nay là gì?",
+            start: 107,
+            end: 119
+        },
+        {
+            id: "s11",
+            prompt: "How has technology changed the way we teach and study recently?",
+            promptTranslation: "Công nghệ đã thay đổi cách chúng ta giảng dạy và học tập như thế nào trong thời gian gần đây?",
+            start: 119,
+            end: 131
+        },
+        {
+            id: "s12",
+            prompt: "Describe a book or a movie that left a strong impression on you.",
+            promptTranslation: "Hãy mô tả một cuốn sách hoặc bộ phim đã để lại ấn tượng mạnh mẽ cho bạn.",
+            start: 131,
+            end: 143
+        },
+        {
+            id: "s13",
+            prompt: "Talk about a healthy habit you have and how it benefits your life.",
+            promptTranslation: "Hãy nói về một thói quen lành mạnh bạn có và lợi ích của nó đối với cuộc sống của bạn.",
+            start: 143,
+            end: 155
+        },
+        {
+            id: "s14",
+            prompt: "Should students wear uniforms at school? Explain your opinion.",
+            promptTranslation: "Học sinh có nên mặc đồng phục ở trường không? Hãy giải thích ý kiến của bạn.",
+            start: 155,
+            end: 167
+        },
+        {
+            id: "s15",
+            prompt: "What personal qualities make someone a truly good teacher?",
+            promptTranslation: "Những phẩm chất cá nhân nào tạo nên một giáo viên thực sự giỏi?",
+            start: 167,
+            end: 179
+        },
+        {
+            id: "s16",
+            prompt: "How can modern schools encourage students to develop critical thinking skills?",
+            promptTranslation: "Các trường học hiện đại làm thế nào để khuyến khích học sinh phát triển kỹ năng tư duy phản biện?",
+            start: 179,
+            end: 191
+        },
+        {
+            id: "s17",
+            prompt: "Discuss the long-term impact of artificial intelligence on traditional teaching methods.",
+            promptTranslation: "Thảo luận về tác động lâu dài của trí tuệ nhân tạo đối với các phương pháp giảng dạy truyền thống.",
+            start: 191,
+            end: 203
+        },
+        {
+            id: "s18",
+            prompt: "What are the primary pedagogical challenges of online learning compared to classroom instruction?",
+            promptTranslation: "Những thách thức sư phạm chính của việc học trực tuyến so với hướng dẫn tại lớp học là gì?",
+            start: 203,
+            end: 215
+        },
+        {
+            id: "s19",
+            prompt: "How does promoting cultural exchange in schools benefit global international relations?",
+            promptTranslation: "Việc thúc đẩy giao lưu văn hóa trong trường học mang lại lợi ích gì cho các quan hệ quốc tế toàn cầu?",
+            start: 215,
+            end: 227
+        },
+        {
+            id: "s20",
+            prompt: "Analyze the positive and negative roles of standardized testing in modern educational systems.",
+            promptTranslation: "Phân tích vai trò tích cực và tiêu cực của các bài kiểm tra chuẩn hóa trong hệ thống giáo dục hiện đại.",
+            start: 227,
+            end: 239
+        },
+        {
+            id: "s21",
+            prompt: "What systemic measures should be implemented to promote lifelong learning among working adults?",
+            promptTranslation: "Những biện pháp có tính hệ thống nào nên được triển khai để thúc đẩy học tập suốt đời ở người trưởng thành đi làm?",
+            start: 239,
+            end: 251
+        },
+        {
+            id: "s22",
+            prompt: "In your opinion, how will classrooms and the role of teachers change in the next fifty years?",
+            promptTranslation: "Theo bạn, các lớp học và vai trò của giáo viên sẽ thay đổi như thế nào trong 50 năm tới?",
+            start: 251,
+            end: 263
         }
     ],
     writing: {
@@ -1656,9 +1796,108 @@ function proceedToNextSkillStage() {
 }
 
 // --- PHẦN 5: HIỆN THỰC HÓA PHÒNG THI NÓI (Speaking) ---
+let speechRecognitionObj = null;
+let speechRecognitionText = "";
+let userWebcamStream = null;
+let isVideoPlayable = true; // Biến kiểm tra video giám khảo có hoạt động được không
+
+// Bật Webcam giáo viên
+function startUserWebcam() {
+    const video = document.getElementById('userWebcam');
+    const placeholder = document.getElementById('userWebcamPlaceholder');
+    
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(stream => {
+            userWebcamStream = stream;
+            if (video) {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play().catch(e => console.log("Webcam play blocked:", e));
+                };
+            }
+            if (placeholder) placeholder.classList.add('hidden');
+        })
+        .catch(err => {
+            console.warn("[Webcam] Không thể mở camera giáo viên:", err.message);
+            if (placeholder) {
+                placeholder.innerHTML = `<i class="fa-solid fa-video-slash text-[10px] text-rose-500 mb-0.5"></i><span class="text-[8px] text-rose-500 font-semibold">Lỗi mở Camera</span>`;
+            }
+        });
+}
+
+// Tắt Webcam giáo viên
+function stopUserWebcam() {
+    if (userWebcamStream) {
+        userWebcamStream.getTracks().forEach(track => track.stop());
+        userWebcamStream = null;
+    }
+    const video = document.getElementById('userWebcam');
+    if (video) video.srcObject = null;
+    const placeholder = document.getElementById('userWebcamPlaceholder');
+    if (placeholder) {
+        placeholder.classList.remove('hidden');
+        placeholder.innerHTML = `<i class="fa-solid fa-video-slash text-xs mb-0.5"></i><span>Camera đang tắt</span>`;
+    }
+}
+
+// Khởi tạo nhận diện giọng nói tiếng Anh
+function initSpeechRecognition() {
+    if (speechRecognitionObj) return;
+    
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        speechRecognitionObj = new SpeechRec();
+        speechRecognitionObj.continuous = true;
+        speechRecognitionObj.interimResults = true;
+        speechRecognitionObj.lang = 'en-US';
+        
+        speechRecognitionObj.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            const currentText = finalTranscript || interimTranscript;
+            const textEl = document.getElementById('speechRealtimeText');
+            if (textEl) {
+                textEl.innerText = currentText || 'Đang lắng nghe...';
+            }
+            speechRecognitionText = finalTranscript || interimTranscript;
+        };
+        
+        speechRecognitionObj.onerror = (event) => {
+            console.warn("[Speech Recognition Error]:", event.error);
+        };
+    }
+}
+
 function initSpeakingExam() {
     currentSpeakingQIdx = 0;
     speakingAnswers = [];
+    isVideoPlayable = true;
+    
+    // Tự động bật camera giáo viên
+    startUserWebcam();
+    
+    // Khởi tạo Speech Recognition
+    initSpeechRecognition();
+    
+    // Thiết lập nguồn video giám khảo
+    const exVideo = document.getElementById('examinerVideo');
+    if (exVideo) {
+        exVideo.src = 'video/speaking_examiner.mp4';
+        exVideo.load();
+        
+        exVideo.onerror = () => {
+            console.warn("[Examiner Video] Lỗi load file hoặc không có file video. Chuyển chế độ TTS fallback.");
+            isVideoPlayable = false;
+        };
+    }
+    
     loadSpeakingQuestion(0);
 }
 
@@ -1678,14 +1917,21 @@ function loadSpeakingQuestion(idx) {
         trans.classList.add('hidden');
     }
 
+    // Render danh sách 22 câu hỏi Nói dưới video dạng cuộn ngang
     const sel = document.getElementById('speakingQuestionSelector');
     let html = "";
     adaptiveDb.speaking.forEach((item, sIdx) => {
-        const act = sIdx === idx ? 'bg-sky-600 text-white font-bold' : 'bg-slate-900 text-slate-500';
-        html += `<span class="px-3 py-1.5 rounded text-[10px] ${act}">${(sIdx + 1).toString().padStart(2, '0')}</span>`;
+        let statusClass = "bg-slate-900 text-slate-500 border border-slate-800"; // Chưa làm
+        if (sIdx === idx) {
+            statusClass = "bg-sky-600 text-white font-bold border border-sky-400 animate-pulse"; // Đang làm
+        } else if (sIdx < idx) {
+            statusClass = "bg-slate-800 text-green-400 border border-green-500/20"; // Đã làm
+        }
+        
+        html += `<span class="px-3 py-1.5 rounded text-[10px] transition shrink-0 ${statusClass}">${(sIdx + 1).toString().padStart(2, '0')}</span>`;
     });
     sel.innerHTML = html;
-    document.getElementById('speakingProgressText').innerText = `Đang thực hiện: Câu ${idx + 1} / ${adaptiveDb.speaking.length}`;
+    document.getElementById('speakingProgressText').innerText = `Đang thực hiện: Câu ${(idx + 1).toString().padStart(2, '0')} / ${adaptiveDb.speaking.length.toString().padStart(2, '0')}`;
 
     startSpeakingState("prep");
 }
@@ -1693,6 +1939,24 @@ function loadSpeakingQuestion(idx) {
 function toggleSpeakingTranslation() {
     const trans = document.getElementById('speakingQuestionTranslation');
     trans.classList.toggle('hidden');
+}
+
+// Fallback phát âm thanh bằng TTS
+function runTTSFallback(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = "en-US";
+        utter.rate = 0.85;
+        
+        const pulse = document.getElementById('speakingVideoPulse');
+        if (pulse) pulse.classList.remove('hidden');
+        
+        utter.onend = () => {
+            if (pulse) pulse.classList.add('hidden');
+        };
+        window.speechSynthesis.speak(utter);
+    }
 }
 
 function startSpeakingState(state) {
@@ -1705,8 +1969,13 @@ function startSpeakingState(state) {
     const descText = document.getElementById('speakingStateDesc');
     const iconEl = document.getElementById('speakingRingIcon');
     const btnStop = document.getElementById('btnSpeakingAction');
+    const recognitionBar = document.getElementById('speakingTextRecognitionBar');
+    
+    const exVideo = document.getElementById('examinerVideo');
+    const exPlaceholder = document.getElementById('examinerVideoPlaceholder');
 
     const circumference = 2 * Math.PI * 65; // ~408.4
+    const q = adaptiveDb.speaking[currentSpeakingQIdx];
 
     if (state === 'prep') {
         speakingSeconds = 5;
@@ -1716,18 +1985,23 @@ function startSpeakingState(state) {
         iconEl.className = "fa-solid fa-hourglass-start text-amber-500 text-2xl mb-1.5";
         ringCircle.setAttribute("stroke", "#f59e0b");
         btnStop.disabled = true;
+        if (recognitionBar) recognitionBar.classList.add('hidden');
 
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const promptUtter = new SpeechSynthesisUtterance(adaptiveDb.speaking[currentSpeakingQIdx].prompt);
-            promptUtter.lang = "en-US";
-            promptUtter.rate = 0.85;
-            
-            document.getElementById('speakingVideoPulse').classList.remove('hidden');
-            promptUtter.onend = () => {
-                document.getElementById('speakingVideoPulse').classList.add('hidden');
-            };
-            window.speechSynthesis.speak(promptUtter);
+        // Điều khiển Video giám khảo phát câu hỏi
+        if (exVideo && isVideoPlayable) {
+            exVideo.currentTime = q.start;
+            exVideo.play()
+                .then(() => {
+                    if (exPlaceholder) exPlaceholder.classList.add('hidden');
+                })
+                .catch(err => {
+                    console.warn("[Video Play Failed] Chuyển TTS fallback:", err.message);
+                    if (exPlaceholder) exPlaceholder.classList.remove('hidden');
+                    runTTSFallback(q.prompt);
+                });
+        } else {
+            if (exPlaceholder) exPlaceholder.classList.remove('hidden');
+            runTTSFallback(q.prompt);
         }
 
         speakingRingInterval = setInterval(() => {
@@ -1744,22 +2018,48 @@ function startSpeakingState(state) {
 
             saveProgressToLocalStorage();
 
+            // Nếu video chạm mốc end sớm hoặc đếm ngược hết giờ
+            if (exVideo && isVideoPlayable && exVideo.currentTime >= q.end) {
+                exVideo.pause();
+            }
+
             if (speakingSeconds <= 0) {
                 clearInterval(speakingRingInterval);
+                if (exVideo && isVideoPlayable) exVideo.pause();
                 startSpeakingState("recording");
             }
         }, 1000);
 
     } else if (state === 'recording') {
-        speakingSeconds = 20;
+        speakingSeconds = 10; // Đếm ngược 10 giây thu âm theo đề bài
         titleText.innerText = "Recording...";
         titleText.className = "text-sm font-extrabold text-red-500 uppercase tracking-widest animate-pulse";
         descText.innerText = "Micro đang mở. Thầy/Cô hãy trả lời trực tiếp câu hỏi bằng tiếng Anh.";
         iconEl.className = "fa-solid fa-microphone text-red-500 text-2xl mb-1.5";
         ringCircle.setAttribute("stroke", "#ef4444");
         btnStop.disabled = false;
+        
+        // Hiện khung nhận dạng chữ chạy trực tiếp
+        if (recognitionBar) {
+            recognitionBar.classList.remove('hidden');
+            document.getElementById('speechRealtimeText').innerText = "Đang lắng nghe...";
+        }
+        speechRecognitionText = "";
 
-        document.getElementById('speakingVideoPulse').classList.remove('hidden');
+        // Tạm dừng video giám khảo khi thu âm
+        if (exVideo && isVideoPlayable) exVideo.pause();
+        window.speechSynthesis.cancel();
+        const pulse = document.getElementById('speakingVideoPulse');
+        if (pulse) pulse.classList.add('hidden');
+
+        // Bắt đầu nhận dạng giọng nói bằng Web Speech API
+        if (speechRecognitionObj) {
+            try {
+                speechRecognitionObj.start();
+            } catch(e) {
+                console.log("Speech recognition already started");
+            }
+        }
 
         speakingRingInterval = setInterval(() => {
             speakingSeconds--;
@@ -1771,7 +2071,7 @@ function startSpeakingState(state) {
 
             const printed = speakingSeconds.toString().padStart(2, '0');
             timerText.innerText = `00:${printed}`;
-            const offset = circumference - (speakingSeconds / 20) * circumference;
+            const offset = circumference - (speakingSeconds / 10) * circumference;
             ringCircle.style.strokeDashoffset = offset;
 
             saveProgressToLocalStorage();
@@ -1791,21 +2091,34 @@ function stopSpeakingRecordAction() {
 
 function proceedNextSpeakingQuestion() {
     stopActiveAudio();
-    document.getElementById('speakingVideoPulse').classList.add('hidden');
+    
+    // Tắt nhận dạng giọng nói
+    if (speechRecognitionObj) {
+        try { speechRecognitionObj.stop(); } catch(e) {}
+    }
+    
+    const recognitionBar = document.getElementById('speakingTextRecognitionBar');
+    if (recognitionBar) recognitionBar.classList.add('hidden');
+    
+    const pulse = document.getElementById('speakingVideoPulse');
+    if (pulse) pulse.classList.add('hidden');
 
     const currentQ = adaptiveDb.speaking[currentSpeakingQIdx];
+    const userVoiceText = speechRecognitionText.trim() || "Yes, I agree with this topic."; // Fallback nếu không thu được chữ
     
     speakingAnswers.push({
         prompt: currentQ.prompt,
         promptTranslation: currentQ.promptTranslation,
-        answerText: currentQ.answerText,
-        transcript: currentQ.transcript
+        answerText: currentQ.prompt, // Đề bài
+        transcript: userVoiceText // Bản dịch thô lấy từ micro
     });
 
     currentSpeakingQIdx++;
     if (currentSpeakingQIdx < adaptiveDb.speaking.length) {
         loadSpeakingQuestion(currentSpeakingQIdx);
     } else {
+        // Tắt Camera giáo viên
+        stopUserWebcam();
         assessSpeakingWithAI();
     }
 }
@@ -1815,7 +2128,7 @@ function assessSpeakingWithAI() {
     const modalLoading = document.getElementById('modalAiLoading');
     const aiText = document.getElementById('aiLoadingText');
     if (modalLoading && aiText) {
-        aiText.innerText = "Hệ thống đang gửi các câu trả lời Nói của Thầy/Cô lên máy chủ AI để phân tích thực tế phát âm, từ vựng và cấu trúc ngữ pháp. Thầy/Cô vui lòng đợi trong giây lát...";
+        aiText.innerText = "Hệ thống đang gửi 22 câu trả lời Nói của Thầy/Cô lên máy chủ AI để phân tích thực tế phát âm, từ vựng và cấu trúc ngữ pháp. Thầy/Cô vui lòng đợi trong giây lát...";
         modalLoading.classList.remove('hidden');
     }
 
@@ -1946,10 +2259,21 @@ function updateWritingContent(textarea) {
         const trimmed = text.trim().split(/\s+/).slice(0, 350).join(" ");
         textarea.value = trimmed;
         writingAnswerText = trimmed;
+        
+        textarea.classList.add('border-rose-500', 'focus:border-rose-500');
+        textarea.classList.remove('border-slate-800', 'border-amber-500', 'focus:border-emerald-500/50', 'focus:border-amber-500');
+    } else if (words >= 330) {
+        counter.className = "px-3 py-1 bg-amber-955/40 border border-amber-800 rounded-full text-amber-400 text-xs font-bold";
+        textarea.classList.add('border-amber-500', 'focus:border-amber-500');
+        textarea.classList.remove('border-slate-800', 'border-rose-500', 'focus:border-emerald-500/50', 'focus:border-rose-500');
     } else if (words >= 250) {
         counter.className = "px-3 py-1 bg-green-950/40 border border-green-800 rounded-full text-green-400 text-xs font-bold";
+        textarea.classList.remove('border-rose-500', 'border-amber-500', 'focus:border-rose-500', 'focus:border-amber-500');
+        textarea.classList.add('border-slate-800', 'focus:border-emerald-500/50');
     } else {
         counter.className = "px-3 py-1 bg-[#0b0f19] border border-slate-800 rounded-full text-emerald-400 text-xs font-bold";
+        textarea.classList.remove('border-rose-500', 'border-amber-500', 'focus:border-rose-500', 'focus:border-amber-500');
+        textarea.classList.add('border-slate-800', 'focus:border-emerald-500/50');
     }
     
     // Tự động lưu tiến trình
