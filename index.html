@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Mô phỏng Khảo sát Năng lực Tiếng Anh cho Giáo viên Phổ thông</title>
+    <meta name="description" content="Hệ thống mô phỏng khảo sát năng lực Tiếng Anh dành cho giáo viên phổ thông theo chuẩn CEFR giúp giáo viên làm quen thao tác thi trực tuyến.">
+    <meta property="og:title" content="Hệ thống Mô phỏng Khảo sát Năng lực Tiếng Anh Giáo viên">
+    <meta property="og:description" content="Hệ thống mô phỏng khảo sát năng lực Tiếng Anh dành cho giáo viên phổ thông theo chuẩn CEFR giúp giáo viên làm quen thao tác thi trực tuyến.">
+    <meta property="og:type" content="website">
+    <!-- Tailwind CSS (for layout utilities) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Vanilla Design System styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- HEADER BAR -->
+    <header class="h-16 sticky top-0 z-40 bg-[#0e1322] border-b border-[#1e2942] w-full">
+        <div class="max-w-7xl w-full mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <img src="./logo.png" alt="Logo" class="h-9 w-auto object-contain">
+                <span class="text-xs text-slate-400 font-semibold hidden md:inline">| MÔ PHỎNG KHẢO SÁT TIẾNG ANH GIÁO VIÊN</span>
+            </div>
+            
+            <!-- Đồng hồ đếm ngược bài thi nằm chính giữa -->
+            <div id="headerTestControls" class="hidden flex items-center space-x-6">
+                <div class="flex items-center space-x-2 bg-[#0b0f19] px-4 py-1.5 rounded-full border border-slate-700">
+                    <i class="fa-regular fa-clock text-blue-400 text-sm animate-pulse"></i>
+                    <span id="globalTimer" class="font-mono text-sm text-white font-bold">15:00</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <!-- Nút bật/tắt song ngữ toàn hệ thống -->
+                <button id="btnGlobalBilingualToggle" onclick="toggleGlobalBilingualMode()" class="px-3 py-1.5 bg-[#141b2d] border border-slate-700 text-xs text-blue-400 font-semibold rounded-lg hover:bg-[#1c263e] transition flex items-center gap-1.5" title="Bật/Tắt hỗ trợ song ngữ Tiếng Việt">
+                    <i class="fa-solid fa-language text-sm"></i>
+                    <span class="hidden sm:inline">Song ngữ: BẬT</span>
+                </button>
+
+                <!-- Nút điều chỉnh cỡ chữ Aa -->
+                <button id="btnTextScale" onclick="toggleTextScaleSlider()" class="hidden p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition" title="Kích cỡ chữ">
+                    <i class="fa-solid fa-font text-base"></i>
+                </button>
+
+                <div id="userBadge" class="text-xs text-slate-300 flex items-center space-x-2">
+                    <div class="h-7 w-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold border border-blue-500/30">
+                        GV
+                    </div>
+                    <span id="userDisplayName" class="hidden lg:inline font-medium">Thầy/Cô Giáo viên</span>
+                </div>
+                
+                <button onclick="logoutToLanding()" class="text-xs text-slate-400 hover:text-rose-400 font-medium transition flex items-center gap-1">
+                    <span class="hidden sm:inline">Thoát</span> <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hộp thoại chỉnh kích cỡ chữ Aa kéo thả -->
+    <div id="textScalePanel" class="hidden fixed top-18 right-6 bg-[#141b2d] border border-slate-700 p-4 rounded-xl shadow-2xl z-50 w-64 space-y-3">
+        <div class="flex items-center justify-between text-xs text-slate-300 font-bold">
+            <span>Cỡ chữ hiển thị tài liệu</span>
+            <span id="textScaleLabel" class="text-blue-400">Mặc định</span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="text-xs text-slate-400">Aa</span>
+            <input type="range" aria-label="Điều chỉnh cỡ chữ tài liệu" min="1" max="3" value="2" oninput="adjustTextScale(this.value)" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+            <span class="text-lg text-slate-200 font-bold">Aa</span>
+        </div>
+    </div>
+
+    <!-- MAIN APP BODY -->
+    <!-- MAIN APP CARD CONTAINER -->
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 flex flex-col overflow-hidden">
+        <div class="flex-1 flex flex-col md:flex-row bg-[#111827]/70 backdrop-blur-md border border-[#1e2942]/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.55)] p-4 md:p-6 gap-6 overflow-hidden">
+
+        <!-- Sidebar dọc bên trái chứa sơ đồ cây thư mục bài làm thích ứng -->
+        <aside id="sidebarNav" class="hidden w-full md:w-64 p-4 flex-col justify-between shrink-0">
+            <div class="space-y-6">
+                <!-- Nút quay lại Landing -->
+                <div class="pb-3 border-b border-slate-800">
+                    <button onclick="triggerBackWarning()" class="flex items-center text-xs text-slate-400 hover:text-white transition font-semibold space-x-2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Thoát phòng khảo sát</span>
+                    </button>
+                </div>
+
+                <!-- Cấu trúc cây kỹ năng phân tầng thích ứng -->
+                <div class="space-y-4">
+                    <!-- READING SKILL NODE -->
+                    <div id="node-reading" class="sidebar-node space-y-2 relative">
+                        <div class="flex items-center justify-between px-2 py-1.5 rounded-lg text-sm font-bold text-white">
+                            <div class="flex items-center space-x-3">
+                                <span class="h-6 w-6 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-book-open"></i>
+                                </span>
+                                <span>Kỹ năng Đọc (Reading)</span>
+                            </div>
+                            <span id="badge-reading" class="text-[10px] bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded uppercase hidden">Adaptive</span>
+                        </div>
+                        
+                        <!-- Lịch sử các phần thi thích ứng của Đọc -->
+                        <div id="readingSectionsList" class="pl-8 space-y-3 relative">
+                            <div class="timeline-line"></div>
+                            <div id="reading-steps-container" class="space-y-3">
+                                <!-- Chèn động các bước thi thích ứng bằng JS -->
+                                <div class="flex items-center space-x-2 text-xs text-blue-400 font-bold relative">
+                                    <span class="h-2 w-2 rounded-full bg-blue-500 absolute -left-6 ring-4 ring-blue-500/20"></span>
+                                    <span>Lượt 1: Bắt đầu ở B1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LISTENING SKILL NODE -->
+                    <div id="node-listening" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3 space-y-2 relative">
+                        <div class="flex items-center justify-between px-2 py-1.5 text-sm font-bold text-slate-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="h-6 w-6 rounded-full bg-slate-850 text-slate-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-headphones"></i>
+                                </span>
+                                <span>Kỹ năng Nghe (Listening)</span>
+                            </div>
+                            <span id="badge-listening" class="text-[10px] bg-lime-500/20 text-lime-400 px-1.5 py-0.5 rounded uppercase hidden">Adaptive</span>
+                        </div>
+                        
+                        <!-- Lịch sử các phần thi thích ứng của Nghe -->
+                        <div id="listeningSectionsList" class="pl-8 space-y-3 relative hidden">
+                            <div class="timeline-line"></div>
+                            <div id="listening-steps-container" class="space-y-3">
+                                <div class="flex items-center space-x-2 text-xs text-slate-500 relative">
+                                    <span class="h-2 w-2 rounded-full bg-slate-800 absolute -left-6"></span>
+                                    <span>Đang khóa</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SPEAKING SKILL NODE -->
+                    <div id="node-speaking" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3">
+                        <div class="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-slate-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="h-6 w-6 rounded-full bg-slate-850 text-slate-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </span>
+                                <span>Kỹ năng Nói (Speaking)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WRITING SKILL NODE -->
+                    <div id="node-writing" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3">
+                        <div class="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-slate-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="h-6 w-6 rounded-full bg-slate-850 text-slate-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-pen-nib"></i>
+                                </span>
+                                <span>Kỹ năng Viết (Writing)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cảnh báo chống gian lận & Hỗ trợ song ngữ -->
+            <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2">
+                <span class="text-[10px] text-blue-400 font-bold uppercase tracking-wider flex items-center">
+                    <i class="fa-solid fa-shield-halved mr-1.5"></i> Chế độ an toàn
+                </span>
+                <p class="text-[9px] text-slate-400 leading-relaxed">Copy/Paste đề thi bị khóa. Giáo viên có thể bấm các nút <i class="fa-solid fa-language text-blue-400 text-xs"></i> dịch tại chỗ để hiểu nghĩa tiếng Việt.</p>
+            </div>
+        </aside>
+
+        <!-- Dynamic Working Canvas Area -->
+        <main class="flex-1 p-6 flex flex-col overflow-y-auto">
+
+            <!-- SCREEN 1: LANDING/WELCOME PAGE -->
+            <div id="screen-landing" class="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 max-w-5xl mx-auto py-8">
+                <!-- Cột thông tin bên trái -->
+                <div class="flex-1 space-y-6 max-w-lg">
+                    <h2 class="text-3xl font-extrabold text-white leading-tight">
+                        Khảo sát Năng lực Tiếng Anh<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Giáo viên Phổ thông</span>
+                    </h2>
+                    
+                    <!-- Khuyến cáo quan trọng về ứng dụng mô phỏng -->
+                    <div class="warning-box flex items-start gap-2.5">
+                        <i class="fa-solid fa-circle-exclamation text-amber-500 text-base mt-0.5"></i>
+                        <div>
+                            <strong class="text-amber-400 block mb-0.5">LƯU Ý QUAN TRỌNG:</strong>
+                            Ứng dụng này chỉ mang tính chất <strong>mô phỏng trải nghiệm thao tác làm quen</strong>, giúp Thầy/Cô quen với các dạng đề khảo sát. Kết quả tự chấm hoàn toàn không có giá trị cấp chứng nhận chính thức.
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Bài khảo sát áp dụng thuật toán thích ứng (Adaptive Test) đánh giá đầy đủ 4 kỹ năng theo chuẩn Khung tham chiếu chung Châu Âu về ngôn ngữ (CEFR) từ bậc A1 đến C2.
+                        <br>Thời gian hoàn thành dự kiến: <strong class="text-white">60 - 120 phút</strong>.
+                    </p>
+
+                    <!-- Danh sách biểu tượng kỹ năng -->
+                    <div class="flex items-center space-x-5 pt-2">
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-11 w-11 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center text-sm border border-teal-500/30" title="Đọc">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Đọc</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-11 w-11 rounded-full bg-lime-500/20 text-lime-400 flex items-center justify-center text-sm border border-lime-500/30" title="Nghe">
+                                <i class="fa-solid fa-headphones"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Nghe</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-11 w-11 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm border border-sky-500/30" title="Nói">
+                                <i class="fa-solid fa-microphone"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Nói</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-11 w-11 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/30" title="Viết">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Viết</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-3.5 w-full max-w-sm animate-fadeIn">
+                            <div class="flex-1 space-y-1.5">
+                                <label for="inputTeacherName" class="text-xs text-slate-450 font-bold block"><i class="fa-solid fa-user-tie text-blue-400 mr-1.5"></i>Họ và tên:</label>
+                                <input type="text" id="inputTeacherName" placeholder="Họ và tên..." class="w-full px-3.5 py-2.5 bg-[#0b0f19] border border-slate-750 focus:border-blue-500 rounded-xl text-slate-200 text-xs focus:outline-none transition placeholder-slate-500">
+                            </div>
+                            <div class="w-full sm:w-44 space-y-1.5">
+                                <label for="inputTeacherPhone" class="text-xs text-slate-450 font-bold block"><i class="fa-solid fa-phone text-blue-400 mr-1.5"></i>Số điện thoại:</label>
+                                <input type="text" id="inputTeacherPhone" placeholder="SĐT (định danh)..." class="w-full px-3.5 py-2.5 bg-[#0b0f19] border border-slate-750 focus:border-blue-500 rounded-xl text-slate-200 text-xs focus:outline-none transition placeholder-slate-500">
+                            </div>
+                        </div>
+                        <button onclick="startTestFlow()" id="btnStartTest" class="px-8 py-3.5 btn-grad text-white font-bold rounded-xl transition flex items-center space-x-2 text-sm animate-fadeIn">
+                            <span>Bắt đầu khảo sát thích ứng</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                        <p class="text-xs text-slate-400 flex items-center">
+                            <i class="fa-solid fa-circle-info mr-1.5 text-blue-400"></i> Bài thi tự động bắt đầu ở trình độ trung bình B1.
+                        </p>
+
+                        <!-- Bảng vinh danh thi đua giáo viên -->
+                        <div class="bg-[#141b2d]/60 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3 mt-4 w-full max-w-sm animate-fadeIn">
+                            <span class="text-xs font-bold text-amber-400 block uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-trophy"></i> Bảng Vinh Danh Giáo Viên Xuất Sắc
+                            </span>
+
+                            <!-- Thanh tìm kiếm giáo viên trên bảng vinh danh -->
+                            <div class="relative w-full">
+                                <input type="text" id="searchLeaderboard" oninput="filterLeaderboard(this.value)" placeholder="Tìm kiếm theo SĐT hoặc Họ tên..." class="w-full pl-8 pr-3 py-1.5 bg-[#0b0f19] border border-slate-800 focus:border-blue-500 rounded-lg text-slate-300 text-[10px] focus:outline-none transition placeholder-slate-500">
+                                <i class="fa-solid fa-magnifying-glass text-slate-500 text-[10px] absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            </div>
+
+                            <div class="overflow-hidden">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr class="text-slate-500 font-bold border-b border-slate-800 pb-1.5 text-[10px]">
+                                            <th class="pb-1 w-10">Hạng</th>
+                                            <th class="pb-1">Thầy/Cô (SĐT)</th>
+                                            <th class="pb-1 text-center w-14">Bậc đạt</th>
+                                            <th class="pb-1 text-center w-16 text-right">Số lượt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboardBody" class="divide-y divide-slate-800/40">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-slate-500 py-3 italic">Đang tải bảng vinh danh...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trợ lý ảo Techie đàm thoại hướng dẫn giáo viên -->
+                <div class="w-80 flex flex-col items-center shrink-0 space-y-4">
+                    <div onclick="nextTechieGreeting()" class="relative bg-[#141b2d] hover:bg-[#192239] cursor-pointer border border-slate-700 hover:border-slate-500 rounded-2xl p-5 shadow-xl w-full transition duration-200 select-none active:scale-[0.99] group" title="Nhấp vào bất kỳ đâu trong cụm Techie để tiếp tục">
+                        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#141b2d] group-hover:bg-[#192239] border-r border-b border-slate-700 group-hover:border-slate-500 transform rotate-45 transition duration-200"></div>
+                        <p id="techieText" class="text-xs text-slate-200 leading-relaxed font-medium">
+                            🤖 Xin chào thầy/cô! Mình là Techie - trợ lý ảo. Hôm nay mình sẽ giúp Thầy/Cô làm quen với cấu trúc và thao tác của hệ thống khảo sát năng lực Tiếng Anh 4 kỹ năng.
+                        </p>
+                    </div>
+
+                    <button id="btnTechieNext" onclick="nextTechieGreeting()" class="w-full py-3.5 bg-[#1c263e] hover:bg-[#253252] hover:text-white border border-slate-700 hover:border-slate-500 text-slate-300 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1 active:scale-[0.98]">
+                        <span>Nhấn để tiếp tục</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+
+                    <!-- Mascot Robot Techie -->
+                    <div onclick="nextTechieGreeting()" class="h-36 w-36 flex items-center justify-center bg-blue-950/20 hover:bg-blue-950/40 cursor-pointer rounded-full border border-blue-500/10 hover:border-blue-500/30 relative transition duration-200 active:scale-[0.97]" title="Nhấp vào bất kỳ đâu trong cụm Techie để tiếp tục">
+                        <div class="absolute inset-0 rounded-full bg-blue-500/5 animate-ping"></div>
+                        <svg class="h-20 w-20 text-blue-400" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="8" y="16" width="48" height="36" rx="10" fill="#141b2d" stroke="currentColor" stroke-width="3"/>
+                            <rect x="18" y="24" width="28" height="12" rx="4" fill="#0b0f19"/>
+                            <circle cx="24" cy="30" r="3.5" fill="#60a5fa" class="animate-pulse"/>
+                            <circle cx="40" cy="30" r="3.5" fill="#60a5fa" class="animate-pulse"/>
+                            <path d="M24 44s3 3 8 3 8-3 8-3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="32" y1="16" x2="32" y2="8" stroke="currentColor" stroke-width="2.5"/>
+                            <circle cx="32" cy="7" r="2.5" fill="currentColor"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 2: INSTRUCTIONS SCREEN -->
+            <div id="screen-instructions" class="hidden flex-1 max-w-2xl mx-auto flex flex-col justify-center items-center text-center space-y-6 py-8">
+                <div id="instructionIconContainer" class="h-20 w-20 rounded-full flex items-center justify-center text-3xl border">
+                    <!-- Icon của kỹ năng tương ứng -->
+                </div>
+                <div class="space-y-1">
+                    <h2 id="instructionTitle" class="text-2xl font-black text-white">Hướng dẫn làm bài</h2>
+                    <p id="instructionDuration" class="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                        <i class="fa-regular fa-clock mr-1"></i> Thời gian: 15 phút / lượt
+                    </p>
+                </div>
+
+                <!-- Hộp test tai nghe riêng của kỹ năng Nghe -->
+                <div id="audioHardwareCheck" class="hidden w-full bg-[#141b2d] border border-slate-700 p-5 rounded-xl space-y-4 text-left">
+                    <span class="text-xs text-slate-300 font-bold uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-headphones text-blue-400 mr-2"></i> Kiểm tra tai nghe (Headphone Test)
+                    </span>
+                    <p class="text-xs text-slate-400">Vui lòng bấm nút Phát ở dưới để nghe âm thanh thử nghiệm. Điều chỉnh âm lượng tai nghe vừa phải trước khi bắt đầu bài kiểm tra.</p>
+                    <div class="flex items-center space-x-4 bg-[#0b0f19] p-3 rounded-lg border border-slate-800">
+                        <button onclick="playHardwareCheckAudio()" class="h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition shrink-0">
+                            <i id="audioCheckIcon" class="fa-solid fa-play text-xs"></i>
+                        </button>
+                        <div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div id="audioCheckBar" class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <span class="text-[10px] text-slate-500 font-mono">0:00 / 0:05</span>
+                    </div>
+                </div>
+
+                <!-- Hộp test micro riêng của kỹ năng Nói -->
+                <div id="micHardwareCheck" class="hidden w-full bg-[#141b2d] border border-slate-700 p-5 rounded-xl space-y-4 text-left">
+                    <span class="text-xs text-slate-300 font-bold uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-microphone text-blue-400 mr-2"></i> Kiểm tra Micro (Microphone Check)
+                    </span>
+                    <p class="text-xs text-slate-400">Ứng dụng sẽ yêu cầu quyền sử dụng Micro để ghi âm bài thi Nói. Hãy nhấp nút bên dưới và nói thử một câu vào mic.</p>
+                    <div class="flex items-center space-x-4 bg-[#0b0f19] p-3 rounded-lg border border-slate-800">
+                        <button onclick="testMicrophoneInput()" id="btnTestMic" class="px-4 py-2 bg-[#1c263e] hover:bg-[#253252] border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 transition flex items-center gap-1.5">
+                            <i id="micTestIcon" class="fa-solid fa-microphone text-blue-400"></i>
+                            <span id="micTestText">Kiểm tra kết nối mic</span>
+                        </button>
+                        <div class="flex-1 flex items-center space-x-1" id="micSignalBars">
+                            <!-- Hoạt ảnh sóng mic giả lập -->
+                            <div class="w-1.5 h-3 bg-slate-800 rounded-full"></div>
+                            <div class="w-1.5 h-5 bg-slate-800 rounded-full"></div>
+                            <div class="w-1.5 h-4 bg-slate-800 rounded-full"></div>
+                            <div class="w-1.5 h-6 bg-slate-800 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Các điểm hướng dẫn làm bài thi chuẩn chỉ (Song ngữ) -->
+                <div class="w-full text-left bg-[#0b0f19] border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div class="space-y-1">
+                        <div class="flex items-start space-x-3 text-xs text-slate-200">
+                            <span class="text-blue-400 mt-0.5"><i class="fa-solid fa-star text-[10px]"></i></span>
+                            <p id="instructionBullet1" class="font-medium">Giữ bình tĩnh, tập trung và tự tin trong suốt bài kiểm tra.</p>
+                        </div>
+                        <p id="instructionBullet1-vi" class="text-[10.5px] text-slate-400 pl-6 border-l border-slate-800">Keep calm, stay focused and be confident during the test.</p>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex items-start space-x-3 text-xs text-slate-200">
+                            <span class="text-blue-400 mt-0.5"><i class="fa-solid fa-star text-[10px]"></i></span>
+                            <p id="instructionBullet2" class="font-medium">Bạn có thể thay đổi câu trả lời của mình bất cứ lúc nào.</p>
+                        </div>
+                        <p id="instructionBullet2-vi" class="text-[10.5px] text-slate-400 pl-6 border-l border-slate-800">You can change your answers at any point during the section.</p>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex items-start space-x-3 text-xs text-slate-200">
+                            <span class="text-blue-400 mt-0.5"><i class="fa-solid fa-star text-[10px]"></i></span>
+                            <p id="instructionBullet3" class="font-medium">Hãy kiểm tra kỹ bài làm trước khi nhấn nút nộp bài.</p>
+                        </div>
+                        <p id="instructionBullet3-vi" class="text-[10.5px] text-slate-400 pl-6 border-l border-slate-800">Please check your answers carefully before submitting.</p>
+                    </div>
+                </div>
+
+                <button onclick="startSkillActiveTest()" class="w-full py-3.5 btn-grad text-white font-bold rounded-xl transition text-sm">
+                    Bắt đầu làm bài
+                </button>
+            </div>
+
+            <!-- SCREEN 3: ADAPTIVE TWO-PANEL EXAM ROOM (Đọc & Nghe) -->
+            <div id="screen-test-area" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
+                
+                <!-- Cột trái: Văn bản/Bài đọc/Trình phát Audio -->
+                <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col overflow-hidden md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none relative">
+                    <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
+                        <span id="mediaPaneHeader" class="text-xs font-extrabold text-teal-400 uppercase tracking-widest">Tài liệu thi</span>
+                        <div class="flex items-center space-x-2">
+                            <!-- Nút song ngữ cho bài đọc -->
+                            <button id="btnTranslateMedia" onclick="toggleTranslation('media')" class="btn-translate-toggle">
+                                <i class="fa-solid fa-language"></i> Dịch bài đọc
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Trình phát Audio mini của kỹ năng Nghe -->
+                    <div id="listeningPlayBar" class="hidden mb-4 custom-audio-bar p-4 flex items-center space-x-4">
+                        <button onclick="toggleMediaListeningAudio()" class="h-10 w-10 rounded-full bg-lime-600 hover:bg-lime-700 text-white flex items-center justify-center transition shrink-0 shadow-lg shadow-lime-500/10">
+                            <i id="listeningPlayIcon" class="fa-solid fa-play"></i>
+                        </button>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                                <span class="font-semibold text-lime-400"><i class="fa-solid fa-circle-play mr-1"></i> BĂNG NGHE GIẢ LẬP</span>
+                                <span id="listeningMediaTimer" class="font-mono">0:00 / 2:08</span>
+                            </div>
+                            <div class="w-full bg-[#090d16] h-1.5 rounded-full overflow-hidden border border-slate-800">
+                                <div id="listeningMediaProgressBar" class="bg-lime-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto pr-2 relative">
+                        <div id="mediaPaneText" class="text-slate-300 leading-relaxed font-size-medium space-y-4">
+                            <!-- Nội dung bài đọc tự động tải -->
+                        </div>
+                        <!-- Nội dung tiếng Việt dịch bài đọc -->
+                        <div id="mediaPaneTranslation" class="hidden bilingual-translation-box mt-4">
+                            <!-- Bản dịch tiếng Việt bài đọc -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cột phải: Câu hỏi trắc nghiệm -->
+                <div class="lg:col-span-6 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                    <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
+                        <span id="questionPanelTaskHeader" class="text-xs font-bold text-slate-300">1. Read the article. Then choose the correct options.</span>
+                    </div>
+
+                    <!-- Khung câu hỏi cuộc lăn -->
+                    <div id="questionsScrollable" class="flex-1 overflow-y-auto space-y-5 pr-2">
+                        <!-- Câu hỏi được inject -->
+                    </div>
+
+                    <!-- Bottom Nav & Nộp bài -->
+                    <div class="border-t border-slate-800 pt-4 mt-4 flex items-center justify-between">
+                        <!-- Hiển thị các lượt thi thích ứng -->
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Tiến trình thích ứng:</span>
+                            <div id="adaptiveStagesIndicator" class="flex items-center gap-1">
+                                <span class="px-2 py-1 bg-teal-500/20 text-teal-400 rounded text-[10px] font-bold border border-teal-500/30">Lượt 1: B1</span>
+                            </div>
+                        </div>
+
+                        <!-- Nút nộp bài -->
+                        <button id="btnSubmitSection" onclick="submitSkillSectionButton()" class="px-6 py-2.5 btn-grad text-white font-bold text-xs rounded-lg transition flex items-center space-x-2">
+                            <span>Nộp bài này</span>
+                            <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 4: SPEAKING ROOM (Giám khảo ảo) -->
+            <div id="screen-test-speaking" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
+                
+                <!-- Cột trái: Trình phát câu hỏi từ Giám khảo -->
+                <div class="lg:col-span-7 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                    <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400">Virtual Examiner (Giám khảo ảo)</span>
+                        <span class="text-[10px] text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/25">IELTS Speaking Format</span>
+                    </div>
+
+                    <!-- Giám khảo ảo đặt câu hỏi -->
+                    <div class="flex-1 bg-[#090d16] border border-slate-800 rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-4">
+                        <div id="speakingVideoFrame" class="w-full h-full flex flex-col items-center justify-center relative">
+                            <!-- Hiệu ứng sóng nhịp giám khảo nói -->
+                            <div class="h-28 w-28 rounded-full border-4 border-sky-500/20 flex items-center justify-center bg-[#141b2d] relative shadow-lg">
+                                <div id="speakingVideoPulse" class="absolute inset-0 rounded-full bg-sky-500/15 animate-ping hidden"></div>
+                                <i class="fa-solid fa-user-tie text-4xl text-sky-400"></i>
+                            </div>
+                            <span class="text-xs text-slate-300 font-bold mt-4">Mr. Harrison (Virtual Examiner)</span>
+                            
+                            <!-- Transcript câu hỏi kèm song ngữ -->
+                            <div class="mt-4 px-6 text-center max-w-md space-y-2">
+                                <p id="speakingQuestionTranscript" class="text-sm text-sky-300 font-medium italic">
+                                    "Please listen to the question."
+                                </p>
+                                <p id="speakingQuestionTranslation" class="text-xs text-slate-400 italic hidden">
+                                    (Vui lòng lắng nghe câu hỏi thi)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thanh danh sách câu hỏi Nói ở góc dưới -->
+                    <div class="border-t border-slate-800 pt-4 mt-4">
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mb-2">
+                            <span>DANH SÁCH CÂU HỎI THI NÓI</span>
+                            <span id="speakingProgressText" class="font-bold text-sky-400">Đang thực hiện: Câu 1 / 2</span>
+                        </div>
+                        <div class="flex gap-1.5" id="speakingQuestionSelector">
+                            <span class="px-3 py-1.5 bg-sky-600 text-white font-bold rounded text-[10px]">01</span>
+                            <span class="px-3 py-1.5 bg-slate-900 text-slate-500 rounded text-[10px]">02</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cột phải: Đồng hồ đếm ngược Prep / Recording -->
+                <div class="lg:col-span-5 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col justify-between items-center md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                    <div class="border-b border-slate-800 pb-3 mb-4 w-full text-left flex justify-between items-center">
+                        <span id="speakingHeading" class="text-xs font-bold text-slate-300">Question 1</span>
+                        <button onclick="toggleSpeakingTranslation()" class="btn-translate-toggle">
+                            <i class="fa-solid fa-language"></i> Dịch câu hỏi
+                        </button>
+                    </div>
+
+                    <!-- Vòng tròn đếm ngược chuẩn bị/ghi âm -->
+                    <div class="flex-1 flex flex-col items-center justify-center space-y-6">
+                        <div class="ring-container">
+                            <svg class="ring-svg" width="150" height="150">
+                                <circle cx="75" cy="75" r="65" stroke="#1c263e" stroke-width="8" fill="transparent"/>
+                                <circle id="speakingRingCircle" class="ring-circle" cx="75" cy="75" r="65" stroke="#f59e0b" stroke-dasharray="408.4" stroke-dashoffset="408.4" stroke-width="8" fill="transparent" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                <i id="speakingRingIcon" class="fa-solid fa-hourglass-start text-amber-500 text-2xl mb-1.5"></i>
+                                <span id="speakingRingTimer" class="font-mono text-lg font-black text-white">00:05</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center space-y-1.5 px-4">
+                            <h3 id="speakingStateTitle" class="text-sm font-extrabold text-amber-500 uppercase tracking-widest">Preparation...</h3>
+                            <p id="speakingStateDesc" class="text-xs text-slate-400 max-w-xs leading-relaxed">Chuẩn bị ý kiến của bạn trong 5 giây trước khi tự động thu âm.</p>
+                        </div>
+                    </div>
+
+                    <!-- Nút dừng thu âm sớm -->
+                    <div class="border-t border-slate-800 pt-4 w-full flex justify-end">
+                        <button id="btnSpeakingAction" onclick="stopSpeakingRecordAction()" disabled class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-30 text-white font-bold text-xs rounded-lg transition uppercase tracking-widest flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-stop"></i> Dừng thu âm sớm
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 5: WRITING ROOM -->
+            <div id="screen-test-writing" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
+                <!-- Trái: Đề bài luận -->
+                <div class="lg:col-span-5 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                    <div class="space-y-4">
+                        <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-400">Đề bài luận (IELTS Writing Task 2)</span>
+                            <button onclick="toggleTranslation('writing-prompt')" class="btn-translate-toggle">
+                                <i class="fa-solid fa-language"></i> Dịch đề bài
+                            </button>
+                        </div>
+                        <div id="writingPromptPane" class="text-sm text-slate-300 leading-relaxed space-y-4 font-mono">
+                            <!-- Đề bài soạn thảo -->
+                        </div>
+                        <div id="writingPromptTranslation" class="hidden bilingual-translation-box">
+                            <!-- Dịch đề bài -->
+                        </div>
+                    </div>
+                    
+                    <div class="warning-box text-xs">
+                        <i class="fa-solid fa-circle-info text-blue-400 mr-1.5"></i>
+                        <strong>Mẹo thi:</strong> Viết tối thiểu <strong>10 từ</strong> và tối đa <strong>350 từ</strong>. Nhập luận điểm rõ ràng, sử dụng các liên từ nối chuyển ý mạch lạc.
+                    </div>
+                </div>
+
+                <!-- Phải: Soạn thảo bài làm -->
+                <div class="lg:col-span-7 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                    <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-300">Bài viết của Thầy/Cô (Your Essay Submission)</span>
+                        <span id="wordCounter" class="px-3 py-1 bg-[#0b0f19] border border-slate-800 rounded-full text-emerald-400 text-xs font-bold">
+                            0 / 350 từ
+                        </span>
+                    </div>
+
+                    <textarea id="writingEditor" aria-label="Khung soạn thảo bài luận" onkeyup="updateWritingContent(this)" placeholder="Bắt đầu viết bài luận của bạn tại đây bằng tiếng Anh..." class="w-full flex-1 my-4 bg-[#0b0f19] border border-slate-800 rounded-xl p-4 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 resize-none font-mono leading-relaxed"></textarea>
+
+                    <div class="flex justify-end border-t border-slate-800 pt-4">
+                        <button onclick="submitSkillSectionButton()" class="px-6 py-2.5 btn-grad text-white font-bold text-xs rounded-lg transition flex items-center space-x-2">
+                            <span>Nộp bài luận</span>
+                            <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 6: TOTAL ASSESSMENT RESULT PAGE (Dashboard) -->
+            <div id="screen-total-summary" class="hidden flex-1 max-w-4xl mx-auto py-4 space-y-6">
+                <!-- Banner Kết quả tổng quát -->
+                <div class="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-slate-800 p-6 rounded-2xl text-center space-y-2 relative overflow-hidden">
+                    <div class="absolute -right-12 -top-12 h-32 w-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+                    <div class="absolute -left-12 -bottom-12 h-32 w-32 bg-teal-500/10 rounded-full blur-2xl"></div>
+                    
+                    <h2 class="text-2xl font-black text-white">Tổng kết kết quả khảo sát năng lực</h2>
+                    <p class="text-sm text-slate-300">
+                        Trình độ năng lực tiếng Anh tổng quát của Thầy/Cô được quy chiếu là:
+                    </p>
+                    <div class="inline-block px-6 py-2 bg-blue-600 rounded-full text-white font-black text-2xl shadow-lg shadow-blue-500/20 my-2" id="summaryFinalLevel">
+                        B1
+                    </div>
+                    <p class="text-xs text-amber-400 max-w-md mx-auto">
+                        <strong>Lưu ý:</strong> Đây là trình độ mô phỏng dựa trên các thuật toán thích ứng CEFR của ứng dụng, chỉ mang mục đích làm quen thao tác thi cử.
+                    </p>
+                </div>
+
+                <!-- Bố cục so sánh các chuẩn quốc tế và kết quả kỹ năng -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    <!-- Trái: Chi tiết từng kỹ năng -->
+                    <div class="md:col-span-5 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 space-y-4">
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-800 pb-2">KẾT QUẢ TỪNG KỸ NĂNG</span>
+                        
+                        <div class="space-y-3 text-xs">
+                            <!-- Đọc -->
+                            <div class="p-3 bg-teal-500/5 border border-teal-500/20 rounded-xl space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-teal-400">
+                                    <span>Kỹ năng Đọc (Reading)</span>
+                                    <span id="summaryReadingCEFR" class="bg-teal-500/20 px-2 py-0.5 rounded text-xs">B2</span>
+                                </div>
+                                <button onclick="enterReviewMode('reading')" class="w-full py-2 bg-teal-600/90 text-white font-bold rounded-lg hover:bg-teal-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                    Xem lại bài đọc & đáp án <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                                </button>
+                            </div>
+
+                            <!-- Nghe -->
+                            <div class="p-3 bg-lime-500/5 border border-lime-500/20 rounded-xl space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-lime-400">
+                                    <span>Kỹ năng Nghe (Listening)</span>
+                                    <span id="summaryListeningCEFR" class="bg-lime-500/20 px-2 py-0.5 rounded text-xs">B1</span>
+                                </div>
+                                <button onclick="enterReviewMode('listening')" class="w-full py-2 bg-lime-600/90 text-white font-bold rounded-lg hover:bg-lime-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                    Xem lại bài nghe & đáp án <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                                </button>
+                            </div>
+
+                            <!-- Nói -->
+                            <div class="p-3 bg-sky-500/5 border border-sky-500/20 rounded-xl space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-sky-400">
+                                    <span>Kỹ năng Nói (Speaking)</span>
+                                    <span id="summarySpeakingCEFR" class="bg-sky-500/20 px-2 py-0.5 rounded text-xs">A2</span>
+                                </div>
+                                <button onclick="enterReviewMode('speaking')" class="w-full py-2 bg-sky-600/90 text-white font-bold rounded-lg hover:bg-sky-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                    Xem lại nhận xét từ AI <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                                </button>
+                            </div>
+
+                            <!-- Viết -->
+                            <div class="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-emerald-400">
+                                    <span>Kỹ năng Viết (Writing)</span>
+                                    <span id="summaryWritingCEFR" class="bg-emerald-500/20 px-2 py-0.5 rounded text-xs">B1</span>
+                                </div>
+                                <button onclick="enterReviewMode('writing')" class="w-full py-2 bg-emerald-600/90 text-white font-bold rounded-lg hover:bg-emerald-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                    Xem lại bài viết & nhận xét AI <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phải: 3 thanh so sánh chuẩn -->
+                    <div class="md:col-span-7 bg-[#0b0f19] border border-slate-800 rounded-xl p-6 space-y-6">
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-800 pb-2">BẢNG QUY ĐỔI CHUẨN QUỐC TẾ</span>
+                        
+                        <!-- Thang CEFR -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-300">Khung Tham Chiếu Châu Âu (CEFR)</span>
+                                <span class="font-black text-teal-400 text-sm" id="barCefrVal">B1</span>
+                            </div>
+                            <div class="relative h-7 bg-[#090d16] rounded-lg border border-slate-800 flex overflow-hidden p-0.5">
+                                <div class="compare-bar-segment" id="lbl-cefr-0">Pre-A1</div>
+                                <div class="compare-bar-segment" id="lbl-cefr-1">A1</div>
+                                <div class="compare-bar-segment" id="lbl-cefr-2">A2</div>
+                                <div class="compare-bar-segment" id="lbl-cefr-3">B1</div>
+                                <div class="compare-bar-segment" id="lbl-cefr-4">B2</div>
+                                <div class="compare-bar-segment" id="lbl-cefr-5">C1</div>
+                                <div class="compare-bar-segment" id="lbl-cefr-6">C2</div>
+                            </div>
+                        </div>
+
+                        <!-- Thang IELTS -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-300">Chuẩn Quốc tế IELTS</span>
+                                <span class="font-black text-sky-400 text-sm" id="barIeltsVal">4.0-5.0</span>
+                            </div>
+                            <div class="relative h-7 bg-[#090d16] rounded-lg border border-slate-800 flex overflow-hidden p-0.5">
+                                <div class="compare-bar-segment" id="lbl-ielts-0">Dưới 3.0</div>
+                                <div class="compare-bar-segment" id="lbl-ielts-1">3.0-3.5</div>
+                                <div class="compare-bar-segment" id="lbl-ielts-2">4.0-5.0</div>
+                                <div class="compare-bar-segment" id="lbl-ielts-3">5.5-6.0</div>
+                                <div class="compare-bar-segment" id="lbl-ielts-4">6.5-7.5</div>
+                                <div class="compare-bar-segment" id="lbl-ielts-5">8.0+</div>
+                            </div>
+                        </div>
+
+                        <!-- Thang VSTEP -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-300">Khung Năng Lực Việt Nam (VSTEP)</span>
+                                <span class="font-black text-emerald-400 text-sm" id="barVstepVal">Bậc 3</span>
+                            </div>
+                            <div class="relative h-7 bg-[#090d16] rounded-lg border border-slate-800 flex overflow-hidden p-0.5">
+                                <div class="compare-bar-segment" id="lbl-vstep-0">Dưới Bậc 1</div>
+                                <div class="compare-bar-segment" id="lbl-vstep-1">Bậc 1</div>
+                                <div class="compare-bar-segment" id="lbl-vstep-2">Bậc 2</div>
+                                <div class="compare-bar-segment" id="lbl-vstep-3">Bậc 3</div>
+                                <div class="compare-bar-segment" id="lbl-vstep-4">Bậc 4</div>
+                                <div class="compare-bar-segment" id="lbl-vstep-5">Bậc 5</div>
+                                <div class="compare-bar-segment" id="lbl-vstep-6">Bậc 6</div>
+                            </div>
+                        </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BẢNG THỐNG KÊ THỜI GIAN LÀM BÀI CHI TIẾT TỪNG CÂU HỎI -->
+                <div class="stats-table-container space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <h3 class="text-xs font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-hourglass-half text-blue-400"></i> BẢNG PHÂN TÍCH THỜI GIAN SUY NGHĨ CHI TIẾT TỪNG CÂU HỎI
+                        </h3>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="exportTimeStatsToExcel()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded transition flex items-center gap-1">
+                                <i class="fa-solid fa-file-excel text-xs"></i> Xuất Excel (Export)
+                            </button>
+                            <span class="text-[10px] text-slate-450 uppercase font-semibold hidden sm:inline">Công cụ đánh giá độ khó ngân hàng đề thi</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>Kỹ năng</th>
+                                    <th>Cấp độ / Phần thi</th>
+                                    <th>Câu hỏi</th>
+                                    <th>Thời gian trả lời</th>
+                                    <th>Độ khó tương đối</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questionTimeStatsBody">
+                                <!-- Chèn dữ liệu động bằng JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 7: REVIEW MODE -->
+            <div id="screen-review-mode" class="hidden flex-1 flex flex-col space-y-4">
+                
+                <!-- Thanh điều hướng và nút bật tắt Hiển thị đáp án -->
+                <div class="flex items-center justify-between bg-[#141b2d] border border-slate-800 p-4 rounded-xl">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="exitReviewToSummary()" class="text-xs text-slate-300 hover:text-white transition font-bold flex items-center space-x-1">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i> <span>Quay lại tổng kết</span>
+                        </button>
+                        <span class="text-xs text-slate-500">|</span>
+                        <h3 class="text-sm font-bold text-white flex items-center">
+                            Bài xem lại: <span id="reviewSkillTitle" class="text-blue-400 ml-1">Kỹ năng Đọc</span>
+                        </h3>
+                    </div>
+                    
+                    <!-- Switch hiển thị đáp án -->
+                    <div id="reviewAnswersSwitchContainer" class="flex items-center space-x-2">
+                        <span class="text-xs font-semibold text-slate-400">Hiển thị đáp án chuẩn</span>
+                        <label class="switch">
+                            <input type="checkbox" id="reviewAnswerToggle" aria-label="Bật tắt hiển thị đáp án chuẩn" onchange="toggleAnswersOnReview()" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Bố cục 2 cột xem lại bài -->
+                <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[480px]">
+                    <!-- Trái: Nội dung câu trả lời -->
+                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[480px] h-auto min-h-[300px] max-h-[450px] md:max-h-none overflow-hidden">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 border-b border-slate-800 pb-1.5">TÀI LIỆU VÀ BÀI LÀM CỦA BẠN</span>
+                        <div id="reviewMediaText" class="flex-1 overflow-y-auto pr-2 text-slate-300 leading-relaxed font-size-medium">
+                            <!-- Nội dung bài làm được nộp -->
+                        </div>
+                    </div>
+
+                    <!-- Phải: Nhận xét chi tiết từ AI Feedback -->
+                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[480px] h-auto min-h-[300px] max-h-[450px] md:max-h-none overflow-hidden">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 border-b border-slate-800 pb-1.5">KẾT QUẢ CHI TIẾT & ĐÁNH GIÁ (AI FEEDBACK)</span>
+                        <div id="reviewFeedbackPane" class="flex-1 overflow-y-auto pr-2 space-y-4">
+                            <!-- Khung nhận xét AI Feedback -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+        </div>
+    </div>
+
+    <!-- MODAL POPUPS CONTAINER -->
+    
+    <!-- 1. Hộp cảnh báo: "Thời gian còn lại" -->
+    <div id="modalConfirmSubmit" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-[#141b2d] border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="mx-auto h-16 w-16 bg-blue-500/10 rounded-full flex items-center justify-center text-3xl text-blue-450 animate-pulse">
+                <i class="fa-regular fa-clock"></i>
+            </div>
+            
+            <div class="space-y-1.5">
+                <h3 class="text-base font-black text-white" id="modalConfirmTimerText">Thời gian còn lại: 15:00</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Bạn vẫn còn thời gian làm bài, hãy kiểm tra lại câu trả lời thật kỹ để đạt kết quả tốt nhất nhé. Sau khi nộp bài, bạn sẽ không thể quay lại phần thi này.
+                </p>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="closeConfirmModalSubmit()" class="flex-1 py-2 bg-[#0b0f19] hover:bg-[#121829] text-slate-300 text-xs font-semibold rounded-lg border border-slate-800 transition">
+                    Kiểm tra lại
+                </button>
+                <button onclick="proceedToSkillCompletionPopup()" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">
+                    Nộp bài ngay
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Hộp thông báo hoàn thành một kỹ năng -->
+    <div id="modalSkillFinished" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-[#141b2d] border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="mx-auto h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-3xl text-emerald-400">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            
+            <div class="space-y-1.5">
+                <h3 class="text-base font-black text-white" id="modalFinishTitle">Đã hoàn thành kỹ năng</h3>
+                <p class="text-xs text-slate-400 leading-relaxed" id="modalFinishDesc">
+                    Hệ thống đã ghi nhận đầy đủ câu trả lời của Thầy/Cô cho phần thi này.
+                </p>
+            </div>
+
+            <button onclick="proceedToNextSkillStage()" id="btnModalFinishAction" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">
+                Chuyển kĩ năng tiếp theo
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. Cửa sổ thông báo cảnh báo cơ bản -->
+    <div id="modalSimpleWarning" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-[#141b2d] border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="mx-auto h-12 w-12 bg-amber-500/10 rounded-full flex items-center justify-center text-xl text-amber-500">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="space-y-1.5">
+                <h3 class="text-sm font-black text-white" id="warnTitle">Thông báo</h3>
+                <p class="text-xs text-slate-400 leading-relaxed" id="warnDesc">Nội dung thông báo.</p>
+            </div>
+            <button onclick="closeSimpleWarning()" class="w-full py-2 bg-[#0b0f19] hover:bg-[#121829] border border-slate-800 text-slate-200 text-xs font-bold rounded-lg transition">
+                Đã hiểu
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. Hộp thoại chờ AI chấm bài viết/nói thực tế -->
+    <div id="modalAiLoading" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-[#141b2d] border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="mx-auto flex items-center justify-center">
+                <div class="relative flex items-center justify-center">
+                    <!-- Vòng tròn quay động -->
+                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-slate-800 border-t-blue-500"></div>
+                    <!-- Icon AI lấp lánh ở giữa -->
+                    <div class="absolute text-xl text-blue-400">
+                        <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-1.5">
+                <h3 class="text-sm font-black text-white">Trí tuệ nhân tạo (AI) đang chấm bài</h3>
+                <p class="text-xs text-slate-400 leading-relaxed" id="aiLoadingText">
+                    Hệ thống đang gửi bài thi Nói/Viết lên máy chủ AI để phân tích thực tế lỗi ngữ pháp, từ vựng và tính mạch lạc. Thầy/Cô vui lòng đợi trong giây lát (khoảng 5-10 giây)...
+                </p>
+            </div>
+            
+            <div class="text-[10px] text-slate-500 font-mono">
+                Đang bảo mật dữ liệu & phân tích CEFR/IELTS...
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom app logic script -->
+    <script src="app.js"></script>
+</body>
+</html>

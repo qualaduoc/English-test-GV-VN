@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSEL - Hệ thống đánh giá năng lực tiếng Anh</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121829;
+            color: #f3f4f6;
+            user-select: none; /* Khóa chức năng copy/paste đề bài bảo mật như trang 2 PDF */
+        }
+        /* Style chuẩn FSEL */
+        .fsel-dark-bg {
+            background-color: #111827;
+        }
+        .fsel-panel-bg {
+            background-color: #1f2937;
+        }
+        .fsel-card-bg {
+            background-color: #1e293b;
+        }
+        .fsel-blue {
+            background-color: #2563eb;
+        }
+        .fsel-blue-hover:hover {
+            background-color: #1d4ed8;
+        }
+        /* Đường nối tiến trình học ở thanh Sidebar trái */
+        .timeline-line {
+            width: 2px;
+            background-color: #374151;
+            position: absolute;
+            top: 24px;
+            bottom: -12px;
+            left: 19px;
+        }
+        /* Cấu hình kích cỡ chữ theo thanh trượt Aa */
+        .font-size-small { font-size: 12px; }
+        .font-size-medium { font-size: 14px; }
+        .font-size-large { font-size: 18px; }
+        
+        /* Animation vòng tròn đếm ngược cho kỹ năng Nói */
+        .ring-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+        .ring-svg {
+            transform: rotate(-90deg);
+        }
+        .ring-circle {
+            transition: stroke-dashoffset 0.1s linear;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Header bar chuẩn của hệ thống FSEL -->
+    <header class="h-14 bg-[#111827] border-b border-[#1f2937] px-6 flex items-center justify-between sticky top-0 z-40">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 p-1.5 rounded-lg flex items-center justify-center text-white font-extrabold text-sm tracking-widest">
+                FSEL
+            </div>
+            <span class="text-xs text-slate-400 font-medium hidden sm:inline">| Hệ thống thi thử dành cho Giáo viên</span>
+        </div>
+        
+        <!-- Đồng hồ đếm ngược nằm chính giữa khi làm bài thi -->
+        <div id="headerTestControls" class="hidden flex items-center space-x-6">
+            <div class="flex items-center space-x-2 bg-[#1f2937] px-3 py-1 rounded-full border border-slate-700">
+                <i class="fa-regular fa-clock text-blue-400 text-sm"></i>
+                <span id="globalTimer" class="font-mono text-sm text-white font-bold">15:00</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <!-- Nút điều chỉnh cỡ chữ [T] tương tự như hình Trang 4 -->
+            <button id="btnTextScale" onclick="toggleTextScaleSlider()" class="hidden p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition" title="Kích cỡ chữ">
+                <i class="fa-solid fa-font text-base"></i>
+            </button>
+            <div id="userBadge" class="text-xs text-slate-300 flex items-center space-x-2">
+                <div class="h-6 w-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                    GV
+                </div>
+                <span class="hidden md:inline font-medium">Thầy/Cô Giáo viên</span>
+            </div>
+            <button onclick="logoutToLanding()" class="text-xs text-slate-400 hover:text-rose-400 font-medium transition">
+                Đăng xuất <i class="fa-solid fa-right-from-bracket ml-1"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hộp thoại chỉnh kích cỡ chữ Aa kéo thả (Trang 4) -->
+    <div id="textScalePanel" class="hidden fixed top-16 right-6 bg-[#1f2937] border border-slate-700 p-4 rounded-xl shadow-2xl z-50 w-64 space-y-3">
+        <div class="flex items-center justify-between text-xs text-slate-300 font-bold">
+            <span>Cỡ chữ hiển thị</span>
+            <span id="textScaleLabel">Mặc định</span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="text-xs text-slate-400">Aa</span>
+            <input type="range" min="1" max="3" value="2" oninput="adjustTextScale(this.value)" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+            <span class="text-lg text-slate-200 font-bold">Aa</span>
+        </div>
+    </div>
+
+    <!-- MAIN BODY -->
+    <div class="flex-1 flex flex-col md:flex-row">
+
+        <!-- Sidebar dọc bên trái chứa sơ đồ cây thư mục bài làm (Trang 3, 5, 6, 8) -->
+        <aside id="sidebarNav" class="hidden w-full md:w-64 bg-[#111827] border-r border-[#1f2937] p-4 flex-col justify-between shrink-0">
+            <div class="space-y-6">
+                <!-- Nút quay lại đầu bài -->
+                <div class="pb-3 border-b border-[#1f2937]">
+                    <button onclick="triggerBackWarning()" class="flex items-center text-xs text-slate-400 hover:text-white transition font-semibold space-x-2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Bài kiểm tra đầu vào</span>
+                    </button>
+                </div>
+
+                <!-- Cấu trúc cây kỹ năng phân tầng -->
+                <div class="space-y-4">
+                    <!-- READING SKILL NODE -->
+                    <div id="node-reading" class="space-y-2 relative">
+                        <div class="flex items-center space-x-3 px-2 py-1.5 rounded-lg text-sm font-bold text-white">
+                            <span class="h-6 w-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-book-open"></i>
+                            </span>
+                            <span>Kỹ năng Đọc</span>
+                        </div>
+                        <!-- Danh sách phần thi Đọc (Phần 1 -> Phần 4) -->
+                        <div id="readingSectionsList" class="pl-8 space-y-3 relative">
+                            <div class="timeline-line"></div>
+                            <div class="flex items-center space-x-2 text-xs text-blue-400 font-bold relative">
+                                <span class="h-2 w-2 rounded-full bg-blue-500 absolute -left-6 ring-4 ring-blue-500/20"></span>
+                                <span>Phần 1</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-500 relative">
+                                <span class="h-2 w-2 rounded-full bg-[#374151] absolute -left-6"></span>
+                                <span class="flex items-center">Phần 2 <i class="fa-solid fa-lock ml-1 text-[10px]"></i></span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-500 relative">
+                                <span class="h-2 w-2 rounded-full bg-[#374151] absolute -left-6"></span>
+                                <span class="flex items-center">Phần 3 <i class="fa-solid fa-lock ml-1 text-[10px]"></i></span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-500 relative">
+                                <span class="h-2 w-2 rounded-full bg-[#374151] absolute -left-6"></span>
+                                <span class="flex items-center">Phần 4 <i class="fa-solid fa-lock ml-1 text-[10px]"></i></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LISTENING SKILL NODE -->
+                    <div id="node-listening" class="opacity-50 pointer-events-none border-t border-[#1f2937] pt-3">
+                        <div class="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-slate-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="h-6 w-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-headphones"></i>
+                                </span>
+                                <span>Kỹ năng Nghe</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </div>
+                    </div>
+
+                    <!-- SPEAKING SKILL NODE -->
+                    <div id="node-speaking" class="opacity-50 pointer-events-none border-t border-[#1f2937] pt-3">
+                        <div class="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-slate-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="h-6 w-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </span>
+                                <span>Kỹ năng Nói</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </div>
+                    </div>
+
+                    <!-- WRITING SKILL NODE -->
+                    <div id="node-writing" class="opacity-50 pointer-events-none border-t border-[#1f2937] pt-3">
+                        <div class="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-slate-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="h-6 w-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-pen-nib"></i>
+                                </span>
+                                <span>Kỹ năng Viết</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cảnh báo chống gian lận -->
+            <div class="p-3 bg-blue-950/20 border border-blue-900/30 rounded-xl space-y-1">
+                <span class="text-[10px] text-blue-400 font-bold uppercase tracking-wider flex items-center">
+                    <i class="fa-solid fa-shield-halved mr-1.5"></i> Chế độ an toàn
+                </span>
+                <p class="text-[10px] text-slate-400 leading-relaxed">Tính năng Copy/Paste văn bản đề bài bị vô hiệu hóa để bảo mật kỳ khảo sát.</p>
+            </div>
+        </aside>
+
+        <!-- Dynamic Working Canvas Area -->
+        <main class="flex-1 p-6 flex flex-col">
+
+            <!-- SCREEN 1: LANDING/WELCOME PAGE (Giống hệt hình chụp Trang 2) -->
+            <div id="screen-landing" class="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 max-w-5xl mx-auto py-8">
+                <!-- Cột thông tin FSEL bên trái -->
+                <div class="flex-1 space-y-6 max-w-lg">
+                    <h2 class="text-3xl font-extrabold text-white leading-tight">Khảo sát năng lực tiếng Anh cùng FSEL</h2>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Bài đánh giá 4 kỹ năng giúp xác định chính xác trình độ hiện tại.
+                    </p>
+                    <p class="text-sm text-slate-400 leading-relaxed">
+                        Khảo sát nhanh chóng - Kết quả rõ ràng - Đánh giá toàn diện.
+                        <br>Thời gian hoàn thành dự kiến: <strong class="text-white">60-135 phút</strong> (tùy trình độ).
+                    </p>
+
+                    <!-- Danh sách biểu tượng kỹ năng -->
+                    <div class="flex items-center space-x-4 pt-2">
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-10 w-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-sm" title="Đọc">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Đọc</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-10 w-10 rounded-full bg-lime-500/20 text-lime-400 flex items-center justify-center text-sm" title="Nghe">
+                                <i class="fa-solid fa-headphones"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Nghe</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-10 w-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm" title="Nói">
+                                <i class="fa-solid fa-microphone"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Nói</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div class="h-10 w-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm" title="Viết">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">Viết</span>
+                        </div>
+                    </div>
+
+                    <!-- Lựa chọn phân cấp lớp thi thử cho giáo viên -->
+                    <div class="space-y-2 pt-4">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Cấp học giảng dạy của Thầy/Cô:</label>
+                        <select id="teacherLevelSelector" class="w-full max-w-xs bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="primary">Giáo viên cấp Tiểu học (Mục tiêu: A2 - B1)</option>
+                            <option value="middle">Giáo viên cấp THCS (Mục tiêu: B1 - B2)</option>
+                            <option value="high">Giáo viên cấp THPT / Chuyên (Mục tiêu: B2 - C1)</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-4 space-y-2">
+                        <button onclick="startTestFlow()" id="btnStartTest" class="hidden px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+                            <span>Bắt đầu ngay</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                        <p class="text-xs text-orange-400 flex items-center">
+                            <i class="fa-solid fa-circle-exclamation mr-1.5"></i> Bạn sẽ cần tai nghe hoặc loa để thực hiện nghe âm thanh
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Trợ lý ảo Techie đàm thoại (Trang 2) -->
+                <div class="w-80 flex flex-col items-center shrink-0 space-y-4">
+                    <!-- Bong bóng hội thoại của Techie -->
+                    <div class="relative bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl w-full">
+                        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-slate-800 border-r border-b border-slate-700 transform rotate-45"></div>
+                        <p id="techieText" class="text-xs text-slate-200 leading-relaxed font-medium">
+                            🤖 Đang khởi động trợ lý ảo Techie...
+                        </p>
+                    </div>
+
+                    <button id="btnTechieNext" onclick="nextTechieGreeting()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold rounded-xl transition">
+                        Nhấn để tiếp tục
+                    </button>
+
+                    <!-- Mascot Robot Techie -->
+                    <div class="h-36 w-36 flex items-center justify-center bg-blue-950/20 rounded-full border border-blue-500/10 relative">
+                        <div class="absolute inset-0 rounded-full bg-blue-500/5 animate-ping"></div>
+                        <!-- Techie Robot SVG -->
+                        <svg class="h-20 w-20 text-blue-400" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="8" y="16" width="48" height="36" rx="10" fill="#1e293b" stroke="currentColor" stroke-width="3"/>
+                            <rect x="18" y="24" width="28" height="12" rx="4" fill="#0f172a"/>
+                            <circle cx="24" cy="30" r="3.5" fill="#60a5fa" class="animate-pulse"/>
+                            <circle cx="40" cy="30" r="3.5" fill="#60a5fa" class="animate-pulse"/>
+                            <path d="M24 44s3 3 8 3 8-3 8-3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="32" y1="16" x2="32" y2="8" stroke="currentColor" stroke-width="2.5"/>
+                            <circle cx="32" cy="7" r="2.5" fill="currentColor"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 2: INSTRUCTIONS SCREEN (Trang 3, 5, 6, 8) -->
+            <div id="screen-instructions" class="hidden flex-1 max-w-2xl mx-auto flex flex-col justify-center items-center text-center space-y-6 py-12">
+                <div id="instructionIconContainer" class="h-20 w-20 rounded-full flex items-center justify-center text-3xl">
+                    <!-- Icon của kỹ năng tương ứng -->
+                </div>
+                <div class="space-y-2">
+                    <h2 id="instructionTitle" class="text-2xl font-black text-white">Hướng dẫn kỹ năng Đọc</h2>
+                    <p id="instructionDuration" class="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                        <i class="fa-regular fa-clock mr-1"></i> Thời gian: 20-40 phút
+                    </p>
+                </div>
+
+                <!-- Hộp test tai nghe riêng của kỹ năng Nghe (Trang 5) -->
+                <div id="audioHardwareCheck" class="hidden w-full bg-slate-800/80 border border-slate-700 p-5 rounded-xl space-y-4 text-left">
+                    <span class="text-xs text-slate-300 font-bold uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-circle-info text-blue-400 mr-2"></i> Kiểm tra tai nghe
+                    </span>
+                    <p class="text-xs text-slate-400">Hãy đảm bảo âm thanh của tai nghe của bạn đã tốt trước khi bắt đầu bài kiểm tra. Vui lòng nhấp vào biểu tượng để kiểm tra chất lượng âm thanh.</p>
+                    <div class="flex items-center space-x-4 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                        <button onclick="playHardwareCheckAudio()" class="h-8 w-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center text-xs transition">
+                            <i id="audioCheckIcon" class="fa-solid fa-play"></i>
+                        </button>
+                        <div class="flex-1 bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                            <div id="audioCheckBar" class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <span class="text-[10px] text-slate-500 font-mono">0:00 / 0:14</span>
+                    </div>
+                </div>
+
+                <!-- Các điểm hướng dẫn làm bài thi chuẩn chỉ -->
+                <div class="w-full text-left bg-slate-950 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-start space-x-3 text-xs text-slate-300">
+                        <span class="text-blue-400 mt-0.5"><i class="fa-solid fa-sparkles"></i></span>
+                        <p id="instructionBullet1">Giữ bình tĩnh, tập trung và tự tin trong suốt bài kiểm tra.</p>
+                    </div>
+                    <div class="flex items-start space-x-3 text-xs text-slate-300">
+                        <span class="text-blue-400 mt-0.5"><i class="fa-solid fa-sparkles"></i></span>
+                        <p id="instructionBullet2">Bạn có thể thay đổi câu trả lời của mình bất cứ lúc nào.</p>
+                    </div>
+                    <div class="flex items-start space-x-3 text-xs text-slate-300">
+                        <span class="text-blue-400 mt-0.5"><i class="fa-solid fa-sparkles"></i></span>
+                        <p id="instructionBullet3">Kiểm tra lại câu trả lời của bạn trước khi nộp.</p>
+                    </div>
+                    <div class="flex items-start space-x-3 text-xs text-slate-300">
+                        <span class="text-blue-400 mt-0.5"><i class="fa-solid fa-sparkles"></i></span>
+                        <p id="instructionBullet4">Đọc kỹ hướng dẫn cho từng phần.</p>
+                    </div>
+                </div>
+
+                <button onclick="startSkillActiveTest()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                    Bắt đầu làm bài
+                </button>
+            </div>
+
+            <!-- SCREEN 3: ADAPTIVE TWO-PANEL EXAM ROOM (Trang 3, 5, 8) -->
+            <div id="screen-test-area" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
+                
+                <!-- Cột trái: Văn bản/Bài đọc/Trình phát Audio -->
+                <div class="lg:col-span-6 bg-slate-950 border border-[#1f2937] rounded-xl p-5 flex flex-col overflow-hidden h-[540px]">
+                    <div class="border-b border-[#1f2937] pb-3 mb-4 flex items-center justify-between">
+                        <span class="text-xs font-extrabold text-slate-200 uppercase tracking-widest">Media</span>
+                        <span class="text-[10px] text-slate-500">Tài liệu thi chuẩn hóa</span>
+                    </div>
+                    <!-- Trình phát Audio mini của kỹ năng Nghe (Trang 5) -->
+                    <div id="listeningPlayBar" class="hidden mb-4 bg-slate-900 border border-slate-800 p-3 rounded-lg flex items-center space-x-3">
+                        <button onclick="toggleMediaListeningAudio()" class="h-10 w-10 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition shrink-0">
+                            <i id="listeningPlayIcon" class="fa-solid fa-play"></i>
+                        </button>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                                <span class="font-bold">Đang phát hội thoại</span>
+                                <span id="listeningMediaTimer" class="font-mono">0:00 / 2:08</span>
+                            </div>
+                            <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                                <div id="listeningMediaProgressBar" class="bg-indigo-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="mediaPaneText" class="flex-1 overflow-y-auto pr-2 text-slate-300 leading-relaxed font-size-medium">
+                        <!-- Nội dung văn bản -->
+                    </div>
+                </div>
+
+                <!-- Cột phải: Câu hỏi trắc nghiệm / Ô nhập đáp án -->
+                <div class="lg:col-span-6 bg-[#111827] border border-[#1f2937] rounded-xl p-5 flex flex-col h-[540px]">
+                    <div class="border-b border-[#1f2937] pb-3 mb-4 flex items-center justify-between">
+                        <span id="questionPanelTaskHeader" class="text-xs font-bold text-slate-400">1. Read the article. Then match the parts of the sentences.</span>
+                    </div>
+
+                    <!-- Khung câu hỏi cuộc lăn -->
+                    <div id="questionsScrollable" class="flex-1 overflow-y-auto space-y-6 pr-2">
+                        <!-- Câu hỏi tự động inject -->
+                    </div>
+
+                    <!-- Bottom Nav & Nộp bài -->
+                    <div class="border-t border-[#1f2937] pt-4 mt-4 flex items-center justify-between">
+                        <!-- Điều hướng nhanh Phần 1 -> Phần 4 ở góc dưới -->
+                        <div id="bottomSectionNav" class="flex space-x-1.5">
+                            <span id="nav-p1" class="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-[11px] font-bold border border-blue-500/30">Phần 1</span>
+                            <span id="nav-p2" class="px-3 py-1.5 bg-slate-900 text-slate-500 rounded text-[11px] font-bold border border-slate-800 flex items-center">
+                                Phần 2 <i class="fa-solid fa-lock ml-1 text-[9px]"></i>
+                            </span>
+                            <span id="nav-p3" class="px-3 py-1.5 bg-slate-900 text-slate-500 rounded text-[11px] font-bold border border-slate-800 flex items-center">
+                                Phần 3 <i class="fa-solid fa-lock ml-1 text-[9px]"></i>
+                            </span>
+                        </div>
+
+                        <!-- Nút nộp bài -->
+                        <button onclick="submitSkillSectionButton()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition flex items-center space-x-2 shadow shadow-blue-500/10">
+                            <span>Nộp bài</span>
+                            <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 4: SPEAKING ROOM (Trang 6, 7) -->
+            <div id="screen-test-speaking" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
+                
+                <!-- Cột trái: Trình phát câu hỏi từ Giám khảo -->
+                <div class="lg:col-span-7 bg-slate-950 border border-[#1f2937] rounded-xl p-5 flex flex-col justify-between h-[540px]">
+                    <div class="border-b border-[#1f2937] pb-3 mb-4">
+                        <span class="text-xs font-bold text-slate-400">Giám khảo đặt câu hỏi trực tiếp</span>
+                    </div>
+
+                    <!-- Avatar Giám khảo ảo đặt câu hỏi -->
+                    <div class="flex-1 bg-slate-900 rounded-xl relative overflow-hidden flex flex-col items-center justify-center">
+                        <div id="speakingVideoFrame" class="w-full h-full flex flex-col items-center justify-center relative">
+                            <!-- Hiệu ứng sóng nhịp -->
+                            <div class="h-28 w-28 rounded-full border-4 border-blue-500/20 flex items-center justify-center bg-slate-950 relative">
+                                <div id="speakingVideoPulse" class="absolute inset-0 rounded-full bg-blue-500/10 animate-ping hidden"></div>
+                                <i class="fa-solid fa-user-tie text-4xl text-slate-400"></i>
+                            </div>
+                            <span class="text-xs text-slate-400 font-bold mt-4">Mr. Harrison (Giám khảo ảo)</span>
+                            <p id="speakingQuestionTranscript" class="text-xs text-blue-300 font-medium italic mt-2 px-6 text-center max-w-md">
+                                "Please click Bắt đầu làm bài to hear the question."
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Thanh danh sách 22 câu hỏi Nói ở góc dưới -->
+                    <div class="border-t border-[#1f2937] pt-4 mt-4">
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mb-2">
+                            <span>Danh sách câu hỏi Nói</span>
+                            <span class="font-bold">Đang thực hiện: Câu 1 / 2</span>
+                        </div>
+                        <div class="flex gap-1.5 overflow-x-auto pb-1" id="speakingQuestionSelector">
+                            <span class="px-2 py-1 bg-blue-500 text-white font-bold rounded text-[10px] shrink-0">01</span>
+                            <span class="px-2 py-1 bg-slate-900 text-slate-500 rounded text-[10px] shrink-0">02</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cột phải: Đồng hồ đo thời gian Preparation / Recording -->
+                <div class="lg:col-span-5 bg-[#111827] border border-[#1f2937] rounded-xl p-5 flex flex-col justify-between items-center h-[540px]">
+                    <div class="border-b border-[#1f2937] pb-3 mb-4 w-full text-left">
+                        <span id="speakingHeading" class="text-xs font-bold text-slate-400">Question 1</span>
+                    </div>
+
+                    <!-- Vòng tròn trạng thái -->
+                    <div class="flex-1 flex flex-col items-center justify-center space-y-6">
+                        <div class="ring-container">
+                            <svg class="ring-svg" width="140" height="140">
+                                <circle cx="70" cy="70" r="60" stroke="#1f2937" stroke-width="8" fill="transparent"/>
+                                <circle id="speakingRingCircle" class="ring-circle" cx="70" cy="70" r="60" stroke="#f97316" stroke-dasharray="376.8" stroke-dashoffset="376.8" stroke-width="8" fill="transparent" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                <i id="speakingRingIcon" class="fa-solid fa-clock-rotate-left text-orange-400 text-xl mb-1"></i>
+                                <span id="speakingRingTimer" class="font-mono text-base font-black text-white">00:00:03</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center space-y-1">
+                            <h3 id="speakingStateTitle" class="text-sm font-extrabold text-orange-400 uppercase tracking-widest">Preparation...</h3>
+                            <p id="speakingStateDesc" class="text-xs text-slate-400 max-w-xs leading-relaxed">Chuẩn bị ý kiến của bạn trong 5 giây trước khi tự động thu âm.</p>
+                        </div>
+                    </div>
+
+                    <!-- Nút dừng thu âm sớm -->
+                    <div class="border-t border-[#1f2937] pt-4 w-full flex justify-end">
+                        <button id="btnSpeakingAction" onclick="stopSpeakingRecordAction()" disabled class="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold text-xs rounded-lg transition uppercase tracking-widest">
+                            Dừng thu âm
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 5: TOTAL ASSESSMENT RESULT PAGE (Giống hệt hình chụp Trang 9) -->
+            <div id="screen-total-summary" class="hidden flex-1 max-w-4xl mx-auto py-6 space-y-6">
+                <!-- Banner Kết quả tổng quát -->
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-2">
+                    <h2 class="text-2xl font-black text-white">Tổng kết bài kiểm tra đầu vào</h2>
+                    <p class="text-sm text-slate-300">
+                        Trình độ tổng quan hiện tại của bạn được xác định là <strong class="text-blue-400 text-base" id="summaryFinalLevel">B1</strong>
+                    </p>
+                    <p class="text-xs text-slate-400">So sánh trình độ hiện tại với các chương trình tiếng Anh khác (?)</p>
+                </div>
+
+                <!-- Bố cục so sánh biểu đồ các chuẩn quốc tế (CEFR, IELTS, VSTEP - Trang 9) -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    <!-- Trái: Chi tiết từng kỹ năng & nút Xem lại bài làm -->
+                    <div class="md:col-span-4 bg-slate-950 border border-[#1f2937] rounded-xl p-4 space-y-3">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">Kết quả kỹ năng</span>
+                        
+                        <div class="space-y-2 text-xs">
+                            <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg space-y-2">
+                                <div class="flex justify-between font-bold text-purple-400">
+                                    <span>Kỹ năng Đọc</span>
+                                    <span id="summaryReadingCEFR">B2</span>
+                                </div>
+                                <button onclick="enterReviewMode('reading')" class="w-full py-1.5 bg-purple-600 text-white font-bold rounded hover:bg-purple-700 text-[10px] transition">
+                                    Xem lại bài làm <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+
+                            <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg space-y-2">
+                                <div class="flex justify-between font-bold text-indigo-400">
+                                    <span>Kỹ năng Nghe</span>
+                                    <span id="summaryListeningCEFR">B1</span>
+                                </div>
+                                <button onclick="enterReviewMode('listening')" class="w-full py-1.5 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700 text-[10px] transition">
+                                    Xem lại bài làm <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+
+                            <div class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg space-y-2">
+                                <div class="flex justify-between font-bold text-rose-400">
+                                    <span>Kỹ năng Nói</span>
+                                    <span id="summarySpeakingCEFR">A2</span>
+                                </div>
+                                <button onclick="enterReviewMode('speaking')" class="w-full py-1.5 bg-rose-600 text-white font-bold rounded hover:bg-rose-700 text-[10px] transition">
+                                    Xem lại bài làm <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+
+                            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg space-y-2">
+                                <div class="flex justify-between font-bold text-emerald-400">
+                                    <span>Kỹ năng Viết</span>
+                                    <span id="summaryWritingCEFR">B1</span>
+                                </div>
+                                <button onclick="enterReviewMode('writing')" class="w-full py-1.5 bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700 text-[10px] transition">
+                                    Xem lại bài làm <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phải: 3 thanh trượt so sánh chuẩn (Trang 9) -->
+                    <div class="md:col-span-8 bg-slate-950 border border-[#1f2937] rounded-xl p-6 space-y-8">
+                        
+                        <!-- Thang CEFR -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold uppercase text-slate-300">CEFR</span>
+                                <span class="font-black text-blue-400 text-sm" id="barCefrVal">B1</span>
+                            </div>
+                            <div class="relative h-6 bg-slate-900 rounded border border-slate-800 flex overflow-hidden">
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-cefr-0">Pre-A1</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-cefr-1">A1</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-cefr-2">A2</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-cefr-3">B1</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-cefr-4">B2</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-cefr-5">C1</div>
+                                <div class="flex-1 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-cefr-6">C2</div>
+                            </div>
+                        </div>
+
+                        <!-- Thang IELTS -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold uppercase text-slate-300">IELTS</span>
+                                <span class="font-black text-blue-400 text-sm" id="barIeltsVal">4.0-5.0</span>
+                            </div>
+                            <div class="relative h-6 bg-slate-900 rounded border border-slate-800 flex overflow-hidden">
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-ielts-0">Dưới 3.0</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-ielts-1">3.0-3.5</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-ielts-2">4.0-5.0</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-ielts-3">5.5-6.0</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-ielts-4">6.5-7.5</div>
+                                <div class="flex-1 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-ielts-5">8.0+</div>
+                            </div>
+                        </div>
+
+                        <!-- Thang VSTEP -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold uppercase text-slate-300">VSTEP</span>
+                                <span class="font-black text-blue-400 text-sm" id="barVstepVal">Bậc 3</span>
+                            </div>
+                            <div class="relative h-6 bg-slate-900 rounded border border-slate-800 flex overflow-hidden">
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-vstep-0">Dưới Bậc 1</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-vstep-1">Bậc 1</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-vstep-2">Bậc 2</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-vstep-3">Bậc 3</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-vstep-4">Bậc 4</div>
+                                <div class="flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-vstep-5">Bậc 5</div>
+                                <div class="flex-1 text-[9px] font-bold text-slate-600 flex items-center justify-center" id="lbl-vstep-6">Bậc 6</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 6: REVIEW MODE (Giống hệt hình chụp Trang 10, 11) -->
+            <div id="screen-review-mode" class="hidden flex-1 flex flex-col space-y-4">
+                
+                <!-- Thanh điều hướng và nút bật tắt Hiển thị đáp án (Trang 10) -->
+                <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="exitReviewToSummary()" class="text-xs text-slate-300 hover:text-white transition font-bold flex items-center space-x-1">
+                            <i class="fa-solid fa-chevron-left"></i> <span>Quay lại tổng kết</span>
+                        </button>
+                        <span class="text-xs text-slate-500">|</span>
+                        <h3 class="text-sm font-bold text-white flex items-center">
+                            Xem lại bài làm: <span id="reviewSkillTitle" class="text-blue-400 ml-1">Kỹ năng Đọc</span>
+                        </h3>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Switch bật tắt đáp án -->
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-semibold text-slate-400">Hiển thị đáp án</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="reviewAnswerToggle" onchange="toggleAnswersOnReview()" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bố cục 2 cột xem lại bài -->
+                <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[480px]">
+                    <!-- Trái: Nội dung câu trả lời -->
+                    <div class="lg:col-span-6 bg-slate-950 border border-slate-800 rounded-xl p-5 flex flex-col h-[480px] overflow-hidden">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 border-b border-slate-800 pb-1.5">Nội dung bài làm</span>
+                        <div id="reviewMediaText" class="flex-1 overflow-y-auto pr-2 text-slate-300 leading-relaxed font-size-medium">
+                            <!-- Câu trả lời được nộp -->
+                        </div>
+                    </div>
+
+                    <!-- Phải: Nhận xét chi tiết từ AI Feedback (Powered by ChatGPT) - Trang 10, 11 -->
+                    <div class="lg:col-span-6 bg-slate-950 border border-slate-800 rounded-xl p-5 flex flex-col h-[480px] overflow-hidden">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 border-b border-slate-800 pb-1.5">Đánh giá chi tiết từ AI (Chuẩn CEFR)</span>
+                        <div id="reviewFeedbackPane" class="flex-1 overflow-y-auto pr-2 space-y-4">
+                            <!-- Khung nhận xét AI Feedback -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL POPUPS CONTAINER -->
+    
+    <!-- 1. Hộp cảnh báo: "Thời gian còn lại" (Trang 4, 7) -->
+    <div id="modalConfirmSubmit" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="mx-auto h-16 w-16 bg-blue-500/10 rounded-full flex items-center justify-center text-3xl text-blue-400 animate-pulse">
+                <i class="fa-regular fa-clock"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-white" id="modalConfirmTimerText">Thời gian còn lại: 07:17</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Thời gian vẫn còn, hãy nhìn lại một lượt bài làm để đạt kết quả tốt nhất trước khi chúng ta sang phần tiếp theo nhé. Sau khi chuyển tiếp bạn sẽ không thể quay về phần thi hiện tại.
+                </p>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="closeConfirmModalSubmit()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 transition">
+                    Kiểm tra lại
+                </button>
+                <button onclick="proceedToSkillCompletionPopup()" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">
+                    Tiếp tục
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Hộp thông báo hoàn thành một kỹ năng (Trang 5, 6, 7) -->
+    <div id="modalSkillFinished" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="mx-auto h-16 w-16 bg-blue-500/10 rounded-full flex items-center justify-center text-3xl text-blue-400">
+                🎉
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-white" id="modalFinishTitle">Bạn đã hoàn thành Kỹ năng Đọc</h3>
+                <p class="text-xs text-slate-400 leading-relaxed" id="modalFinishDesc">
+                    Hệ thống đã đủ dữ liệu để tính điểm tổng kết của kỹ năng này. Bạn không cần làm thêm các phần tiếp theo.
+                </p>
+            </div>
+
+            <button onclick="proceedToNextSkillStage()" id="btnModalFinishAction" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">
+                Chuyển kĩ năng tiếp theo
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. Cửa sổ thông báo cảnh báo cơ bản -->
+    <div id="modalSimpleWarning" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="mx-auto h-12 w-12 bg-amber-500/10 rounded-full flex items-center justify-center text-xl text-amber-500">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-sm font-black text-white" id="warnTitle">Thông báo</h3>
+                <p class="text-xs text-slate-400 leading-relaxed" id="warnDesc">Nội dung thông báo mẫu.</p>
+            </div>
+            <button onclick="closeSimpleWarning()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold rounded-lg transition">
+                Đồng ý
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- QUẢN LÝ TRẠNG THÁI TOÀN CỤC ---
+        let currentTier = "primary"; // primary, middle, high
+        let currentSkill = "reading"; // reading, listening, speaking, writing
+        let appState = "landing"; // landing, instruction, active_test, summary, review
+        let textScale = 2; // 1: small, 2: medium, 3: large
+        
+        let headerTimerObj = null;
+        let testSecondsRemaining = 900; // 15 phút đếm ngược
+        let speakingStateTimerObj = null;
+        let speakingSeconds = 0;
+        let speakingState = "prep"; // prep, recording
+
+        // Bộ lưu câu trả lời thi thử
+        let userAnswers = {
+            reading: { q1: null, q2: null, q3: null },
+            listening: { q1: "", q2: "", q3: "" },
+            speaking: [],
+            writing: ""
+        };
+
+        // Kho dữ liệu ngân hàng đề bài dựa trên lựa chọn Cấp học (Tiểu học, THCS, THPT)
+        const tierContentDb = {
+            primary: {
+                reading: {
+                    media: `<strong>Mô-đun Đọc A2 - Tiểu học</strong><br><br>We use plastic every day. It's in the clothes we wear and the homes we live in. It even covers the food and water we buy. It may seem that we can't live without it. However, many experts now believe that plastic is one of the most serious forms of pollution. If we throw away plastic, it won't disappear naturally, like other forms of waste. A banana skin will disappear in a few weeks. A plastic bag can last for 500 years! That means that most of the plastic bags that have been made - they were only invented 70 years ago - still exist.`,
+                    task: "1. Đọc văn bản và chọn đáp án nối chính xác nhất.",
+                    questions: [
+                        { id: "r1", q: "The article is mostly about:", options: ["Nguồn gốc của các loại đồ dùng bằng nhựa", "Rác thải nhựa và mối nguy hại dài hạn của nó", "Cách chế biến vỏ chuối tự nhiên"], correct: 1 },
+                        { id: "r2", q: "A plastic bag can last for:", options: ["70 năm", "500 năm", "Vài tuần ngắn ngủi"], correct: 1 },
+                        { id: "r3", q: "Plastic was invented around:", options: ["70 năm trước", "500 năm trước", "Mới được sáng chế gần đây"], correct: 0 }
+                    ]
+                },
+                listening: {
+                    media: "<strong>Mô-đun Nghe A2 - Nghe đoạn hội thoại mô tả trường lớp tiểu học</strong><br><br>🔊 Vui lòng đeo tai nghe, bấm nút Play để nghe và điền từ thích hợp vào chỗ trống ở bảng bên phải.",
+                    task: "1. Nghe và viết 1 từ chính xác để hoàn thiện chỗ trống.",
+                    audioText: "My school is called Sunshine Primary School. We have about three hundred children. In the playground, we love playing soccer during break time. My teacher is very friendly.",
+                    questions: [
+                        { id: "l1", q: "1. The name of the school is Sunshine _____ School.", correct: "primary" },
+                        { id: "l2", q: "2. The school has about three _____ children.", correct: "hundred" },
+                        { id: "l3", q: "3. During break time, children love playing _____ in the playground.", correct: "soccer" }
+                    ]
+                },
+                speaking: [
+                    { id: "s1", prompt: "Can you describe your classroom to me?", answerText: "My classroom is big. It has many tables and a whiteboard. I teach young kids.", transcript: "I have a nice classroom. There are thirty small chairs and tables. The walls are blue." },
+                    { id: "s2", prompt: "What activities do your students enjoy doing?", answerText: "They love singing simple songs and coloring pictures.", transcript: "Students love coloring pictures and playing English games." }
+                ],
+                writing: {
+                    media: "<strong>Task 2 (Tiểu học)</strong><br><br>Some people believe that teaching basic phonics is the most important part of early childhood education. To what extent do you agree or disagree with this statement?",
+                    prompt: "Write at least 150 words.",
+                    sampleAnswer: "In my opinion, teaching phonics is extremely important for young pupils as it builds a strong foundation for reading and spelling correctly at early ages."
+                }
+            },
+            middle: {
+                reading: {
+                    media: `<strong>Mô-đun Đọc B2 - Trung học Cơ sở</strong><br><br>The internet changed how students research and do homework. In the past, children had to visit library stacks, copy information onto paper cards, and wait for materials. Today, search engines deliver billions of results instantly. However, this ease of access has a downside: information overload and the rising difficulty of evaluating the credibility of digital articles.`,
+                    task: "1. Chọn đáp án chính xác nhất theo văn bản.",
+                    questions: [
+                        { id: "r1", q: "In the past, doing research required students to:", options: ["Sử dụng công cụ tìm kiếm trực tuyến", "Đến thư viện trực tiếp tra cứu tài liệu", "Làm việc theo nhóm lớn"], correct: 1 },
+                        { id: "r2", q: "What is a main negative impact of instant internet access?", options: ["Sự bùng nổ thông tin và khó đánh giá nguồn tin", "Chi phí truy cập mạng quá đắt đỏ", "Sự khan hiếm tài liệu học thuật"], correct: 0 },
+                        { id: "r3", q: "The author implies digital articles are:", options: ["Luôn đáng tin cậy hơn sách in", "Cần có kỹ năng chọn lọc và đánh giá kỹ lưỡng", "Không nên dùng cho việc làm bài tập"], correct: 1 }
+                    ]
+                },
+                listening: {
+                    media: "<strong>Mô-đun Nghe B2 - Hội thoại về phương pháp dạy học tương tác</strong><br><br>🔊 Nghe đoạn băng và trả lời câu hỏi lựa chọn phương án.",
+                    task: "1. Chọn đáp án đúng nhất dựa trên đoạn hội thoại nghe được.",
+                    audioText: "Interactive learning models encourage active participation. Instead of lecturing for forty-five minutes, middle school teachers should facilitate debates, group assignments, and peer reviews to enhance critical thinking skills.",
+                    questions: [
+                        { id: "l1", q: "The speaker argues teachers should NOT:", options: ["Tổ chức thảo luận nhóm", "Thuyết giảng suốt 45 phút liên tục", "Sử dụng kiểm tra chéo"], correct: 1 },
+                        { id: "l2", q: "The goal of interactive models is to develop:", options: ["Kỹ năng ghi nhớ thụ động", "Tư duy phản biện (Critical thinking)", "Kỹ năng quản lý tài chính"], correct: 1 },
+                        { id: "l3", q: "Peer review means students evaluate:", options: ["Giáo án của thầy cô", "Bài làm của bạn học cùng lớp", "Điểm thi của chính họ"], correct: 1 }
+                    ]
+                },
+                speaking: [
+                    { id: "s1", prompt: "How do you handle unmotivated students in your class?", answerText: "I usually try to connect lessons with their hobbies like video games.", transcript: "I use gamification to make grammar drills more exciting for teenagers." },
+                    { id: "s2", prompt: "What is your opinion on using smartphones for learning?", answerText: "It is a double-edged sword, very helpful but causing distractions.", transcript: "Smartphones are highly effective if guided under strict classroom rules." }
+                ],
+                writing: {
+                    media: "<strong>Task 2 (THCS)</strong><br><br>The most important role of a teacher is helping children develop their knowledge, not their character. To what extent do you agree or disagree with this statement?",
+                    prompt: "Write at least 250 words.",
+                    sampleAnswer: "I disagree with this statement because education should encompass both cognitive growth and moral development to shape responsible citizens."
+                }
+            },
+            high: {
+                reading: {
+                    media: `<strong>Mô-đun Đọc C1 - THPT / Chuyên sâu</strong><br><br>The integration of advanced Artificial Intelligence systems in high school classrooms is sparking profound epistemological debates. Educators worry that generative language patterns could undermine developmental writing processes. Advocates argue that AI tutors democratize high-level coaching, adapting to individual cognitive paces. This requires a curriculum restructuring where evaluation moves from standard output checking to process-oriented reflection.`,
+                    task: "1. Đọc văn bản chuyên sâu và lựa chọn phương án đúng.",
+                    questions: [
+                        { id: "r1", q: "What is a major worry regarding AI in writing classrooms?", options: ["Chi phí bản quyền phần mềm cao", "Làm suy yếu quá trình phát triển tư duy viết của học sinh", "Tốc độ xử lý của máy tính chậm"], correct: 1 },
+                        { id: "r2", q: "Advocates argue that AI tutors are beneficial because they:", options: ["Dân chủ hóa và cá nhân hóa tốc độ tự học", "Thay thế hoàn toàn vai trò của giáo viên đứng lớp", "Tự động chấm điểm chính xác tuyệt đối"], correct: 0 },
+                        { id: "r3", q: "Curriculum restructuring should transition towards:", options: ["Đánh giá dựa trên kết quả đầu ra đơn thuần", "Đánh giá dựa trên quá trình học và phản biện", "Loại bỏ hoàn toàn môn Viết"], correct: 1 }
+                    ]
+                },
+                listening: {
+                    media: "<strong>Mô-đun Nghe C1 - Thảo luận hội thảo khoa học sư phạm</strong><br><br>🔊 Nghe bài phát biểu khoa học và làm bài trắc nghiệm.",
+                    task: "1. Chọn phương án chính xác nhất.",
+                    audioText: "Standardized testing often fails to gauge complex qualitative skills such as emotional intelligence and creative synthesizing. While metrics provide simple quantitative benchmarking, they risk flattening student individuality.",
+                    questions: [
+                        { id: "l1", q: "What complex skills do standardized tests often fail to evaluate?", options: ["Kỹ năng ghi nhớ thuật ngữ toán học", "Trí tuệ cảm xúc và tổng hợp sáng tạo", "Khả năng viết đúng chính tả"], correct: 1 },
+                        { id: "l2", q: "The speaker warns that metrics risk:", options: ["Làm tăng chi phí giáo dục", "Làm phẳng tính cá nhân của học sinh", "Giảm động lực của giáo viên"], correct: 1 },
+                        { id: "l3", q: "Synthesizing refers to:", options: ["Ghi nhớ từ vựng mới", "Tổng hợp thông tin từ nhiều nguồn sáng tạo", "Làm toán thống kê"], correct: 1 }
+                    ]
+                },
+                speaking: [
+                    { id: "s1", prompt: "How should high school curriculums adapt to the rapid advancements of AI?", answerText: "Curriculums should focus more on analysis and ethics rather than memorization.", transcript: "High schools must pivot towards process-oriented assessments and digital literacy." },
+                    { id: "s2", prompt: "Describe your personal teaching philosophy.", answerText: "I believe in student-centered teaching that fosters independent critical thinking.", transcript: "My philosophy is rooted in cognitive development and encouraging intellectual autonomy." }
+                ],
+                writing: {
+                    media: "<strong>Task 2 (THPT / Chuyên)</strong><br><br>Some educationists advocate that competitive high school systems prepare students best for reality, while others claim they foster toxic environments. Discuss both views and give your opinion.",
+                    prompt: "Write at least 250 words.",
+                    sampleAnswer: "While healthy competition pushes high schoolers to achieve their potential, excessive academic rivalry can lead to mental burnout; therefore, a balanced cooperative learning model is superior."
+                }
+            }
+        };
+
+        // Chuỗi hội thoại mở đầu của Techie (Trang 2 PDF)
+        const techieGreetings = [
+            "Xin chào thầy/cô! Mình là Techie - trợ lý ảo của FSEL. Hôm nay, mình sẽ giúp thầy/cô kiểm tra trình độ tiếng Anh hiện tại một cách khách quan và toàn diện, hoàn toàn miễn phí. Nhấn Tiếp tục để xem lưu ý quan trọng về bài khảo sát.",
+            "Mục tiêu của khảo sát là để xây dựng được lộ trình đào tạo phù hợp nhất với từng Thầy/Cô. Hệ thống sẽ phân phối số mô-đun khảo sát phù hợp với từng trình độ nên đôi khi Thầy/Cô có thể gặp câu hỏi dễ hoặc khó hơn bình thường. Thầy/Cô hãy thật thoải mái và tự tin làm bài với đúng năng lực của mình nhé!"
+        ];
+        let techieGreetingIdx = 0;
+
+        function nextTechieGreeting() {
+            techieGreetingIdx++;
+            if (techieGreetingIdx < techieGreetings.length) {
+                document.getElementById('techieText').innerText = techieGreetings[techieGreetingIdx];
+                if (techieGreetingIdx === techieGreetings.length - 1) {
+                    document.getElementById('btnTechieNext').innerText = "Đã hiểu";
+                    document.getElementById('btnStartTest').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('btnTechieNext').classList.add('hidden');
+            }
+        }
+
+        // --- ĐIỀU HƯỚNG MÀN HÌNH CHÍNH XÁC (Sửa triệt để lỗi đơ trắng màn hình) ---
+        function setAppState(state) {
+            appState = state;
+            
+            // Ẩn tất cả các màn hình hoạt động
+            document.getElementById('screen-landing').classList.add('hidden');
+            document.getElementById('screen-instructions').classList.add('hidden');
+            document.getElementById('screen-test-area').classList.add('hidden');
+            document.getElementById('screen-test-speaking').classList.add('hidden');
+            document.getElementById('screen-total-summary').classList.add('hidden');
+            document.getElementById('screen-review-mode').classList.add('hidden');
+            
+            // Hiển thị lại đúng màn hình tương ứng với trạng thái (Đã sửa lỗi thiếu)
+            if (state === 'landing') {
+                document.getElementById('screen-landing').classList.remove('hidden');
+            } else if (state === 'instruction') {
+                document.getElementById('screen-instructions').classList.remove('hidden');
+            } else if (state === 'summary') {
+                document.getElementById('screen-total-summary').classList.remove('hidden');
+            } else if (state === 'review') {
+                document.getElementById('screen-review-mode').classList.remove('hidden');
+            } else if (state === 'active_test') {
+                // Trạng thái này sẽ hiển thị riêng rẽ trong startSkillActiveTest tùy theo kỹ năng Nói hay Đọc/Nghe/Viết
+            }
+            
+            // Chỉ hiển thị thanh Sidebar bên trái trong lúc thi, hướng dẫn hoặc xem lại kết quả
+            const sidebar = document.getElementById('sidebarNav');
+            if (state === 'active_test' || state === 'instruction' || state === 'review') {
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('flex');
+            } else {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex');
+            }
+
+            // Hiển thị đồng hồ đếm ngược và nút T tăng cỡ chữ khi đang trong phần thi chính thức
+            const headerCtrls = document.getElementById('headerTestControls');
+            const fontAdjustBtn = document.getElementById('btnTextScale');
+            if (state === 'active_test') {
+                headerCtrls.classList.remove('hidden');
+                fontAdjustBtn.classList.remove('hidden');
+            } else {
+                headerCtrls.classList.add('hidden');
+                fontAdjustBtn.classList.add('hidden');
+            }
+        }
+
+        // --- KHỞI ĐỘNG BÀI KIỂM TRA ---
+        function startTestFlow() {
+            currentTier = document.getElementById('teacherLevelSelector').value;
+            // Quay về trạng thái lời chào đầu tiên
+            document.getElementById('techieText').innerText = techieGreetings[0];
+            
+            // Bắt đầu bằng kỹ năng Đọc (Reading) thích ứng
+            currentSkill = "reading";
+            loadSkillInstruction(currentSkill);
+        }
+
+        // --- BỘ ĐIỀU KHIỂN HƯỚNG DẪN (Trang 3, 5, 6, 8) ---
+        function loadSkillInstruction(skill) {
+            currentSkill = skill;
+            setAppState('instruction');
+            updateSidebarTreeStatus(skill);
+
+            const titleEl = document.getElementById('instructionTitle');
+            const durationEl = document.getElementById('instructionDuration');
+            const iconContainer = document.getElementById('instructionIconContainer');
+            const audioCheck = document.getElementById('audioHardwareCheck');
+
+            audioCheck.classList.add('hidden');
+
+            if (skill === 'reading') {
+                titleEl.innerText = "Hướng dẫn kỹ năng Đọc";
+                durationEl.innerText = "Thời gian: 20-40 phút";
+                iconContainer.className = "h-20 w-20 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-3xl";
+                iconContainer.innerHTML = `<i class="fa-solid fa-book-open"></i>`;
+                
+                document.getElementById('instructionBullet1').innerText = "Giữ bình tĩnh, tập trung và tự tin trong suốt bài kiểm tra.";
+                document.getElementById('instructionBullet2').innerText = "Bạn có thể thay đổi câu trả lời của mình bất cứ lúc nào.";
+                document.getElementById('instructionBullet3').innerText = "Kiểm tra lại câu trả lời của bạn trước khi nộp.";
+                document.getElementById('instructionBullet4').innerText = "Đọc kỹ hướng dẫn cho từng phần.";
+            } 
+            else if (skill === 'listening') {
+                titleEl.innerText = "Hướng dẫn kỹ năng Nghe";
+                durationEl.innerText = "Thời gian: 20-40 phút";
+                iconContainer.className = "h-20 w-20 rounded-full bg-lime-500/20 text-lime-400 flex items-center justify-center text-3xl";
+                iconContainer.innerHTML = `<i class="fa-solid fa-headphones"></i>`;
+                
+                // Hiển thị phần test headphone ở Trang 5
+                audioCheck.classList.remove('hidden');
+
+                document.getElementById('instructionBullet1').innerText = "Nghe đoạn hội thoại hoặc độc thoại tiếng Anh độc lập.";
+                document.getElementById('instructionBullet2').innerText = "Chọn đáp án đúng nhất hoặc điền từ thích hợp vào chỗ trống.";
+                document.getElementById('instructionBullet3').innerText = "Đoạn băng nghe sẽ chỉ phát một số lần giới hạn.";
+                document.getElementById('instructionBullet4').innerText = "Đảm bảo âm lượng của thiết bị nghe ở mức vừa đủ.";
+            } 
+            else if (skill === 'speaking') {
+                titleEl.innerText = "Hướng dẫn kỹ năng Nói";
+                durationEl.innerText = "Thời gian: 20-40 phút";
+                iconContainer.className = "h-20 w-20 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-3xl";
+                iconContainer.innerHTML = `<i class="fa-solid fa-microphone"></i>`;
+
+                document.getElementById('instructionBullet1').innerText = "Bạn phải có một micro để hoàn thành phần này của Bài kiểm tra mô phỏng IELTS.";
+                document.getElementById('instructionBullet2').innerText = "Bài kiểm tra Nói IELTS bao gồm ba phần.";
+                document.getElementById('instructionBullet3').innerText = "Trong Bài kiểm tra mô phỏng FSEL, bạn sẽ xem và nghe một video của một giám khảo hỏi bạn.";
+                document.getElementById('instructionBullet4').innerText = "Hệ thống sẽ tự động ghi âm phản hồi của bạn sau khi hết thời gian chuẩn bị.";
+            } 
+            else if (skill === 'writing') {
+                titleEl.innerText = "Hướng dẫn kỹ năng Viết";
+                durationEl.innerText = "Thời gian: 20-40 phút";
+                iconContainer.className = "h-20 w-20 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl";
+                iconContainer.innerHTML = `<i class="fa-solid fa-pen-nib"></i>`;
+
+                document.getElementById('instructionBullet1').innerText = "Viết bài luận học thuật dựa trên đề tài xã hội hoặc sư phạm.";
+                document.getElementById('instructionBullet2').innerText = "Soạn bài làm trực tiếp vào khung soạn thảo văn bản.";
+                document.getElementById('instructionBullet3').innerText = "Giới hạn từ tối đa khoảng 350 từ để chấm điểm hiệu quả.";
+                document.getElementById('instructionBullet4').innerText = "Sử dụng từ vựng đa dạng và kết cấu lập luận rõ ràng.";
+            }
+
+            document.getElementById('screen-instructions').classList.remove('hidden');
+        }
+
+        // --- KIỂM TRA PHẦN CỨNG MICRO / TAI NGHE MÔ PHỎNG ---
+        let hwAudioObj = null;
+        let hwAudioProgressInterval = null;
+
+        function playHardwareCheckAudio() {
+            const btnIcon = document.getElementById('audioCheckIcon');
+            const progress = document.getElementById('audioCheckBar');
+            
+            if (hwAudioObj) {
+                window.speechSynthesis.cancel();
+                clearInterval(hwAudioProgressInterval);
+                hwAudioObj = null;
+                btnIcon.className = "fa-solid fa-play";
+                progress.style.width = "0%";
+                return;
+            }
+
+            if ('speechSynthesis' in window) {
+                btnIcon.className = "fa-solid fa-pause";
+                const checkUtter = new SpeechSynthesisUtterance("Testing your headphones. Can you hear the sound clearly?");
+                checkUtter.lang = "en-US";
+                checkUtter.onend = () => {
+                    btnIcon.className = "fa-solid fa-play";
+                    progress.style.width = "100%";
+                    clearInterval(hwAudioProgressInterval);
+                    hwAudioObj = null;
+                };
+                
+                hwAudioObj = checkUtter;
+                window.speechSynthesis.speak(checkUtter);
+
+                let width = 0;
+                hwAudioProgressInterval = setInterval(() => {
+                    width += 5;
+                    if (width <= 100) {
+                        progress.style.width = `${width}%`;
+                    }
+                }, 150);
+            } else {
+                showSimpleWarning("Lỗi âm thanh", "Trình duyệt của bạn không hỗ trợ công cụ phát tiếng TTS mẫu.");
+            }
+        }
+
+        // --- KHỞI CHẠY THI CHÍNH THỨC ---
+        function startSkillActiveTest() {
+            if (hwAudioObj) {
+                window.speechSynthesis.cancel();
+                clearInterval(hwAudioProgressInterval);
+                hwAudioObj = null;
+            }
+
+            setAppState('active_test');
+
+            // Thiết lập bộ đếm thời gian 15:00 đếm ngược
+            testSecondsRemaining = 900;
+            updateGlobalHeaderTimer();
+            clearInterval(headerTimerObj);
+            headerTimerObj = setInterval(() => {
+                testSecondsRemaining--;
+                if (testSecondsRemaining <= 0) {
+                    clearInterval(headerTimerObj);
+                    autoSubmitOnTimeOut();
+                } else {
+                    updateGlobalHeaderTimer();
+                }
+            }, 1000);
+
+            const testArea = document.getElementById('screen-test-area');
+            const speakingArea = document.getElementById('screen-test-speaking');
+            
+            if (currentSkill === 'speaking') {
+                testArea.classList.add('hidden');
+                speakingArea.classList.remove('hidden');
+                initSpeakingTestSimulator();
+            } else {
+                testArea.classList.remove('hidden');
+                speakingArea.classList.add('hidden');
+                loadTwoPanelTestData();
+            }
+        }
+
+        function updateGlobalHeaderTimer() {
+            const minutes = Math.floor(testSecondsRemaining / 60);
+            const seconds = testSecondsRemaining % 60;
+            document.getElementById('globalTimer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // --- TẢI DỮ LIỆU ĐỀ THI 2 CỘT (Trang 3, 5, 8) ---
+        function loadTwoPanelTestData() {
+            const mediaPane = document.getElementById('mediaPaneText');
+            const questionsContainer = document.getElementById('questionsScrollable');
+            const taskHeader = document.getElementById('questionPanelTaskHeader');
+            const audioBar = document.getElementById('listeningPlayBar');
+
+            audioBar.classList.add('hidden');
+            mediaPane.classList.remove('font-mono');
+
+            const currentDb = tierContentDb[currentTier][currentSkill];
+            mediaPane.innerHTML = currentDb.media;
+            taskHeader.innerText = currentDb.task;
+
+            if (currentSkill === 'reading') {
+                let html = "";
+                currentDb.questions.forEach((q, idx) => {
+                    html += `
+                        <div class="space-y-3 p-4 bg-slate-900 border border-slate-800 rounded-xl">
+                            <span class="text-xs font-bold text-blue-400">Câu hỏi ${idx + 1}</span>
+                            <p class="text-sm font-semibold text-slate-100">${q.q}</p>
+                            <div class="space-y-2">
+                    `;
+                    q.options.forEach((opt, optIdx) => {
+                        const checked = userAnswers.reading[`q${idx+1}`] === optIdx ? "checked" : "";
+                        html += `
+                            <label class="flex items-start space-x-3 p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs cursor-pointer hover:bg-slate-900 transition">
+                                <input type="radio" name="r_q_${idx+1}" value="${optIdx}" ${checked} onchange="saveReadingAnswer('q${idx+1}', ${optIdx})" class="mt-0.5 text-blue-600 focus:ring-0">
+                                <span class="text-slate-300">${opt}</span>
+                            </label>
+                        `;
+                    });
+                    html += `</div></div>`;
+                });
+                questionsContainer.innerHTML = html;
+            } 
+            else if (currentSkill === 'listening') {
+                audioBar.classList.remove('hidden');
+                listeningAudioPlaying = false;
+                document.getElementById('listeningPlayIcon').className = "fa-solid fa-play";
+                document.getElementById('listeningMediaProgressBar').style.width = "0%";
+                document.getElementById('listeningMediaTimer').innerText = "0:00 / 2:08";
+
+                let html = "";
+                currentDb.questions.forEach((q, idx) => {
+                    const ansVal = userAnswers.listening[`q${idx+1}`] || "";
+                    html += `
+                        <div class="space-y-3 p-4 bg-slate-900 border border-slate-800 rounded-xl">
+                            <span class="text-xs font-bold text-indigo-400">Câu hỏi ${idx + 1}</span>
+                            <p class="text-sm font-semibold text-slate-100">${q.q}</p>
+                            <input type="text" value="${ansVal}" onkeyup="saveListeningAnswer('q${idx+1}', this.value)" placeholder="Gõ câu trả lời của bạn..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    `;
+                });
+                questionsContainer.innerHTML = html;
+            } 
+            else if (currentSkill === 'writing') {
+                mediaPane.classList.add('font-mono');
+                
+                const typedVal = userAnswers.writing || "";
+                const words = typedVal.trim() ? typedVal.trim().split(/\s+/).length : 0;
+
+                questionsContainer.innerHTML = `
+                    <div class="flex flex-col space-y-4 h-full">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-400">Vùng soạn thảo bài viết:</span>
+                            <span id="wordCounter" class="bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-emerald-400 font-bold">
+                                ${words} / 350 từ
+                            </span>
+                        </div>
+                        <textarea id="writingEditor" onkeyup="updateWritingContent(this)" placeholder="Bắt đầu viết bài luận của bạn tại đây..." class="w-full flex-1 min-h-[300px] bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 resize-none font-mono leading-relaxed">${typedVal}</textarea>
+                    </div>
+                `;
+            }
+        }
+
+        // --- LƯU TRỮ ĐÁP ÁN BÀI LÀM ---
+        function saveReadingAnswer(key, val) {
+            userAnswers.reading[key] = val;
+        }
+
+        function saveListeningAnswer(key, val) {
+            userAnswers.listening[key] = val;
+        }
+
+        function updateWritingContent(textarea) {
+            const val = textarea.value;
+            userAnswers.writing = val;
+            const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+            document.getElementById('wordCounter').innerText = `${words} / 350 từ`;
+
+            if (words > 350) {
+                document.getElementById('wordCounter').className = "bg-slate-900 border border-rose-800 px-3 py-1 rounded-full text-rose-400 font-bold animate-pulse";
+            } else {
+                document.getElementById('wordCounter').className = "bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-emerald-400 font-bold";
+            }
+        }
+
+        // --- PHÁT FILE NGHE MÔ PHỎNG (Trang 5) ---
+        let listeningAudioPlaying = false;
+        let listeningAudioProgressInterval = null;
+
+        function toggleMediaListeningAudio() {
+            const btnIcon = document.getElementById('listeningPlayIcon');
+            const progress = document.getElementById('listeningMediaProgressBar');
+            const timer = document.getElementById('listeningMediaTimer');
+            const audioText = tierContentDb[currentTier].listening.audioText;
+
+            if (listeningAudioPlaying) {
+                window.speechSynthesis.cancel();
+                clearInterval(listeningAudioProgressInterval);
+                listeningAudioPlaying = false;
+                btnIcon.className = "fa-solid fa-play";
+                progress.style.width = "0%";
+                timer.innerText = "0:00 / 2:08";
+                return;
+            }
+
+            if ('speechSynthesis' in window) {
+                listeningAudioPlaying = true;
+                btnIcon.className = "fa-solid fa-pause";
+                
+                const listenUtter = new SpeechSynthesisUtterance(audioText);
+                listenUtter.lang = "en-US";
+                listenUtter.rate = 0.85;
+                listenUtter.onend = () => {
+                    btnIcon.className = "fa-solid fa-play";
+                    progress.style.width = "100%";
+                    timer.innerText = "2:08 / 2:08";
+                    clearInterval(listeningAudioProgressInterval);
+                    listeningAudioPlaying = false;
+                };
+
+                window.speechSynthesis.speak(listenUtter);
+
+                let progressVal = 0;
+                listeningAudioProgressInterval = setInterval(() => {
+                    progressVal += 2;
+                    if (progressVal <= 100) {
+                        progress.style.width = `${progressVal}%`;
+                        const simSeconds = Math.round((progressVal / 100) * 128);
+                        const m = Math.floor(simSeconds / 60);
+                        const s = simSeconds % 60;
+                        timer.innerText = `${m}:${s.toString().padStart(2, '0')} / 2:08`;
+                    }
+                }, 300);
+            } else {
+                showSimpleWarning("Lỗi", "Trình duyệt không hỗ trợ phát âm thanh mẫu.");
+            }
+        }
+
+        // --- ĐÁNH GIÁ THÍCH ỨNG KỸ NĂNG NÓI MÔ PHỎNG (Trang 6, 7) ---
+        let currentSpeakingQuestionIdx = 0;
+        let speakingRingInterval = null;
+
+        function initSpeakingTestSimulator() {
+            currentSpeakingQuestionIdx = 0;
+            userAnswers.speaking = [];
+            loadSpeakingQuestion(currentSpeakingQuestionIdx);
+        }
+
+        function loadSpeakingQuestion(idx) {
+            const questionsDb = tierContentDb[currentTier].speaking;
+            const currentQ = questionsDb[idx];
+
+            document.getElementById('speakingHeading').innerText = `Question ${idx + 1}`;
+            document.getElementById('speakingQuestionTranscript').innerText = `"${currentQ.prompt}"`;
+
+            let listHtml = "";
+            questionsDb.forEach((q, qIdx) => {
+                const activeClass = qIdx === idx ? "bg-blue-600 text-white font-bold" : "bg-slate-900 text-slate-500";
+                listHtml += `<span class="px-3 py-1 rounded text-[10px] shrink-0 ${activeClass}">${(qIdx + 1).toString().padStart(2, '0')}</span>`;
+            });
+            document.getElementById('speakingQuestionSelector').innerHTML = listHtml;
+
+            startSpeakingState("prep");
+        }
+
+        function startSpeakingState(state) {
+            speakingState = state;
+            clearInterval(speakingRingInterval);
+
+            const ringCircle = document.getElementById('speakingRingCircle');
+            const timerText = document.getElementById('speakingRingTimer');
+            const titleText = document.getElementById('speakingStateTitle');
+            const descText = document.getElementById('speakingStateDesc');
+            const iconEl = document.getElementById('speakingRingIcon');
+            const btnStop = document.getElementById('btnSpeakingAction');
+
+            const circumference = 2 * Math.PI * 60; // 376.8
+
+            if (state === 'prep') {
+                speakingSeconds = 5;
+                titleText.innerText = "Preparation...";
+                titleText.className = "text-sm font-extrabold text-orange-400 uppercase tracking-widest";
+                descText.innerText = "Chuẩn bị ý kiến của bạn trong 5 giây trước khi tự động thu âm.";
+                iconEl.className = "fa-solid fa-clock-rotate-left text-orange-400 text-xl mb-1";
+                ringCircle.setAttribute("stroke", "#f97316");
+                btnStop.disabled = true;
+
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const promptUtter = new SpeechSynthesisUtterance(tierContentDb[currentTier].speaking[currentSpeakingQuestionIdx].prompt);
+                    promptUtter.lang = "en-US";
+                    window.speechSynthesis.speak(promptUtter);
+                }
+
+                speakingRingInterval = setInterval(() => {
+                    speakingSeconds--;
+                    timerText.innerText = `00:00:0${speakingSeconds}`;
+                    const offset = circumference - (speakingSeconds / 5) * circumference;
+                    ringCircle.style.strokeDashoffset = offset;
+
+                    if (speakingSeconds <= 0) {
+                        clearInterval(speakingRingInterval);
+                        startSpeakingState("recording");
+                    }
+                }, 1000);
+            } 
+            else if (state === 'recording') {
+                speakingSeconds = 20; // Giới hạn 20s nói thử nghiệm
+                titleText.innerText = "Recording...";
+                titleText.className = "text-sm font-extrabold text-blue-400 uppercase tracking-widest animate-pulse";
+                descText.innerText = "Hệ thống đang thu âm câu trả lời trực tiếp của bạn...";
+                iconEl.className = "fa-solid fa-microphone text-blue-500 text-xl mb-1";
+                ringCircle.setAttribute("stroke", "#3b82f6");
+                btnStop.disabled = false;
+
+                document.getElementById('speakingVideoPulse').classList.remove('hidden');
+
+                speakingRingInterval = setInterval(() => {
+                    speakingSeconds--;
+                    const printedSec = speakingSeconds.toString().padStart(2, '0');
+                    timerText.innerText = `00:00:${printedSec}`;
+                    const offset = circumference - (speakingSeconds / 20) * circumference;
+                    ringCircle.style.strokeDashoffset = offset;
+
+                    if (speakingSeconds <= 0) {
+                        clearInterval(speakingRingInterval);
+                        proceedNextSpeakingQuestion();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopSpeakingRecordAction() {
+            clearInterval(speakingRingInterval);
+            proceedNextSpeakingQuestion();
+        }
+
+        function proceedNextSpeakingQuestion() {
+            document.getElementById('speakingVideoPulse').classList.add('hidden');
+            
+            const currentQ = tierContentDb[currentTier].speaking[currentSpeakingQuestionIdx];
+            userAnswers.speaking.push({
+                prompt: currentQ.prompt,
+                transcript: currentQ.transcript
+            });
+
+            currentSpeakingQuestionIdx++;
+            const totalQs = tierContentDb[currentTier].speaking.length;
+
+            if (currentSpeakingQuestionIdx < totalQs) {
+                loadSpeakingQuestion(currentSpeakingQuestionIdx);
+            } else {
+                showSkillFinishedPopup();
+            }
+        }
+
+        // --- XỬ LÝ NỘP BÀI THI & HIỂN THỊ CẢNH BÁO (Trang 4, 5, 9) ---
+        function submitSkillSectionButton() {
+            if (currentSkill === 'reading') {
+                if (userAnswers.reading.q1 === null || userAnswers.reading.q2 === null || userAnswers.reading.q3 === null) {
+                    showSimpleWarning("Chưa hoàn thành", "Thầy/Cô vui lòng lựa chọn đầy đủ đáp án cho tất cả câu hỏi phần Đọc.");
+                    return;
+                }
+            } 
+            else if (currentSkill === 'listening') {
+                if (!userAnswers.listening.q1 || !userAnswers.listening.q2 || !userAnswers.listening.q3) {
+                    showSimpleWarning("Chưa hoàn thành", "Thầy/Cô vui lòng nhập đáp án điền từ vào chỗ trống.");
+                    return;
+                }
+            }
+            else if (currentSkill === 'writing') {
+                const words = userAnswers.writing.trim() ? userAnswers.writing.trim().split(/\s+/).length : 0;
+                if (words < 10) {
+                    showSimpleWarning("Bài viết quá ngắn", "Vui lòng nhập bài viết luận tối thiểu 10 từ để hệ thống AI chấm điểm chính xác.");
+                    return;
+                }
+            }
+
+            const min = Math.floor(testSecondsRemaining / 60);
+            const sec = testSecondsRemaining % 60;
+            document.getElementById('modalConfirmTimerText').innerText = `Thời gian còn lại: ${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+            document.getElementById('modalConfirmSubmit').classList.remove('hidden');
+        }
+
+        function closeConfirmModalSubmit() {
+            document.getElementById('modalConfirmSubmit').classList.add('hidden');
+        }
+
+        function proceedToSkillCompletionPopup() {
+            closeConfirmModalSubmit();
+            clearInterval(headerTimerObj);
+            showSkillFinishedPopup();
+        }
+
+        function showSkillFinishedPopup() {
+            const title = document.getElementById('modalFinishTitle');
+            const desc = document.getElementById('modalFinishDesc');
+            const btn = document.getElementById('btnModalFinishAction');
+
+            if (currentSkill === 'reading') {
+                title.innerText = "Bạn đã hoàn thành Kỹ năng Đọc";
+                desc.innerText = "Hệ thống đã đủ dữ liệu để tính điểm tổng kết của kỹ năng này. Bạn không cần làm thêm các phần tiếp theo.";
+                btn.innerText = "Chuyển kĩ năng tiếp theo";
+            } 
+            else if (currentSkill === 'listening') {
+                title.innerText = "Bạn đã hoàn thành Kỹ năng Nghe";
+                desc.innerText = "Hệ thống đã đủ dữ liệu để tính điểm tổng kết của kỹ năng này. Bạn không cần làm thêm các phần tiếp theo.";
+                btn.innerText = "Chuyển kĩ năng tiếp theo";
+            } 
+            else if (currentSkill === 'speaking') {
+                title.innerText = "Bạn đã hoàn thành Kỹ năng Nói";
+                desc.innerText = "Hệ thống đã đủ dữ liệu để tính điểm tổng kết của kỹ năng này. Bạn không cần làm thêm các phần tiếp theo.";
+                btn.innerText = "Chuyển kĩ năng tiếp theo";
+            } 
+            else if (currentSkill === 'writing') {
+                title.innerText = "Bạn đã hoàn thành Kỹ năng Viết";
+                desc.innerText = "Hệ thống đã đủ dữ liệu để tính điểm tổng kết của kỹ năng này. Nhấn 'Xem tổng kết' để biết trình độ của mình bạn nhé.";
+                btn.innerText = "Xem tổng kết";
+            }
+
+            document.getElementById('modalSkillFinished').classList.remove('hidden');
+        }
+
+        function proceedToNextSkillStage() {
+            document.getElementById('modalSkillFinished').classList.add('hidden');
+            
+            if (currentSkill === 'reading') {
+                loadSkillInstruction('listening');
+            } else if (currentSkill === 'listening') {
+                loadSkillInstruction('speaking');
+            } else if (currentSkill === 'speaking') {
+                loadSkillInstruction('writing');
+            } else if (currentSkill === 'writing') {
+                loadSummaryResultsDashboard();
+            }
+        }
+
+        function autoSubmitOnTimeOut() {
+            clearInterval(headerTimerObj);
+            closeConfirmModalSubmit();
+            showSkillFinishedPopup();
+        }
+
+        // --- HIỂN THỊ KẾT QUẢ TỔNG QUÁT (Trang 9) ---
+        function loadSummaryResultsDashboard() {
+            setAppState('summary');
+
+            let finalLevel = "B1";
+            let readingCEFR = "B1";
+            let listeningCEFR = "B1";
+            let speakingCEFR = "A2";
+            let writingCEFR = "B1";
+            let ieltsVal = "4.0-5.0";
+            let vstepVal = "Bậc 3";
+
+            if (currentTier === 'primary') {
+                finalLevel = "B1";
+                readingCEFR = "B2";
+                listeningCEFR = "B1";
+                speakingCEFR = "A2";
+                writingCEFR = "B1";
+                ieltsVal = "4.0-5.0";
+                vstepVal = "Bậc 3";
+            } else if (currentTier === 'middle') {
+                finalLevel = "B2";
+                readingCEFR = "B2";
+                listeningCEFR = "B2";
+                speakingCEFR = "B1";
+                writingCEFR = "B2";
+                ieltsVal = "5.5-6.0";
+                vstepVal = "Bậc 4";
+            } else {
+                finalLevel = "C1";
+                readingCEFR = "C1";
+                listeningCEFR = "C1";
+                speakingCEFR = "B2";
+                writingCEFR = "C1";
+                ieltsVal = "6.5-7.5";
+                vstepVal = "Bậc 5";
+            }
+
+            document.getElementById('summaryFinalLevel').innerText = finalLevel;
+            document.getElementById('summaryReadingCEFR').innerText = readingCEFR;
+            document.getElementById('summaryListeningCEFR').innerText = listeningCEFR;
+            document.getElementById('summarySpeakingCEFR').innerText = speakingCEFR;
+            document.getElementById('summaryWritingCEFR').innerText = writingCEFR;
+
+            document.getElementById('barCefrVal').innerText = finalLevel;
+            document.getElementById('barIeltsVal').innerText = ieltsVal;
+            document.getElementById('barVstepVal').innerText = vstepVal;
+
+            const cefrIdx = ["Pre-A1", "A1", "A2", "B1", "B2", "C1", "C2"].indexOf(finalLevel);
+            for (let i = 0; i <= 6; i++) {
+                const label = document.getElementById(`lbl-cefr-${i}`);
+                if (label) {
+                    if (i === cefrIdx) {
+                        label.className = "flex-1 border-r border-slate-800 text-[10px] font-black text-white bg-blue-600 flex items-center justify-center";
+                    } else {
+                        label.className = "flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center";
+                    }
+                }
+            }
+
+            const ieltsLabels = ["Dưới 3.0", "3.0-3.5", "4.0-5.0", "5.5-6.0", "6.5-7.5", "8.0+"];
+            const ieltsIdx = ieltsLabels.indexOf(ieltsVal);
+            for (let i = 0; i < 6; i++) {
+                const label = document.getElementById(`lbl-ielts-${i}`);
+                if (label) {
+                    if (i === ieltsIdx) {
+                        label.className = "flex-1 border-r border-slate-800 text-[10px] font-black text-white bg-indigo-600 flex items-center justify-center";
+                    } else {
+                        label.className = "flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center";
+                    }
+                }
+            }
+
+            const vstepLabels = ["Dưới Bậc 1", "Bậc 1", "Bậc 2", "Bậc 3", "Bậc 4", "Bậc 5", "Bậc 6"];
+            const vstepIdx = vstepLabels.indexOf(vstepVal);
+            for (let i = 0; i <= 6; i++) {
+                const label = document.getElementById(`lbl-vstep-${i}`);
+                if (label) {
+                    if (i === vstepIdx) {
+                        label.className = "flex-1 border-r border-slate-800 text-[10px] font-black text-white bg-emerald-600 flex items-center justify-center";
+                    } else {
+                        label.className = "flex-1 border-r border-slate-800 text-[9px] font-bold text-slate-600 flex items-center justify-center";
+                    }
+                }
+            }
+        }
+
+        // --- XEM LẠI BÀI LÀM & AI FEEDBACK (Trang 10, 11) ---
+        let currentReviewSkill = "reading";
+
+        function enterReviewMode(skill) {
+            currentReviewSkill = skill;
+            setAppState('review');
+
+            const titleEl = document.getElementById('reviewSkillTitle');
+            const mediaPane = document.getElementById('reviewMediaText');
+
+            titleEl.innerText = `Kỹ năng ` + (skill === 'reading' ? 'Đọc' : skill === 'listening' ? 'Nghe' : skill === 'speaking' ? 'Nói' : 'Viết');
+
+            const currentDb = tierContentDb[currentTier][skill];
+
+            if (skill === 'reading') {
+                mediaPane.innerHTML = currentDb.media;
+                renderReadingAnswersOnReview();
+            } 
+            else if (skill === 'listening') {
+                mediaPane.innerHTML = currentDb.media;
+                renderListeningAnswersOnReview();
+            } 
+            else if (skill === 'speaking') {
+                let html = "";
+                userAnswers.speaking.forEach((ans, idx) => {
+                    html += `
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+                            <span class="text-xs font-bold text-blue-400">Câu hỏi ${idx + 1}: "${ans.prompt}"</span>
+                            <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                                <span class="text-[10px] text-slate-500 block">Bản ghi giọng nói của bạn:</span>
+                                <p class="text-xs text-slate-300 italic">"${ans.transcript}"</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                mediaPane.innerHTML = html;
+                renderAIReviewFeedback('speaking');
+            } 
+            else if (skill === 'writing') {
+                mediaPane.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 text-xs">
+                            <span class="font-bold text-slate-400 block mb-1">Đề bài Task 2:</span>
+                            <p class="text-slate-300">${currentDb.media}</p>
+                        </div>
+                        <div class="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+                            <span class="text-xs font-bold text-emerald-400 block">Bài luận đã nộp của bạn:</span>
+                            <p class="text-xs text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">${userAnswers.writing || currentDb.sampleAnswer}</p>
+                        </div>
+                    </div>
+                `;
+                renderAIReviewFeedback('writing');
+            }
+        }
+
+        function renderReadingAnswersOnReview() {
+            const feedbackPane = document.getElementById('reviewFeedbackPane');
+            const showAnswers = document.getElementById('reviewAnswerToggle').checked;
+            const currentDb = tierContentDb[currentTier].reading;
+
+            let html = `<div class="space-y-4">`;
+            currentDb.questions.forEach((q, idx) => {
+                const userChoice = userAnswers.reading[`q${idx+1}`];
+                const isCorrect = userChoice === q.correct;
+                const statusBorder = isCorrect ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5";
+                const statusColor = isCorrect ? "text-emerald-400" : "text-rose-400";
+                const statusIcon = isCorrect ? `<i class="fa-solid fa-circle-check"></i>` : `<i class="fa-solid fa-circle-xmark"></i>`;
+
+                html += `
+                    <div class="p-4 rounded-xl border ${statusBorder} space-y-3">
+                        <div class="flex items-center justify-between text-xs font-bold ${statusColor}">
+                            <span>Câu hỏi ${idx + 1}</span>
+                            <span>${statusIcon} ${isCorrect ? "Trả lời Đúng" : "Trả lời Sai"}</span>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-100">${q.q}</p>
+                        <div class="space-y-1.5 text-xs">
+                `;
+
+                q.options.forEach((opt, optIdx) => {
+                    let optBg = "bg-slate-950 border-slate-800 text-slate-400";
+                    if (optIdx === userChoice) {
+                        optBg = isCorrect ? "bg-emerald-500/20 border-emerald-500 text-white font-bold" : "bg-rose-500/20 border-rose-500 text-white font-bold";
+                    } else if (showAnswers && optIdx === q.correct) {
+                        optBg = "bg-emerald-500/10 border-emerald-500/50 text-emerald-300 font-bold";
+                    }
+
+                    html += `
+                        <div class="p-2.5 border rounded-lg ${optBg}">
+                            ${opt}
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+            });
+            html += `</div>`;
+            feedbackPane.innerHTML = html;
+        }
+
+        function renderListeningAnswersOnReview() {
+            const feedbackPane = document.getElementById('reviewFeedbackPane');
+            const showAnswers = document.getElementById('reviewAnswerToggle').checked;
+            const currentDb = tierContentDb[currentTier].listening;
+
+            let html = `<div class="space-y-4">`;
+            currentDb.questions.forEach((q, idx) => {
+                const userAns = (userAnswers.listening[`q${idx+1}`] || "").trim().toLowerCase();
+                const correctAns = q.correct.toLowerCase();
+                const isCorrect = userAns === correctAns;
+
+                const statusBorder = isCorrect ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5";
+                const statusColor = isCorrect ? "text-emerald-400" : "text-rose-400";
+                const statusIcon = isCorrect ? `<i class="fa-solid fa-circle-check"></i>` : `<i class="fa-solid fa-circle-xmark"></i>`;
+
+                html += `
+                    <div class="p-4 rounded-xl border ${statusBorder} space-y-3">
+                        <div class="flex items-center justify-between text-xs font-bold ${statusColor}">
+                            <span>Câu hỏi ${idx + 1}</span>
+                            <span>${statusIcon} ${isCorrect ? "Đúng" : "Sai"}</span>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-100">${q.q}</p>
+                        <div class="space-y-2 text-xs">
+                            <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-300">
+                                <span class="text-[10px] text-slate-500 block">Câu trả lời của bạn:</span>
+                                <strong class="${statusColor}">${userAnswers.listening[`q${idx+1}`] || "(Bỏ trống)"}</strong>
+                            </div>
+                `;
+
+                if (showAnswers && !isCorrect) {
+                    html += `
+                        <div class="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300">
+                            <span class="text-[10px] text-slate-500 block">Đáp án chuẩn:</span>
+                            <strong>${q.correct}</strong>
+                        </div>
+                    `;
+                }
+
+                html += `</div></div>`;
+            });
+            html += `</div>`;
+            feedbackPane.innerHTML = html;
+        }
+
+        function renderAIReviewFeedback(skill) {
+            const feedbackPane = document.getElementById('reviewFeedbackPane');
+
+            if (skill === 'speaking') {
+                const spLevel = currentTier === 'primary' ? 'A2' : currentTier === 'middle' ? 'B1' : 'B2';
+                feedbackPane.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300 uppercase">Speaking CEFR Level</span>
+                            <span class="h-8 w-8 rounded bg-blue-600 text-white font-black text-sm flex items-center justify-center">${spLevel}</span>
+                        </div>
+
+                        <!-- Tiêu chí FC (Trang 10) -->
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                            <span class="text-xs font-bold text-blue-400 block"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Fluency and Coherence (FC)</span>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                Speaks with minor pauses. Has moderate ability to link sentences logically. Correctly manages common colloquial expressions relevant to school teaching.
+                            </p>
+                        </div>
+
+                        <!-- Tiêu chí LR (Trang 10) -->
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                            <span class="text-xs font-bold text-blue-400 block"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Lexical Resource (LR)</span>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                Able to talk about pedagogical and general academic themes comfortably. Errors in word choices are sparse and do not hinder overall comprehension.
+                            </p>
+                        </div>
+
+                        <!-- Tiêu chí GRA (Trang 10) -->
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                            <span class="text-xs font-bold text-blue-400 block"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Grammatical Range and Accuracy (GRA)</span>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                Uses a mix of simple and complex sentence structures with solid grammatical command. Shows minimal errors in complex tenses.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } 
+            else if (skill === 'writing') {
+                const wrLevel = currentTier === 'primary' ? 'B1' : currentTier === 'middle' ? 'B2' : 'C1';
+                feedbackPane.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300 uppercase">Writing CEFR Level</span>
+                            <span class="h-8 w-8 rounded bg-emerald-600 text-white font-black text-sm flex items-center justify-center">${wrLevel}</span>
+                        </div>
+
+                        <!-- Tiêu chí TA (Trang 11) -->
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                            <span class="text-xs font-bold text-emerald-400 block"><i class="fa-solid fa-star-of-life mr-1"></i> Task Achievement (TA)</span>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                The main requirements of the prompt are fully addressed. The writer expresses a clear, structured position, supported by teaching-relevant examples.
+                            </p>
+                        </div>
+
+                        <!-- Tiêu chí CC (Trang 11) -->
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                            <span class="text-xs font-bold text-emerald-400 block"><i class="fa-solid fa-star-of-life mr-1"></i> Coherence and Cohesion (CC)</span>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                Logical paragraph sequencing with clean transitional connectors. Minimal repetitive wording. Cohesion is maintained effectively across the entire essay.
+                            </p>
+                        </div>
+
+                        <!-- Tiêu chí LR (Trang 11) -->
+                        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                            <span class="text-xs font-bold text-emerald-400 block"><i class="fa-solid fa-star-of-life mr-1"></i> Lexical Resource (LR)</span>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                Rich vocabulary tailored specifically to pedagogical scenarios. Sophisticated synonym replacements used appropriately throughout.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleAnswersOnReview() {
+            if (currentReviewSkill === 'reading') {
+                renderReadingAnswersOnReview();
+            } else if (currentReviewSkill === 'listening') {
+                renderListeningAnswersOnReview();
+            }
+        }
+
+        function exitReviewToSummary() {
+            setAppState('summary');
+        }
+
+        // --- CÁC HÀM CẬP NHẬT GIAO DIỆN HỖ TRỢ ---
+        function updateSidebarTreeStatus(activeSkill) {
+            const rdNode = document.getElementById('node-reading');
+            const lsNode = document.getElementById('node-listening');
+            const spNode = document.getElementById('node-speaking');
+            const wrNode = document.getElementById('node-writing');
+
+            [rdNode, lsNode, spNode, wrNode].forEach(node => {
+                node.classList.add('opacity-50', 'pointer-events-none');
+            });
+
+            let targetNode = null;
+            if (activeSkill === 'reading') targetNode = rdNode;
+            else if (activeSkill === 'listening') targetNode = lsNode;
+            else if (activeSkill === 'speaking') targetNode = spNode;
+            else if (activeSkill === 'writing') targetNode = wrNode;
+
+            if (targetNode) {
+                targetNode.classList.remove('opacity-50', 'pointer-events-none');
+            }
+
+            const readSectionsList = document.getElementById('readingSectionsList');
+            if (activeSkill === 'reading') {
+                readSectionsList.classList.remove('hidden');
+            } else {
+                readSectionsList.classList.add('hidden');
+            }
+        }
+
+        function toggleTextScaleSlider() {
+            const el = document.getElementById('textScalePanel');
+            el.classList.toggle('hidden');
+        }
+
+        function adjustTextScale(val) {
+            textScale = parseInt(val);
+            const label = document.getElementById('textScaleLabel');
+            const textContainers = [
+                document.getElementById('mediaPaneText'),
+                document.getElementById('reviewMediaText')
+            ];
+
+            const sizes = ["font-size-small", "font-size-medium", "font-size-large"];
+            const labels = ["Nhỏ", "Mặc định", "Lớn"];
+
+            label.innerText = labels[textScale - 1];
+
+            textContainers.forEach(container => {
+                if (container) {
+                    container.className = `flex-1 overflow-y-auto pr-2 text-slate-300 leading-relaxed ${sizes[textScale - 1]}`;
+                }
+            });
+        }
+
+        function triggerBackWarning() {
+            showSimpleWarning("Cảnh báo", "Bạn không được rời khỏi bài kiểm tra khi chưa nộp bài hoặc có sự đồng ý của giám thị.");
+        }
+
+        function showSimpleWarning(title, desc) {
+            document.getElementById('warnTitle').innerText = title;
+            document.getElementById('warnDesc').innerText = desc;
+            document.getElementById('modalSimpleWarning').classList.remove('hidden');
+        }
+
+        function closeSimpleWarning() {
+            document.getElementById('modalSimpleWarning').classList.add('hidden');
+        }
+
+        function logoutToLanding() {
+            clearInterval(headerTimerObj);
+            clearInterval(speakingRingInterval);
+            window.speechSynthesis.cancel();
+            
+            setAppState('landing');
+            techieGreetingIdx = 0;
+            document.getElementById('techieText').innerText = techieGreetings[0];
+            document.getElementById('btnTechieNext').innerText = "Nhấn để tiếp tục";
+            document.getElementById('btnTechieNext').classList.remove('hidden');
+            document.getElementById('btnStartTest').classList.add('hidden');
+
+            userAnswers = {
+                reading: { q1: null, q2: null, q3: null },
+                listening: { q1: "", q2: "", q3: "" },
+                speaking: [],
+                writing: ""
+            };
+        }
+
+        // Khởi chạy hệ thống mặc định
+        window.onload = function() {
+            setAppState('landing');
+            document.getElementById('techieText').innerText = techieGreetings[0];
+        };
+    </script>
+</body>
+</html>

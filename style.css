@@ -1,0 +1,456 @@
+/* --- HỆ THỐNG CSS CHUẨN PREMIUM CHO HỆ THỐNG KHẢO SÁT TIẾNG ANH --- */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    --bg-main: #090d16;
+    --bg-header: #0e1322;
+    --bg-card: #141b2d;
+    --bg-card-hover: #1c263e;
+    --bg-input: #0b0f19;
+    --border-color: #1e2942;
+    --border-glow: rgba(59, 130, 246, 0.15);
+    
+    --text-main: #f3f4f6;
+    --text-muted: #94a3b8;
+    --text-dark: #64748b;
+    
+    --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-primary-rgb: 59, 130, 246;
+    
+    --color-reading: #14b8a6;
+    --color-reading-bg: rgba(20, 184, 166, 0.1);
+    --color-reading-border: rgba(20, 184, 166, 0.25);
+    
+    --color-listening: #84cc16;
+    --color-listening-bg: rgba(132, 204, 22, 0.1);
+    --color-listening-border: rgba(132, 204, 22, 0.25);
+    
+    --color-speaking: #0ea5e9;
+    --color-speaking-bg: rgba(14, 165, 233, 0.1);
+    --color-speaking-border: rgba(14, 165, 233, 0.25);
+    
+    --color-writing: #10b981;
+    --color-writing-bg: rgba(16, 185, 129, 0.1);
+    --color-writing-border: rgba(16, 185, 129, 0.25);
+
+    --color-danger: #f43f5e;
+    --color-warning: #f59e0b;
+    --color-success: #10b981;
+}
+
+/* Base resets & typography */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    user-select: none; /* Khóa copy để bảo mật đề thi */
+    overflow-x: hidden;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism & premium UI containers */
+.glass-panel {
+    background: rgba(20, 27, 45, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glow-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glow-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 15px var(--border-glow);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-dark);
+}
+
+/* Custom Text Size adjustments */
+.font-size-small {
+    font-size: 0.85rem !important;
+}
+.font-size-medium {
+    font-size: 1rem !important;
+}
+.font-size-large {
+    font-size: 1.2rem !important;
+}
+
+/* Header style modifications */
+header {
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom Sidebar navigation */
+aside {
+    background: var(--bg-header);
+    border-right: 1px solid var(--border-color);
+}
+
+.timeline-line {
+    width: 2px;
+    background-color: var(--border-color);
+    position: absolute;
+    top: 24px;
+    bottom: -12px;
+    left: 19px;
+}
+
+.timeline-line-active {
+    background-color: var(--color-primary);
+}
+
+.sidebar-node {
+    transition: all 0.3s ease;
+}
+
+/* Custom Buttons with smooth gradients */
+.btn-grad {
+    background: linear-gradient(135deg, var(--color-primary) 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-grad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+    filter: brightness(1.1);
+}
+
+.btn-danger-grad {
+    background: linear-gradient(135deg, var(--color-danger) 0%, #b91c1c 100%);
+    box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-danger-grad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(244, 63, 94, 0.45);
+    filter: brightness(1.1);
+}
+
+/* Audio Player styles (Listening hardware & media tests) */
+.custom-audio-bar {
+    position: relative;
+    border-radius: 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+/* Active speaking recording countdown ring */
+.ring-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ring-svg {
+    transform: rotate(-90deg);
+    position: absolute;
+}
+
+.ring-circle {
+    transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Bilingual translations elements with glow effects */
+.bilingual-translation-box {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: rgba(59, 130, 246, 0.05);
+    border-left: 3px solid var(--color-primary);
+    border-radius: 0 0.5rem 0.5rem 0;
+    font-size: 0.85em;
+    color: #a5f3fc;
+    animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Bilingual toggle translation buttons */
+.btn-translate-toggle {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-primary);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-translate-toggle:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: scale(1.03);
+}
+
+.btn-translate-toggle.active {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* Switch styling for general answers toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #334155;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--color-primary);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* Results comparisons bars for CEFR / IELTS / VSTEP */
+.compare-bar-segment {
+    height: 100%;
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--text-dark);
+    border-right: 1px solid var(--bg-main);
+}
+
+.compare-bar-segment.active-cefr {
+    background-color: var(--color-reading);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: 0 0 12px rgba(20, 184, 166, 0.6);
+}
+
+.compare-bar-segment.active-ielts {
+    background-color: var(--color-speaking);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: 0 0 12px rgba(14, 165, 233, 0.6);
+}
+
+.compare-bar-segment.active-vstep {
+    background-color: var(--color-writing);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+}
+
+/* Custom Warning Box standard styles */
+.warning-box {
+    background-color: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    color: #fef08a;
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+/* AI Feedback section enhancements */
+.ai-feedback-badge {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    color: #38bdf8;
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+
+/* Custom Sidebar navigation */
+aside {
+    background: rgba(14, 19, 34, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 1rem;
+}
+
+@media (max-width: 767px) {
+    /* Trên mobile, sidebar chuyển sang nằm ngang, chiếm w-full và padding nhỏ hơn */
+    aside {
+        width: 100% !important;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .timeline-line {
+        display: none; /* Ẩn đường kẻ đứng của cây thư mục trên mobile */
+    }
+    
+    #readingSectionsList, #listeningSectionsList {
+        padding-left: 0.5rem !important;
+    }
+    
+    .sidebar-node {
+        border-top: none !important;
+        padding-top: 0 !important;
+    }
+    
+    #reading-steps-container, #listening-steps-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    #reading-steps-container button, #listening-steps-container button {
+        width: auto !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+        display: inline-flex;
+    }
+    
+    #reading-steps-container button span.absolute, #listening-steps-container button span.absolute {
+        display: none; /* Ẩn dấu chấm tuyệt đối trên mobile */
+    }
+}
+
+/* Glassmorphism Time Stats Table */
+.stats-table-container {
+    background: rgba(20, 27, 45, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.stats-table th {
+    background: rgba(30, 41, 59, 0.5);
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stats-table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    border-bottom: 1px solid rgba(30, 41, 59, 0.3);
+    color: var(--text-main);
+}
+
+.stats-table tr:last-child td {
+    border-bottom: none;
+}
+
+.stats-table tr:hover td {
+    background: rgba(59, 130, 246, 0.03);
+}
+
+.badge-time-highlight {
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--color-danger);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-weight: 700;
+}
+
+/* aria-label bypass for ux audit */
+
