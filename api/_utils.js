@@ -3,22 +3,24 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-// Tự động load file .env ở local nếu tồn tại (đường dẫn ở thư mục cha vì file _utils.js nằm trong api/)
-const envPath = path.join(__dirname, '..', '.env');
-if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split(/\r?\n/).forEach(line => {
-        if (!line || line.trim().startsWith('#')) return;
-        const parts = line.split('=');
-        if (parts.length >= 2) {
-            const key = parts[0].trim();
-            let value = parts.slice(1).join('=').trim();
-            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-                value = value.substring(1, value.length - 1);
+// Tự động load file .env ở local nếu đang chạy cục bộ qua local-server.js
+if (process.env.IS_LOCAL === 'true') {
+    const envPath = path.join(__dirname, '..', '.env');
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        envContent.split(/\r?\n/).forEach(line => {
+            if (!line || line.trim().startsWith('#')) return;
+            const parts = line.split('=');
+            if (parts.length >= 2) {
+                const key = parts[0].trim();
+                let value = parts.slice(1).join('=').trim();
+                if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                    value = value.substring(1, value.length - 1);
+                }
+                process.env[key] = value;
             }
-            process.env[key] = value;
-        }
-    });
+        });
+    }
 }
 
 // Các cấu hình đọc từ biến môi trường
@@ -49,14 +51,14 @@ requiredEnvVars.forEach(envVar => {
         configErrorMessage += msg + "\n";
         hasConfigError = true;
     } else if (envVar.key === 'ENCRYPTION_KEY' && val.trim().length !== 32) {
-        const msg = `[LỖI CẤU HÌNH] Khóa ENCRYPTION_KEY phải dài ĐÚNG 32 ký tự (Hiện tại: ${val.trim().length} ký tự).`;
+        const msg = `[LỖI CẤU HÌNH] Khóa ENCRYPTION_KEY phải dài ĐÚNG 32 ký tự (Hiện tại: ${val ? val.trim().length : 0} ký tự).`;
         configErrorMessage += msg + "\n";
         hasConfigError = true;
     }
 });
 
-// Nếu chạy local, crash server ngay lập tức khi thiếu cấu hình
-if (hasConfigError && !process.env.VERCEL) {
+// Nếu chạy local qua local-server.js, crash server ngay lập tức khi thiếu cấu hình
+if (hasConfigError && process.env.IS_LOCAL === 'true') {
     console.error("💥 LỖI KHỞI ĐỘNG CỤC BỘ:\n" + configErrorMessage);
     process.exit(1);
 }

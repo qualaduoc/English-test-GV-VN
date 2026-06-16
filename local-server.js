@@ -1,3 +1,5 @@
+process.env.IS_LOCAL = 'true';
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -34,11 +36,12 @@ const server = http.createServer((req, res) => {
         return handleLeaderboard(req, res);
     }
 
-    // Serve file tĩnh ở local
-    let filePath = path.join(__dirname, safeUrl === '/' ? 'index.html' : safeUrl);
+    // Serve file tĩnh ở local từ thư mục public
+    let filePath = path.join(__dirname, 'public', safeUrl === '/' ? 'index.html' : safeUrl);
     
     // Bảo vệ Directory Traversal
-    if (!filePath.startsWith(__dirname)) {
+    const publicDir = path.join(__dirname, 'public');
+    if (!filePath.startsWith(publicDir)) {
         res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end('Truy cập bị cấm (Forbidden)');
         return;
