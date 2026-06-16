@@ -230,7 +230,7 @@ Do not include any markdown format like \`\`\`json outside the JSON object.`;
         let answersFormatted = "";
         if (Array.isArray(studentAnswer)) {
             studentAnswer.forEach((ans, idx) => {
-                answersFormatted += `Question ${idx + 1}: ${ans.prompt}\nAnswer Transcript: ${ans.transcript}\n\n`;
+                answersFormatted += `Question ${idx + 1}: ${ans.prompt}\nSample Answer (Gợi ý chuẩn): ${ans.sampleAnswer || ''}\nAnswer Transcript (Thí sinh trả lời): ${ans.transcript || ''}\n\n`;
             });
         } else {
             answersFormatted = studentAnswer;

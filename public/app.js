@@ -385,157 +385,179 @@ const adaptiveDb = {
     speaking: [
         {
             id: "s1",
-            prompt: "What is your name and where do you live?",
-            promptTranslation: "Tên của bạn là gì và bạn đang sống ở đâu?",
+            prompt: "Could you please introduce yourself and tell me why you like teaching?",
+            promptTranslation: "Bạn có thể tự giới thiệu bản thân và cho tôi biết tại sao bạn thích giảng dạy không?",
+            sampleAnswer: "My name is Lan. I am an English teacher. I love teaching because seeing my students progress and communicate confidently in English brings me great joy and fulfillment.",
             start: 0,
-            end: 11
+            end: 8
         },
         {
             id: "s2",
-            prompt: "What do you like to do in your free time?",
-            promptTranslation: "Bạn thích làm gì vào thời gian rảnh rỗi?",
-            start: 11,
-            end: 23
+            prompt: "What is your typical daily routine before you start your classes?",
+            promptTranslation: "Thói quen hàng ngày điển hình của bạn trước khi bắt đầu các tiết học là gì?",
+            sampleAnswer: "Before classes, I usually review my lesson plans, prepare teaching materials and games, and ensure the classroom projector and speakers are working properly.",
+            start: 8,
+            end: 16
         },
         {
             id: "s3",
-            prompt: "Can you talk about your family and your home?",
-            promptTranslation: "Bạn có thể kể về gia đình và ngôi nhà của bạn không?",
-            start: 23,
-            end: 35
+            prompt: "What activities do your students enjoy doing the most in your classroom?",
+            promptTranslation: "Học sinh của bạn thích tham gia những hoạt động nào nhất trong lớp học của bạn?",
+            sampleAnswer: "My students really enjoy interactive language games, vocabulary quizzes like Kahoot, and group role-play activities where they can practice speaking with their peers.",
+            start: 16,
+            end: 24
         },
         {
             id: "s4",
-            prompt: "What is your favorite food and how often do you eat it?",
-            promptTranslation: "Món ăn yêu thích của bạn là gì và bạn có thường xuyên ăn món đó không?",
-            start: 35,
-            end: 47
+            prompt: "How do you help a student who is too shy to speak English in class?",
+            promptTranslation: "Bạn làm thế nào để giúp một học sinh quá nhút nhát không dám nói tiếng Anh trong lớp?",
+            sampleAnswer: "I encourage shy students by putting them in small supportive groups, asking simple questions first, and praising every small effort they make to build their confidence.",
+            start: 24,
+            end: 32
         },
         {
             id: "s5",
-            prompt: "Describe your typical daily routine as a teacher.",
-            promptTranslation: "Hãy mô tả một thói quen hàng ngày điển hình của bạn với tư cách là một giáo viên.",
-            start: 47,
-            end: 59
+            prompt: "What is your favorite English book or movie, and why do you like it?",
+            promptTranslation: "Cuốn sách hoặc bộ phim tiếng Anh yêu thích của bạn là gì và tại sao bạn thích nó?",
+            sampleAnswer: "My favorite book is 'Charlotte's Web' because of its simple yet beautiful vocabulary and its touching story about friendship, which is great for teaching kids.",
+            start: 32,
+            end: 40
         },
         {
             id: "s6",
-            prompt: "Who is a teacher that inspired you the most in your life?",
-            promptTranslation: "Ai là giáo viên đã truyền cảm hứng nhiều nhất cho bạn trong cuộc sống?",
-            start: 59,
-            end: 71
+            prompt: "How do you manage a classroom when some students are distracting others?",
+            promptTranslation: "Bạn quản lý lớp học thế nào khi một số học sinh làm xao nhãng những học sinh khác?",
+            sampleAnswer: "I address distractions by establishing clear classroom rules, using non-verbal cues like eye contact, and redirecting their focus with an engaging task or quick question.",
+            start: 40,
+            end: 48
         },
         {
             id: "s7",
-            prompt: "What is your favorite season of the year and why?",
-            promptTranslation: "Mùa yêu thích nhất của bạn trong năm là gì và tại sao?",
-            start: 71,
-            end: 83
+            prompt: "What are the key benefits of using games and songs to teach English to young learners?",
+            promptTranslation: "Những lợi ích chính của việc sử dụng các trò chơi và bài hát để dạy tiếng Anh cho học sinh nhỏ tuổi là gì?",
+            sampleAnswer: "Games and songs create a fun, stress-free environment, capture short attention spans, and help young learners naturally memorize vocabulary and pronunciation through repetition.",
+            start: 48,
+            end: 56
         },
         {
             id: "s8",
-            prompt: "Tell me about a memorable holiday or trip that you had.",
-            promptTranslation: "Hãy kể cho tôi nghe về một kỳ nghỉ hoặc chuyến đi đáng nhớ mà bạn đã từng có.",
-            start: 83,
-            end: 95
+            prompt: "Describe a successful lesson you recently taught. What made it work well?",
+            promptTranslation: "Hãy mô tả một tiết học thành công mà bạn vừa giảng dạy gần đây. Điều gì đã giúp tiết học đó đạt hiệu quả tốt?",
+            sampleAnswer: "I taught a lesson on environmental vocabulary using a group debate. It worked well because students were active, expressed real opinions, and utilized the vocabulary naturally.",
+            start: 56,
+            end: 64
         },
         {
             id: "s9",
-            prompt: "Why did you choose to become a teacher instead of other professions?",
-            promptTranslation: "Tại sao bạn lại chọn trở thành giáo viên thay vì những ngành nghề khác?",
-            start: 95,
-            end: 107
+            prompt: "How do you balance teaching grammar with teaching communication skills in your classes?",
+            promptTranslation: "Bạn cân bằng việc dạy ngữ pháp với dạy kỹ năng giao tiếp như thế nào trong các tiết học của mình?",
+            sampleAnswer: "I integrate grammar into communicative activities. After explaining a rule briefly, I have students practice it through real-world dialogues, role-plays, and speaking tasks.",
+            start: 64,
+            end: 72
         },
         {
             id: "s10",
-            prompt: "What do you think are the greatest benefits of learning English today?",
-            promptTranslation: "Bạn nghĩ lợi ích lớn nhất của việc học tiếng Anh ngày nay là gì?",
-            start: 107,
-            end: 119
+            prompt: "What challenges do you face when teaching English listening skills, and how do you solve them?",
+            promptTranslation: "Bạn gặp những thách thức nào khi dạy kỹ năng nghe tiếng Anh và bạn giải quyết chúng ra sao?",
+            sampleAnswer: "Students often struggle with natural speed and accents. I solve this by dividing listening tasks into pre-listening, while-listening, and post-listening phases, and using authentic materials.",
+            start: 72,
+            end: 80
         },
         {
             id: "s11",
-            prompt: "How has technology changed the way we teach and study recently?",
-            promptTranslation: "Công nghệ đã thay đổi cách chúng ta giảng dạy và học tập như thế nào trong thời gian gần đây?",
-            start: 119,
-            end: 131
+            prompt: "How do you provide constructive feedback to students after a speaking activity?",
+            promptTranslation: "Bạn cung cấp phản hồi mang tính xây dựng như thế nào cho học sinh sau một hoạt động nói?",
+            sampleAnswer: "I highlight their strengths first, then address common errors anonymously on the board, and finally give individual tips on how to improve pronunciation and fluency.",
+            start: 80,
+            end: 88
         },
         {
             id: "s12",
-            prompt: "Describe a book or a movie that left a strong impression on you.",
-            promptTranslation: "Hãy mô tả một cuốn sách hoặc bộ phim đã để lại ấn tượng mạnh mẽ cho bạn.",
-            start: 131,
-            end: 143
+            prompt: "Why is it important for English teachers to integrate cultural topics into their language lessons?",
+            promptTranslation: "Tại sao việc giáo viên tiếng Anh tích hợp các chủ đề văn hóa vào các bài học ngôn ngữ lại quan trọng?",
+            sampleAnswer: "Integrating culture helps students understand the context of the language, fosters global awareness, and makes learning more interesting by comparing different customs.",
+            start: 88,
+            end: 96
         },
         {
             id: "s13",
-            prompt: "Talk about a healthy habit you have and how it benefits your life.",
-            promptTranslation: "Hãy nói về một thói quen lành mạnh bạn có và lợi ích của nó đối với cuộc sống của bạn.",
-            start: 143,
-            end: 155
+            prompt: "How should teachers adapt their lesson plans to accommodate classes with mixed-ability students?",
+            promptTranslation: "Giáo viên nên điều chỉnh giáo án như thế nào để phù hợp với những lớp học có học sinh có năng lực khác nhau?",
+            sampleAnswer: "I employ differentiated instruction by designing tasks with varying levels of complexity, organizing peer-tutoring groups, and providing scaffolded worksheets to support weaker learners.",
+            start: 96,
+            end: 104
         },
         {
             id: "s14",
-            prompt: "Should students wear uniforms at school? Explain your opinion.",
-            promptTranslation: "Học sinh có nên mặc đồng phục ở trường không? Hãy giải thích ý kiến của bạn.",
-            start: 155,
-            end: 167
+            prompt: "What role does formative assessment play in monitoring student progress throughout the academic year?",
+            promptTranslation: "Đánh giá quá trình đóng vai trò gì trong việc giám sát sự tiến bộ của học sinh trong suốt năm học?",
+            sampleAnswer: "Formative assessment provides real-time insights into student comprehension, allowing teachers to adjust their teaching strategies immediately and help students identify their learning gaps early.",
+            start: 104,
+            end: 112
         },
         {
             id: "s15",
-            prompt: "What personal qualities make someone a truly good teacher?",
-            promptTranslation: "Những phẩm chất cá nhân nào tạo nên một giáo viên thực sự giỏi?",
-            start: 167,
-            end: 179
+            prompt: "How can English teachers effectively cultivate critical thinking skills through language learning tasks?",
+            promptTranslation: "Làm thế nào giáo viên tiếng Anh có thể trau dồi hiệu quả các kỹ năng tư duy phản biện thông qua các nhiệm vụ học ngôn ngữ?",
+            sampleAnswer: "Teachers can design open-ended discussion questions, encourage students to analyze texts from multiple perspectives, and organize problem-solving group projects instead of simple rote learning.",
+            start: 112,
+            end: 120
         },
         {
             id: "s16",
-            prompt: "How can modern schools encourage students to develop critical thinking skills?",
-            promptTranslation: "Các trường học hiện đại làm thế nào để khuyến khích học sinh phát triển kỹ năng tư duy phản biện?",
-            start: 179,
-            end: 191
+            prompt: "In what ways has the transition to hybrid learning models impacted student engagement and performance?",
+            promptTranslation: "Việc chuyển đổi sang mô hình học tập kết hợp đã tác động đến sự tham gia và kết quả học tập của học sinh theo những cách nào?",
+            sampleAnswer: "Hybrid learning offers flexibility but poses challenges in self-discipline. It requires teachers to use interactive online tools and structured offline tasks to maintain high engagement levels.",
+            start: 120,
+            end: 128
         },
         {
             id: "s17",
-            prompt: "Discuss the long-term impact of artificial intelligence on traditional teaching methods.",
-            promptTranslation: "Thảo luận về tác động lâu dài của trí tuệ nhân tạo đối với các phương pháp giảng dạy truyền thống.",
-            start: 191,
-            end: 203
+            prompt: "How do you design a comprehensive rubric to objectively grade students' creative writing assignments?",
+            promptTranslation: "Bạn thiết kế một tiêu chí đánh giá toàn diện như thế nào để chấm điểm khách quan các bài tập viết sáng tạo của học sinh?",
+            sampleAnswer: "I construct a detailed rubric with clear criteria: content relevance, organization, vocabulary variety, grammatical accuracy, and creativity, assigning specific score ranges to each descriptor.",
+            start: 128,
+            end: 136
         },
         {
             id: "s18",
-            prompt: "What are the primary pedagogical challenges of online learning compared to classroom instruction?",
-            promptTranslation: "Những thách thức sư phạm chính của việc học trực tuyến so với hướng dẫn tại lớp học là gì?",
-            start: 203,
-            end: 215
+            prompt: "What is your strategy for continuous professional development to stay updated with modern pedagogical trends?",
+            promptTranslation: "Chiến lược phát triển chuyên môn liên tục của bạn là gì để luôn cập nhật các xu hướng sư phạm hiện đại?",
+            sampleAnswer: "My strategy involves attending international TESOL webinars, participating in professional learning communities, reading academic journals, and peer-observing lessons to refine my teaching methods.",
+            start: 136,
+            end: 144
         },
         {
             id: "s19",
-            prompt: "How does promoting cultural exchange in schools benefit global international relations?",
-            promptTranslation: "Việc thúc đẩy giao lưu văn hóa trong trường học mang lại lợi ích gì cho các quan hệ quốc tế toàn cầu?",
-            start: 215,
-            end: 227
+            prompt: "Evaluate the pedagogical implications of utilizing generative AI tools in English language education.",
+            promptTranslation: "Đánh giá các hàm ý sư phạm của việc sử dụng các công cụ AI tạo sinh trong giáo dục tiếng Anh.",
+            sampleAnswer: "Generative AI provides personalized learning paths and automated feedback, but it risks fostering academic dishonesty and diminishing authentic student voice if not integrated with critical evaluation frameworks.",
+            start: 144,
+            end: 152
         },
         {
             id: "s20",
-            prompt: "Analyze the positive and negative roles of standardized testing in modern educational systems.",
-            promptTranslation: "Phân tích vai trò tích cực và tiêu cực của các bài kiểm tra chuẩn hóa trong hệ thống giáo dục hiện đại.",
-            start: 227,
-            end: 239
+            prompt: "How should educational policies balance standardized assessment requirements with student-centered learning methodologies?",
+            promptTranslation: "Các chính sách giáo dục nên cân bằng các yêu cầu đánh giá chuẩn hóa với các phương pháp học tập lấy học sinh làm trung tâm như thế nào?",
+            sampleAnswer: "Policies should integrate qualitative assessments alongside standardized tests, allowing schools to prioritize holistic development and soft skills without sacrificing basic academic benchmarks.",
+            start: 152,
+            end: 160
         },
         {
             id: "s21",
-            prompt: "What systemic measures should be implemented to promote lifelong learning among working adults?",
-            promptTranslation: "Những biện pháp có tính hệ thống nào nên được triển khai để thúc đẩy học tập suốt đời ở người trưởng thành đi làm?",
-            start: 239,
-            end: 251
+            prompt: "Analyze the societal impact of English language proficiency on socioeconomic mobility in developing countries.",
+            promptTranslation: "Phân tích tác động xã hội của sự thành thạo tiếng Anh đối với sự di động kinh tế - xã hội ở các nước đang phát triển.",
+            sampleAnswer: "English proficiency serves as a critical catalyst for socioeconomic mobility, unlocking global career opportunities and higher wages, though it may inadvertently widen the inequality gap between urban and rural populations.",
+            start: 160,
+            end: 168
         },
         {
             id: "s22",
             prompt: "In your opinion, how will classrooms and the role of teachers change in the next fifty years?",
             promptTranslation: "Theo bạn, các lớp học và vai trò của giáo viên sẽ thay đổi như thế nào trong 50 năm tới?",
-            start: 251,
-            end: 263
+            sampleAnswer: "As English evolves into a global lingua franca, the ownership of the language shifts to multilingual speakers, systematically dismantling native-speakerism and validating diverse local English varieties in classrooms.",
+            start: 168,
+            end: 176
         }
     ],
     writing: {
@@ -2066,6 +2088,7 @@ function proceedNextSpeakingQuestion() {
     speakingAnswers.push({
         prompt: currentQ.prompt,
         promptTranslation: currentQ.promptTranslation,
+        sampleAnswer: currentQ.sampleAnswer, // Câu trả lời mẫu
         answerText: currentQ.prompt, // Đề bài
         transcript: userVoiceText // Bản dịch thô lấy từ micro
     });
