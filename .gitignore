@@ -26,3 +26,4 @@ Thumbs.db
 .gemini/
 .agent/tasks/
 .agent/workflows/
+/.agent/

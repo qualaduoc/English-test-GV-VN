@@ -55,25 +55,34 @@ const requiredEnvVars = [
 ];
 
 let hasConfigError = false;
+let configErrorMessage = "";
 console.log("\x1b[36m%s\x1b[0m", "[Khởi tạo] Đang kiểm tra cấu hình môi trường bắt buộc...");
 
 requiredEnvVars.forEach(envVar => {
     const val = process.env[envVar.key];
     if (!val || val.trim() === "") {
-        console.error("\x1b[31m%s\x1b[0m", `[LỖI CẤU HÌNH] Thiếu biến môi trường bắt buộc: ${envVar.key} (${envVar.desc})`);
+        const msg = `[LỖI CẤU HÌNH] Thiếu biến môi trường bắt buộc: ${envVar.key} (${envVar.desc})`;
+        console.error("\x1b[31m%s\x1b[0m", msg);
+        configErrorMessage += msg + "\n";
         hasConfigError = true;
     } else if (envVar.key === 'ENCRYPTION_KEY' && val.trim().length !== 32) {
-        console.error("\x1b[31m%s\x1b[0m", `[LỖI CẤU HÌNH] Khóa ENCRYPTION_KEY phải dài ĐÚNG 32 ký tự (Hiện tại: ${val.trim().length} ký tự).`);
+        const msg = `[LỖI CẤU HÌNH] Khóa ENCRYPTION_KEY phải dài ĐÚNG 32 ký tự (Hiện tại: ${val.trim().length} ký tự).`;
+        console.error("\x1b[31m%s\x1b[0m", msg);
+        configErrorMessage += msg + "\n";
         hasConfigError = true;
     }
 });
 
 if (hasConfigError) {
     console.error("\x1b[31m%s\x1b[0m", "\n==============================================================");
-    console.error("\x1b[31m%s\x1b[0m", "💥 KHỞI ĐỘNG THẤT BẠI: Thiếu hoặc sai cấu hình biến môi trường!");
-    console.error("\x1b[31m%s\x1b[0m", "Vui lòng kiểm tra lại file .env (ở local) hoặc cấu hình trên Hosting/Vercel.");
+    console.error("\x1b[31m%s\x1b[0m", "💥 THIẾU HOẶC SAI BIẾN MÔI TRƯỜNG CỐT LÕI!");
+    console.error("\x1b[31m%s\x1b[0m", "Vui lòng kiểm tra lại file .env (ở local) hoặc cấu hình trong Settings -> Environment Variables trên Vercel Dashboard.");
     console.error("\x1b[31m%s\x1b[0m", "==============================================================\n");
-    process.exit(1);
+    
+    // Nếu chạy local, crash server ngay lập tức để nhà phát triển phát hiện
+    if (!process.env.VERCEL) {
+        process.exit(1);
+    }
 }
 
 // Cấu hình mã hóa dữ liệu
@@ -439,7 +448,18 @@ function getCEFRNumericValue(level) {
     return map[level] !== undefined ? map[level] : 0;
 }
 
-const server = http.createServer((req, res) => {
+const requestHandler = (req, res) => {
+    // Nếu có lỗi cấu hình biến môi trường, trả về lỗi 500 chi tiết để hỗ trợ deploy Vercel
+    if (hasConfigError) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ 
+            success: false, 
+            error: 'Lỗi cấu hình hệ thống: Thiếu biến môi trường trên Vercel Dashboard. Vui lòng cấu hình GEMINI_KEYS, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ENCRYPTION_KEY trong Settings -> Environment Variables.',
+            details: configErrorMessage
+        }));
+        return;
+    }
+
     // Chỉ cho phép các ký tự an toàn, tránh Directory Traversal
     const safeUrl = req.url.split('?')[0];
 
@@ -646,11 +666,18 @@ const server = http.createServer((req, res) => {
             res.end(content, 'utf-8');
         }
     });
-});
+};
 
-server.listen(PORT, () => {
-    console.log(`===================================================`);
-    console.log(`  MÁY CHỦ THI MÔ PHỎNG ĐÃ KHỞI CHẠY THÀNH CÔNG!`);
-    console.log(`  Địa chỉ truy cập local: http://localhost:${PORT}`);
-    console.log(`===================================================`);
-});
+// Nếu không chạy trong môi trường Vercel Serverless (chạy local)
+if (!process.env.VERCEL) {
+    const server = http.createServer(requestHandler);
+    server.listen(PORT, () => {
+        console.log(`===================================================`);
+        console.log(`  MÁY CHỦ THI MÔ PHỎNG ĐÃ KHỞI CHẠY THÀNH CÔNG!`);
+        console.log(`  Địa chỉ truy cập local: http://localhost:${PORT}`);
+        console.log(`===================================================`);
+    });
+} else {
+    // Export handler cho Vercel Serverless Function
+    module.exports = requestHandler;
+}
