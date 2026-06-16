@@ -1798,47 +1798,7 @@ function proceedToNextSkillStage() {
 // --- PHẦN 5: HIỆN THỰC HÓA PHÒNG THI NÓI (Speaking) ---
 let speechRecognitionObj = null;
 let speechRecognitionText = "";
-let userWebcamStream = null;
 let isVideoPlayable = true; // Biến kiểm tra video giám khảo có hoạt động được không
-
-// Bật Webcam giáo viên
-function startUserWebcam() {
-    const video = document.getElementById('userWebcam');
-    const placeholder = document.getElementById('userWebcamPlaceholder');
-    
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        .then(stream => {
-            userWebcamStream = stream;
-            if (video) {
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play().catch(e => console.log("Webcam play blocked:", e));
-                };
-            }
-            if (placeholder) placeholder.classList.add('hidden');
-        })
-        .catch(err => {
-            console.warn("[Webcam] Không thể mở camera giáo viên:", err.message);
-            if (placeholder) {
-                placeholder.innerHTML = `<i class="fa-solid fa-video-slash text-[10px] text-rose-500 mb-0.5"></i><span class="text-[8px] text-rose-500 font-semibold">Lỗi mở Camera</span>`;
-            }
-        });
-}
-
-// Tắt Webcam giáo viên
-function stopUserWebcam() {
-    if (userWebcamStream) {
-        userWebcamStream.getTracks().forEach(track => track.stop());
-        userWebcamStream = null;
-    }
-    const video = document.getElementById('userWebcam');
-    if (video) video.srcObject = null;
-    const placeholder = document.getElementById('userWebcamPlaceholder');
-    if (placeholder) {
-        placeholder.classList.remove('hidden');
-        placeholder.innerHTML = `<i class="fa-solid fa-video-slash text-xs mb-0.5"></i><span>Camera đang tắt</span>`;
-    }
-}
 
 // Khởi tạo nhận diện giọng nói tiếng Anh
 function initSpeechRecognition() {
@@ -1879,9 +1839,6 @@ function initSpeakingExam() {
     currentSpeakingQIdx = 0;
     speakingAnswers = [];
     isVideoPlayable = true;
-    
-    // Tự động bật camera giáo viên
-    startUserWebcam();
     
     // Khởi tạo Speech Recognition
     initSpeechRecognition();
@@ -2117,8 +2074,6 @@ function proceedNextSpeakingQuestion() {
     if (currentSpeakingQIdx < adaptiveDb.speaking.length) {
         loadSpeakingQuestion(currentSpeakingQIdx);
     } else {
-        // Tắt Camera giáo viên
-        stopUserWebcam();
         assessSpeakingWithAI();
     }
 }
