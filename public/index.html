@@ -530,8 +530,8 @@
                 <div class="lg:col-span-5 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col justify-between items-center md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
                     <div class="border-b border-slate-800 pb-3 mb-4 w-full text-left flex justify-between items-center">
                         <span id="speakingHeading" class="text-xs font-bold text-slate-300">Question 1</span>
-                        <button onclick="toggleSpeakingTranslation()" class="btn-translate-toggle">
-                            <i class="fa-solid fa-language"></i> Dịch câu hỏi
+                        <button id="btnSubtitleToggle" onclick="cycleSubtitleMode()" class="btn-translate-toggle flex items-center gap-1 text-[10px] bg-slate-800 border border-slate-700 hover:bg-slate-700 text-sky-400 px-2.5 py-1 rounded transition">
+                            <i class="fa-solid fa-closed-captioning"></i> Phụ đề: Song ngữ
                         </button>
                     </div>
 
@@ -554,8 +554,11 @@
                         </div>
                     </div>
 
-                    <!-- Nút dừng thu âm sớm -->
-                    <div class="border-t border-slate-800 pt-4 w-full flex justify-end">
+                    <!-- Bảng điều khiển thi nói -->
+                    <div class="border-t border-slate-800 pt-4 w-full flex justify-between gap-3">
+                        <button id="btnSpeakingReplay" onclick="replaySpeakingQuestion()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-amber-400 font-bold text-xs rounded-lg transition uppercase tracking-widest flex items-center gap-1.5 border border-amber-500/25">
+                            <i class="fa-solid fa-rotate-left"></i> Nghe lại câu hỏi
+                        </button>
                         <button id="btnSpeakingAction" onclick="stopSpeakingRecordAction()" disabled class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-30 text-white font-bold text-xs rounded-lg transition uppercase tracking-widest flex items-center gap-1.5">
                             <i class="fa-solid fa-circle-stop"></i> Dừng thu âm sớm
                         </button>

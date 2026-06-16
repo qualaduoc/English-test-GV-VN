@@ -208,6 +208,7 @@ Do not include any markdown format like \`\`\`json outside the JSON object.`;
     } else if (skill === 'speaking') {
         systemInstruction = `You are an expert IELTS and CEFR English Speaking examiner.
 Analyze the transcripts of the teacher's answers to the speaking questions.
+Also pay attention to the "Replays" (Số lần nghe lại câu hỏi) for each question. If the teacher has many replays, it suggests listening comprehension issues. Provide appropriate advice in overallFeedbackVi and overallFeedbackEn.
 Evaluate the speaking performance based on 3 criteria:
 1. Fluency and Coherence (Độ trôi chảy)
 2. Lexical Resource (Từ vựng)
@@ -230,7 +231,7 @@ Do not include any markdown format like \`\`\`json outside the JSON object.`;
         let answersFormatted = "";
         if (Array.isArray(studentAnswer)) {
             studentAnswer.forEach((ans, idx) => {
-                answersFormatted += `Question ${idx + 1}: ${ans.prompt}\nSample Answer (Gợi ý chuẩn): ${ans.sampleAnswer || ''}\nAnswer Transcript (Thí sinh trả lời): ${ans.transcript || ''}\n\n`;
+                answersFormatted += `Question ${idx + 1}: ${ans.prompt}\nSample Answer (Gợi ý chuẩn): ${ans.sampleAnswer || ''}\nAnswer Transcript (Thí sinh trả lời): ${ans.transcript || ''}\nReplays (Số lần nghe lại): ${ans.replays || 0}\n\n`;
             });
         } else {
             answersFormatted = studentAnswer;
