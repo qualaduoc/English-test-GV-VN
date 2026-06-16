@@ -1066,9 +1066,9 @@ function renderLeaderboardTable(data) {
         const displayName = maskedPhone ? `${item.teacher_name} (${maskedPhone})` : item.teacher_name;
 
         html += `
-            <tr class="hover:bg-slate-800/10 transition duration-150">
+            <tr class="hover:bg-slate-800/20 transition duration-150 cursor-pointer" onclick="showTeacherStatsModal('${item.phone}', '${item.teacher_name}')" title="Bấm để xem chi tiết thời gian suy nghĩ của Thầy/Cô ${item.teacher_name}">
                 <td class="py-2.5 font-bold text-center">${rankIcon}</td>
-                <td class="py-2.5 font-semibold text-slate-350 truncate max-w-[120px]" title="${item.teacher_name}${maskedPhone ? ' - SĐT: ' + maskedPhone : ''}">${displayName}</td>
+                <td class="py-2.5 font-semibold text-slate-350 truncate max-w-[120px] text-blue-400 hover:underline" title="${item.teacher_name}${maskedPhone ? ' - SĐT: ' + maskedPhone : ''}">${displayName}</td>
                 <td class="py-2.5 text-center"><span class="px-1.5 py-0.5 rounded text-[10px] ${overallBadge}">${item.highest_overall_cefr || "N/A"}</span></td>
                 <td class="py-2.5 text-right font-mono text-slate-400 pr-2">${item.attempts_count || 1}</td>
             </tr>
@@ -1094,6 +1094,183 @@ function filterLeaderboard(query) {
         return nameMatch || phoneMatch;
     });
     renderLeaderboardTable(filtered);
+}
+
+// Biến lưu trữ dữ liệu thời gian suy nghĩ cho Modal popup
+let modalTimeStatsData = [];
+let currentModalTeacherName = "";
+
+// Hiển thị Modal chi tiết thời gian suy nghĩ của giáo viên khi click bảng vinh danh
+function showTeacherStatsModal(phone, teacherName) {
+    if (!phone) return;
+    
+    currentModalTeacherName = teacherName;
+    const modal = document.getElementById('teacherStatsModal');
+    const nameEl = document.getElementById('modalTeacherName');
+    const tbody = document.getElementById('modalTimeStatsBody');
+    
+    if (!modal || !nameEl || !tbody) return;
+    
+    nameEl.innerText = teacherName;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-4"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Đang tải dữ liệu thời gian từ máy chủ...</td></tr>`;
+    modal.classList.remove('hidden');
+    
+    fetch(`/api/teacher-time-stats?phone=${encodeURIComponent(phone)}`)
+    .then(res => res.json())
+    .then(res => {
+        if (res.success && Array.isArray(res.data)) {
+            modalTimeStatsData = res.data;
+            renderModalStatsTable(modalTimeStatsData);
+        } else {
+            throw new Error(res.error || "Không thể tải dữ liệu");
+        }
+    })
+    .catch(err => {
+        console.error("[Modal Stats] Lỗi khi tải thời gian suy nghĩ:", err);
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-rose-500 py-4">Gặp lỗi khi tải dữ liệu thời gian của giáo viên này. Có thể chưa có lượt thi chính thức nào được lưu.</td></tr>`;
+    });
+}
+
+// Render dữ liệu thời gian vào bảng trong Modal
+function renderModalStatsTable(stats) {
+    const tbody = document.getElementById('modalTimeStatsBody');
+    if (!tbody) return;
+    
+    // Bản dịch kỹ năng sang tiếng Việt để hiển thị thân thiện
+    const skillTranslations = {
+        "Reading": "Đọc (Reading)",
+        "Listening": "Nghe (Listening)",
+        "Speaking": "Nói (Speaking)",
+        "Writing": "Viết (Writing)"
+    };
+    
+    // Bản dịch level sang tiếng Việt
+    const levelTranslations = (skill, level) => {
+        if (skill === "Speaking") return "IELTS Speaking Format";
+        if (skill === "Writing") return "IELTS Writing Task 2";
+        // Đối với Reading/Listening thích ứng
+        return level; 
+    };
+
+    // Bản dịch câu hỏi
+    const questionTranslations = (skill, q) => {
+        if (skill === "Writing") return "Bài viết luận";
+        if (q.startsWith("Q")) {
+            return `Câu hỏi ${q.slice(1)}`;
+        }
+        return q;
+    };
+
+    let html = "";
+    
+    // Sao chép mảng để sắp xếp giảm dần theo thời gian
+    let sortedStats = [...stats];
+    sortedStats.sort((a, b) => b.time - a.time);
+
+    sortedStats.forEach(item => {
+        const m = Math.floor(item.time / 60);
+        const s = item.time % 60;
+        const timeStr = `${m}m ${s}s`;
+        
+        let difficulty = "Dễ";
+        let diffBadge = "bg-green-500/10 text-green-400 border border-green-500/25 px-2 py-0.5 rounded";
+        if (item.time > 90) {
+            difficulty = "Rất Khó";
+            diffBadge = "bg-rose-500/10 text-rose-400 border border-rose-500/25 px-2 py-0.5 rounded animate-pulse";
+        } else if (item.time > 45) {
+            difficulty = "Trung Binh";
+            diffBadge = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25 px-2 py-0.5 rounded";
+        }
+
+        const transSkill = skillTranslations[item.skill] || item.skill;
+        const transLevel = levelTranslations(item.skill, item.level);
+        const transQ = questionTranslations(item.skill, item.question);
+
+        html += `
+            <tr class="hover:bg-slate-800/20 transition duration-150">
+                <td class="font-bold text-slate-350 py-3">${transSkill}</td>
+                <td class="text-slate-400 py-3">${transLevel}</td>
+                <td class="font-semibold text-blue-400 py-3">${transQ}</td>
+                <td class="py-3"><span class="badge-time-highlight font-mono">${timeStr}</span></td>
+                <td class="py-3"><span class="${diffBadge} text-[10px] font-bold">${difficulty}</span></td>
+            </tr>
+        `;
+    });
+
+    if (sortedStats.length === 0) {
+        html = `<tr><td colspan="5" class="text-center text-slate-500 py-4 italic">Giáo viên này chưa có dữ liệu chi tiết từng câu hỏi.</td></tr>`;
+    }
+
+    tbody.innerHTML = html;
+}
+
+// Đóng Modal popup
+function closeTeacherStatsModal() {
+    const modal = document.getElementById('teacherStatsModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// Xuất dữ liệu từ Modal ra file Excel (CSV)
+function exportModalTimeStatsToExcel() {
+    if (!modalTimeStatsData || modalTimeStatsData.length === 0) {
+        alert("Chưa có dữ liệu làm bài để xuất báo cáo!");
+        return;
+    }
+
+    // Bản dịch tương tự
+    const skillTranslations = {
+        "Reading": "Đọc (Reading)",
+        "Listening": "Nghe (Listening)",
+        "Speaking": "Nói (Speaking)",
+        "Writing": "Viết (Writing)"
+    };
+    
+    const levelTranslations = (skill, level) => {
+        if (skill === "Speaking") return "IELTS Speaking Format";
+        if (skill === "Writing") return "IELTS Writing Task 2";
+        return level; 
+    };
+
+    const questionTranslations = (skill, q) => {
+        if (skill === "Writing") return "Bài viết luận";
+        if (q.startsWith("Q")) return `Câu hỏi ${q.slice(1)}`;
+        return q;
+    };
+
+    let csvContent = "\uFEFF"; // UTF-8 BOM
+    csvContent += "Kỹ năng,Cấp độ / Phần thi,Câu hỏi,Thời gian trả lời (giây),Độ khó tương đối\n";
+
+    let sortedStats = [...modalTimeStatsData];
+    sortedStats.sort((a, b) => b.time - a.time);
+
+    sortedStats.forEach(item => {
+        const transSkill = skillTranslations[item.skill] || item.skill;
+        const transLevel = levelTranslations(item.skill, item.level);
+        const transQ = questionTranslations(item.skill, item.question);
+
+        let difficulty = "Dễ";
+        if (item.time > 90) difficulty = "Rất Khó";
+        else if (item.time > 45) difficulty = "Trung Binh";
+
+        const skillStr = `"${transSkill.replace(/"/g, '""')}"`;
+        const levelStr = `"${transLevel.replace(/"/g, '""')}"`;
+        const qStr = `"${transQ.replace(/"/g, '""')}"`;
+        
+        csvContent += `${skillStr},${levelStr},${qStr},${item.time},${difficulty}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    // Tên file thân thiện chứa tên giáo viên
+    const safeName = removeVietnameseTones(currentModalTeacherName).replace(/\s+/g, '_');
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Bao_cao_thoi_gian_${safeName}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // Khởi chạy hệ thống mặc định

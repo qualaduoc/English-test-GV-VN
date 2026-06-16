@@ -604,9 +604,75 @@ async function handleRegisterTeacher(req, res) {
     });
 }
 
+// Lấy chi tiết thời gian suy nghĩ của giáo viên
+async function handleTeacherTimeStats(req, res) {
+    if (checkConfigError(res)) return;
+    if (req.method !== 'GET') {
+        res.writeHead(405, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+        return;
+    }
+
+    const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const phone = parsedUrl.searchParams.get('phone');
+    if (!phone) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, error: 'Thiếu số điện thoại' }));
+        return;
+    }
+
+    try {
+        const url = `${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${encodeURIComponent(phone)}&order=created_at.desc&limit=1`;
+        const targetUrl = new URL(url);
+        
+        const options = {
+            hostname: targetUrl.hostname,
+            path: targetUrl.pathname + targetUrl.search,
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
+            timeout: 5000
+        };
+
+        const getReq = https.request(options, (getRes) => {
+            let data = '';
+            getRes.on('data', chunk => data += chunk);
+            getRes.on('end', () => {
+                if (getRes.statusCode === 200) {
+                    const records = JSON.parse(data);
+                    if (records.length > 0) {
+                        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                        res.end(JSON.stringify({ success: true, data: records[0].time_stats }));
+                    } else {
+                        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                        res.end(JSON.stringify({ success: true, data: [] }));
+                    }
+                } else {
+                    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(JSON.stringify({ success: false, error: `Lỗi kết nối Supabase: ${getRes.statusCode}` }));
+                }
+            });
+        });
+
+        getReq.on('error', err => {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+        });
+        getReq.end();
+
+    } catch (error) {
+        console.error("[API teacher-time-stats] Lỗi:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, error: error.message || 'Lỗi hệ thống' }));
+    }
+}
+
 module.exports = {
     handleAssess,
     handleSaveResult,
     handleLeaderboard,
-    handleRegisterTeacher
+    handleRegisterTeacher,
+    handleTeacherTimeStats
 };
