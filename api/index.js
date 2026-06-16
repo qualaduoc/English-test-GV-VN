@@ -654,41 +654,38 @@ const requestHandler = (req, res) => {
         return;
     }
 
-    // serve file tĩnh chỉ khi chạy ở môi trường LOCAL
-    if (!process.env.VERCEL) {
-        let filePath = path.join(__dirname, '..', safeUrl === '/' ? 'index.html' : safeUrl);
-        
-        // Kiểm tra xem file có nằm ngoài thư mục root không (chống Directory Traversal)
-        const rootPath = path.join(__dirname, '..');
-        if (!filePath.startsWith(rootPath)) {
-            res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-            res.end('Truy cập bị cấm (Forbidden)');
-            return;
-        }
-
-        const ext = path.extname(filePath).toLowerCase();
-        
-        fs.readFile(filePath, (err, content) => {
-            if (err) {
-                if (err.code === 'ENOENT') {
-                    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-                    res.end('<h1>404 Không Tìm Thấy File</h1><p>Vui lòng kiểm tra lại đường dẫn.</p>', 'utf-8');
-                } else {
-                    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-                    res.end(`Lỗi hệ thống: ${err.code}`);
-                }
-            } else {
-                res.writeHead(200, { 
-                    'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-                    'Cache-Control': 'no-store, no-cache, must-revalidate, private' // Không cache để dễ test local
-                });
-                res.end(content, 'utf-8');
-            }
-        });
-    } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('404 Không Tìm Thấy');
+    // Serve file tĩnh cho cả local và Vercel (nếu Vercel định tuyến file tĩnh vào function này)
+    let filePath = path.join(__dirname, '..', safeUrl === '/' ? 'index.html' : safeUrl);
+    
+    // Kiểm tra xem file có nằm ngoài thư mục root không (chống Directory Traversal)
+    const rootPath = path.join(__dirname, '..');
+    if (!filePath.startsWith(rootPath)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Truy cập bị cấm (Forbidden)');
+        return;
     }
+
+    const ext = path.extname(filePath).toLowerCase();
+    
+    fs.readFile(filePath, (err, content) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+                res.end('<h1>404 Không Tìm Thấy File</h1><p>Vui lòng kiểm tra lại đường dẫn.</p>', 'utf-8');
+            } else {
+                res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+                res.end(`Lỗi hệ thống: ${err.code}`);
+            }
+        } else {
+            res.writeHead(200, { 
+                'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+                'Cache-Control': process.env.VERCEL 
+                    ? 'public, max-age=3600' // Cho phép cache ở Vercel CDN để tăng tốc
+                    : 'no-store, no-cache, must-revalidate, private' // Không cache ở local để dễ dev
+            });
+            res.end(content, 'utf-8');
+        }
+    });
 };
 
 module.exports = requestHandler;
