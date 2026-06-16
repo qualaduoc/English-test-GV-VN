@@ -1,6 +1,7 @@
 // --- MODULE CHẤM ĐIỂM & REVIEW BÀI THI ---
 // --- PHẦN 7: THUẬT TOÁN TÍNH ĐIỂM CEFR TỔNG HỢP & DASHBOARD ---
 function calculateFinalScoresAndShowDashboard() {
+    window.onbeforeunload = null; // Gỡ bỏ chặn reload trang khi đã hoàn thành bài thi
     // writingFinalLevel đã được chấm bởi AI hoặc fallback từ hàm assessWritingWithAI
 
     const rVal = getCEFRNumericValue(readingAdaptive.finalLevel);

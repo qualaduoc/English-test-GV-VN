@@ -2,6 +2,7 @@
 
 // --- BIẾN QUẢN LÝ TRẠNG THÁI ---
 let currentSkill = "reading"; // reading, listening, speaking, writing
+let examMode = "practice"; // practice: trải nghiệm, strict: nghiêm túc
 let appState = "landing"; // landing, instruction, active_test, summary, review
 let teacherName = "Giáo viên phổ thông";
 let teacherPhone = "";
@@ -169,6 +170,21 @@ function startTestFlow() {
     
     teacherName = inputName;
     teacherPhone = inputPhone;
+    
+    // Đọc chế độ khảo sát được chọn
+    const selectedMode = document.querySelector('input[name="testMode"]:checked');
+    examMode = selectedMode ? selectedMode.value : "practice";
+    
+    // Nếu là chế độ nghiêm túc, gán sự kiện chặn thoát trang/reload
+    if (examMode === 'strict') {
+        window.onbeforeunload = function(e) {
+            const message = "Thầy/Cô đang trong phòng khảo sát nghiêm túc. Tải lại trang hoặc rời đi sẽ làm mất toàn bộ bài thi!";
+            e.returnValue = message;
+            return message;
+        };
+    } else {
+        window.onbeforeunload = null;
+    }
     
     // Cập nhật hiển thị lên Header
     document.getElementById('userDisplayName').innerText = `Thầy/Cô ${teacherName}`;
@@ -476,7 +492,21 @@ function adjustTextScale(val) {
 }
 
 function triggerBackWarning() {
-    showSimpleWarning("Không thể thoát", "Thầy/Cô đang trong phòng thi chính thức. Theo quy chế khảo sát, Thầy/Cô không được rời phòng thi khi chưa nộp bài hoặc chưa hết thời gian.");
+    if (examMode === 'strict') {
+        showStrictWarning();
+    } else {
+        logoutToLanding();
+    }
+}
+
+function showStrictWarning() {
+    const modal = document.getElementById('modalStrictWarning');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeStrictWarning() {
+    const modal = document.getElementById('modalStrictWarning');
+    if (modal) modal.classList.add('hidden');
 }
 
 function showSimpleWarning(title, desc) {
@@ -490,10 +520,16 @@ function closeSimpleWarning() {
 }
 
 function logoutToLanding() {
+    if (examMode === 'strict' && appState === 'active_test') {
+        showStrictWarning();
+        return;
+    }
+
     clearInterval(headerTimerObj);
     clearInterval(speakingRingInterval);
     stopActiveAudio();
     clearProgressFromLocalStorage();
+    window.onbeforeunload = null; // Gỡ bỏ chặn reload trang khi thực sự thoát
 
     teacherName = "Giáo viên phổ thông";
     teacherPhone = "";
@@ -510,6 +546,11 @@ function logoutToLanding() {
     document.getElementById('btnTechieNext').innerText = "Nhấn để tiếp tục";
     document.getElementById('btnTechieNext').classList.remove('hidden');
     document.getElementById('btnStartTest').classList.remove('hidden');
+    
+    // Reset radio button testMode
+    const modePractice = document.getElementById('modePractice');
+    if (modePractice) modePractice.checked = true;
+
     loadLeaderboard();
 }
 

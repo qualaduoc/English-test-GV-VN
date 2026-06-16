@@ -239,7 +239,48 @@
                                 <input type="text" id="inputTeacherPhone" placeholder="SĐT (định danh)..." class="w-full px-3.5 py-2.5 bg-[#0b0f19] border border-slate-750 focus:border-blue-500 rounded-xl text-slate-200 text-xs focus:outline-none transition placeholder-slate-500">
                             </div>
                         </div>
-                        <button onclick="startTestFlow()" id="btnStartTest" class="px-8 py-3.5 btn-grad text-white font-bold rounded-xl transition flex items-center space-x-2 text-sm animate-fadeIn">
+
+                        <!-- LỰA CHỌN CHẾ ĐỘ KHẢO SÁT -->
+                        <div class="space-y-2 w-full max-w-sm animate-fadeIn">
+                            <span class="text-xs text-slate-400 font-bold block">
+                                <i class="fa-solid fa-graduation-cap text-blue-400 mr-1.5"></i>Chọn chế độ khảo sát:
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                                <!-- Chế độ Trải nghiệm -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="testMode" value="practice" checked id="modePractice" class="peer sr-only">
+                                    <div class="p-3 bg-[#0b0f19] border border-slate-800 rounded-xl peer-checked:border-blue-500 peer-checked:bg-blue-950/20 hover:border-slate-700 transition flex flex-col space-y-1 select-none h-full">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[11px] font-black text-slate-200 peer-checked:text-blue-400 flex items-center gap-1">
+                                                <i class="fa-solid fa-leaf text-teal-400"></i> TRẢI NGHIỆM
+                                            </span>
+                                            <div class="h-3 w-3 rounded-full border border-slate-750 flex items-center justify-center peer-checked:border-blue-500">
+                                                <div class="h-1.5 w-1.5 rounded-full bg-transparent peer-checked:bg-blue-500"></div>
+                                            </div>
+                                        </div>
+                                        <p class="text-[9px] text-slate-400 leading-normal">Cho phép tự do thoát phòng, nghe lại câu hỏi và chuyển kỹ năng tùy ý.</p>
+                                    </div>
+                                </label>
+
+                                <!-- Chế độ Nghiêm túc -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="testMode" value="strict" id="modeStrict" class="peer sr-only">
+                                    <div class="p-3 bg-[#0b0f19] border border-slate-800 rounded-xl peer-checked:border-rose-500 peer-checked:bg-rose-950/20 hover:border-slate-700 transition flex flex-col space-y-1 select-none h-full">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[11px] font-black text-slate-200 peer-checked:text-rose-450 flex items-center gap-1">
+                                                <i class="fa-solid fa-gavel text-rose-500 animate-pulse"></i> NGHIÊM TÚC
+                                            </span>
+                                            <div class="h-3 w-3 rounded-full border border-slate-750 flex items-center justify-center peer-checked:border-rose-500">
+                                                <div class="h-1.5 w-1.5 rounded-full bg-transparent peer-checked:bg-rose-500"></div>
+                                            </div>
+                                        </div>
+                                        <p class="text-[9px] text-slate-400 leading-normal"><strong class="text-rose-400">Không cho phép thoát</strong> khỏi phòng thi hoặc đóng tab khi chưa nộp bài.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button onclick="startTestFlow()" id="btnStartTest" class="px-8 py-3.5 btn-grad text-white font-bold rounded-xl transition flex items-center space-x-2 text-sm animate-fadeIn w-full sm:w-auto justify-center">
                             <span>Bắt đầu khảo sát thích ứng</span>
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
@@ -909,6 +950,28 @@
             <div class="text-[10px] text-slate-500 font-mono">
                 Đang bảo mật dữ liệu & phân tích CEFR/IELTS...
             </div>
+        </div>
+    </div>
+
+    <!-- 5. Hộp thoại cảnh báo quy chế thi nghiêm khắc (Strict Mode Warning) -->
+    <div id="modalStrictWarning" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-[#141b2d] border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl animate-scaleUp">
+            <div class="mx-auto flex items-center justify-center">
+                <div class="h-14 w-14 rounded-full border-4 border-amber-500/20 flex items-center justify-center bg-amber-500/10 shadow-inner">
+                    <i class="fa-solid fa-triangle-exclamation text-xl text-amber-500 animate-bounce"></i>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <h3 class="text-sm font-extrabold text-white uppercase tracking-wider">Không thể thoát</h3>
+                <p class="text-xs text-slate-400 leading-relaxed px-2">
+                    Thầy/Cô đang trong phòng thi chính thức. Theo quy chế khảo sát, Thầy/Cô không được rời phòng thi khi chưa nộp bài hoặc chưa hết thời gian.
+                </p>
+            </div>
+            
+            <button onclick="closeStrictWarning()" class="w-full py-2.5 bg-[#0b0f19] hover:bg-[#121829] border border-slate-800 hover:border-slate-750 text-slate-200 text-xs font-bold rounded-lg transition active:scale-[0.98]">
+                Đã hiểu
+            </button>
         </div>
     </div>
 
