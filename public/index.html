@@ -507,18 +507,14 @@
             <!-- SCREEN 4: SPEAKING ROOM (Giám khảo ảo) -->
             <div id="screen-test-speaking" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
                 
-                <!-- Cột trái: Trình phát câu hỏi từ Giám khảo -->
-                <div class="lg:col-span-7 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
-                    <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-400">Virtual Examiner (Giám khảo ảo)</span>
-                        <span class="text-[10px] text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/25">IELTS Speaking Format</span>
-                    </div>
-
-                    <!-- Trình chiếu video câu hỏi của Giám khảo ảo -->
-                    <div class="flex-1 bg-[#090d16] border border-slate-800 rounded-xl relative overflow-hidden flex items-center justify-center">
+                <!-- Cột trái: Trình phát câu hỏi từ Giám khảo (Tăng tỷ lệ từ col-span-7 lên col-span-8) -->
+                <div class="lg:col-span-8 bg-[#0b0f19] border border-slate-800 rounded-xl p-3 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                    
+                    <!-- Trình chiếu video câu hỏi của Giám khảo ảo (Không có header text rườm rà như giao diện gốc) -->
+                    <div class="flex-1 bg-[#090d16] border border-slate-800/80 rounded-lg relative overflow-hidden flex items-center justify-center">
                         <div id="speakingVideoFrame" class="w-full h-full relative flex items-center justify-center bg-slate-950">
                             <!-- Thẻ video giám khảo thực tế (play/pause tự động) -->
-                            <video id="examinerVideo" class="w-full h-full object-cover rounded-lg" playsinline></video>
+                            <video id="examinerVideo" class="w-full h-full object-cover rounded-md" playsinline></video>
                             
                             <!-- Giao diện placeholder dự phòng nếu video chưa load hoặc lỗi -->
                             <div id="examinerVideoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-900/90 text-center space-y-4">
@@ -530,7 +526,7 @@
                             </div>
 
                             <!-- Phụ đề câu hỏi giám khảo đang hỏi (có thể dịch tiếng Việt) -->
-                            <div class="absolute bottom-3 left-3 right-3 bg-black/70 backdrop-blur-sm border border-slate-800 p-2.5 rounded-lg z-20 space-y-1">
+                            <div class="absolute bottom-3 left-3 right-3 bg-black/70 backdrop-blur-sm border border-slate-800/60 p-2.5 rounded-lg z-20 space-y-1">
                                 <p id="speakingQuestionTranscript" class="text-xs text-sky-350 font-semibold italic text-center leading-relaxed">
                                     "Please listen to the question."
                                 </p>
@@ -552,56 +548,67 @@
                                     Đang lắng nghe...
                                 </p>
                             </div>
+
+                            <!-- Thanh tiến trình phát video Speaking giống như giao diện gốc -->
+                            <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-900/60 z-30 flex items-center">
+                                <div id="speakingVideoProgressBar" class="h-full bg-blue-500 w-0 transition-all duration-100"></div>
+                            </div>
+                            <div class="absolute bottom-2 left-3 text-[10px] text-slate-300 bg-black/60 px-1.5 py-0.5 rounded z-30 font-mono" id="speakingVideoTimeLabel">
+                                00:00 / 00:00
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Thanh danh sách câu hỏi Nói ở góc dưới (22 câu) -->
-                    <div class="border-t border-slate-800 pt-4 mt-4">
-                        <div class="flex items-center justify-between text-[10px] text-slate-400 mb-2">
-                            <span>DANH SÁCH CÂU HỎI THI NÓI</span>
+                    <!-- Thanh danh sách câu hỏi Nói ở góc dưới (22 câu) thiết kế ngang sẫm màu y như app gốc -->
+                    <div class="border-t border-slate-800/80 pt-3 mt-3">
+                        <div class="flex items-center justify-between text-[10px] text-slate-450 mb-1.5 px-1">
+                            <span class="font-bold">DANH SÁCH CÂU HỎI THI NÓI</span>
                             <span id="speakingProgressText" class="font-bold text-sky-400">Đang thực hiện: Câu 01 / 22</span>
                         </div>
-                        <div class="flex gap-1 overflow-x-auto pb-1 max-w-full" id="speakingQuestionSelector">
+                        <div class="bg-[#0b0f19] border border-slate-800/60 rounded-lg p-2 flex gap-1 overflow-x-auto max-w-full" id="speakingQuestionSelector">
                             <!-- 22 câu hỏi dạng số sẽ được inject động từ JS -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Cột phải: Đồng hồ đếm ngược Prep / Recording -->
-                <div class="lg:col-span-5 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col justify-between items-center md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
-                    <div class="border-b border-slate-800 pb-3 mb-4 w-full text-left flex justify-between items-center">
+                <!-- Cột phải: Đồng hồ đếm ngược Prep / Recording (Đổi sang col-span-4 và thiết kế tối giản) -->
+                <div class="lg:col-span-4 bg-[#0e1322] border border-slate-800 rounded-xl p-4 flex flex-col justify-between items-center md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                    <div class="border-b border-slate-800/80 pb-3 mb-4 w-full text-left flex justify-between items-center">
                         <span id="speakingHeading" class="text-xs font-bold text-slate-300">Question 1</span>
                         <button id="btnSubtitleToggle" onclick="cycleSubtitleMode()" class="btn-translate-toggle flex items-center gap-1 text-[10px] bg-slate-800 border border-slate-700 hover:bg-slate-700 text-sky-400 px-2.5 py-1 rounded transition">
                             <i class="fa-solid fa-closed-captioning"></i> Phụ đề: Song ngữ
                         </button>
                     </div>
 
-                    <!-- Vòng tròn đếm ngược chuẩn bị/ghi âm -->
-                    <div class="flex-1 flex flex-col items-center justify-center space-y-6">
-                        <div class="ring-container">
-                            <svg class="ring-svg" width="150" height="150">
-                                <circle cx="75" cy="75" r="65" stroke="#1c263e" stroke-width="8" fill="transparent"/>
-                                <circle id="speakingRingCircle" class="ring-circle" cx="75" cy="75" r="65" stroke="#f59e0b" stroke-dasharray="408.4" stroke-dashoffset="408.4" stroke-width="8" fill="transparent" stroke-linecap="round"/>
+                    <!-- Vòng tròn đếm ngược chuẩn bị/ghi âm giống 100% app gốc (Vòng tròn mảnh, icon Mic ở giữa) -->
+                    <div class="flex-1 flex flex-col items-center justify-center space-y-5">
+                        <div class="relative h-[130px] w-[130px] flex items-center justify-center">
+                            <svg class="absolute inset-0" width="130" height="130" viewBox="0 0 130 130">
+                                <circle cx="65" cy="65" r="56" stroke="#1c263e" stroke-width="4" fill="transparent"/>
+                                <circle id="speakingRingCircle" class="ring-circle" cx="65" cy="65" r="56" stroke="#f59e0b" stroke-dasharray="351.8" stroke-dashoffset="0" stroke-width="4" fill="transparent" stroke-linecap="round"/>
                             </svg>
-                            <div class="absolute inset-0 flex items-center justify-center flex-col">
-                                <i id="speakingRingIcon" class="fa-solid fa-hourglass-start text-amber-500 text-2xl mb-1.5"></i>
-                                <span id="speakingRingTimer" class="font-mono text-lg font-black text-white">00:05</span>
+                            
+                            <!-- Icon micro ở giữa vòng tròn -->
+                            <div id="speakingCenterMicBg" class="h-14 w-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center z-10 transition duration-300">
+                                <i id="speakingRingIcon" class="fa-solid fa-hourglass-start text-lg text-amber-500"></i>
                             </div>
                         </div>
 
-                        <div class="text-center space-y-1.5 px-4">
-                            <h3 id="speakingStateTitle" class="text-sm font-extrabold text-amber-500 uppercase tracking-widest">Preparation...</h3>
-                            <p id="speakingStateDesc" class="text-xs text-slate-400 max-w-xs leading-relaxed">Chuẩn bị ý kiến của bạn trong 5 giây trước khi tự động thu âm.</p>
+                        <!-- Thời gian đếm ngược và nhãn trạng thái nằm ở dưới vòng tròn -->
+                        <div class="text-center space-y-1 px-4">
+                            <span id="speakingRingTimer" class="font-mono text-2xl font-black text-white tracking-wider">00:00:05</span>
+                            <h3 id="speakingStateTitle" class="text-xs font-black text-amber-500 uppercase tracking-widest">Preparation...</h3>
+                            <p id="speakingStateDesc" class="text-[10px] text-slate-400 max-w-xs leading-relaxed hidden">Chuẩn bị ý kiến của bạn trong 5 giây trước khi tự động thu âm.</p>
                         </div>
                     </div>
 
-                    <!-- Bảng điều khiển thi nói -->
-                    <div class="border-t border-slate-800 pt-4 w-full flex justify-between gap-3">
-                        <button id="btnSpeakingReplay" onclick="replaySpeakingQuestion()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-amber-400 font-bold text-xs rounded-lg transition uppercase tracking-widest flex items-center gap-1.5 border border-amber-500/25">
-                            <i class="fa-solid fa-rotate-left"></i> Nghe lại câu hỏi
+                    <!-- Bảng điều khiển thi nói tối giản căn giữa -->
+                    <div class="border-t border-slate-800/80 pt-4 w-full flex flex-col items-center gap-3">
+                        <button id="btnSpeakingAction" onclick="stopSpeakingRecordAction()" disabled class="px-8 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-30 disabled:pointer-events-none text-white font-extrabold text-xs rounded-full transition uppercase tracking-widest flex items-center justify-center gap-1.5 w-full max-w-[180px]">
+                            <i class="fa-solid fa-microphone-slash"></i> Dừng thu âm
                         </button>
-                        <button id="btnSpeakingAction" onclick="stopSpeakingRecordAction()" disabled class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-30 text-white font-bold text-xs rounded-lg transition uppercase tracking-widest flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-stop"></i> Dừng thu âm sớm
+                        <button id="btnSpeakingReplay" onclick="replaySpeakingQuestion()" class="text-[10px] text-amber-500 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> Nghe lại câu hỏi thi
                         </button>
                     </div>
                 </div>

@@ -47,6 +47,27 @@ function initSpeakingExam() {
     // Khởi tạo Speech Recognition
     initSpeechRecognition();
     
+    // Gán sự kiện timeupdate cho video phát câu hỏi
+    const exVideo = document.getElementById('examinerVideo');
+    if (exVideo) {
+        exVideo.ontimeupdate = () => {
+            const progressBar = document.getElementById('speakingVideoProgressBar');
+            const timeLabel = document.getElementById('speakingVideoTimeLabel');
+            if (exVideo.duration) {
+                const progress = (exVideo.currentTime / exVideo.duration) * 100;
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                
+                const curM = Math.floor(exVideo.currentTime / 60);
+                const curS = Math.floor(exVideo.currentTime % 60);
+                const durM = Math.floor(exVideo.duration / 60);
+                const durS = Math.floor(exVideo.duration % 60);
+                if (timeLabel) {
+                    timeLabel.innerText = `${curM.toString().padStart(2, '0')}:${curS.toString().padStart(2, '0')} / ${durM.toString().padStart(2, '0')}:${durS.toString().padStart(2, '0')}`;
+                }
+            }
+        };
+    }
+    
     loadSpeakingQuestion(0);
 }
 
@@ -57,12 +78,18 @@ function loadSpeakingQuestion(idx) {
 
     speakingReplays = 0; // Reset số lần nghe lại cho câu hỏi mới
 
+    // Reset thanh tiến trình video
+    const progressBar = document.getElementById('speakingVideoProgressBar');
+    const timeLabel = document.getElementById('speakingVideoTimeLabel');
+    if (progressBar) progressBar.style.width = "0%";
+    if (timeLabel) timeLabel.innerText = "00:00 / 00:00";
+
     const btnReplay = document.getElementById('btnSpeakingReplay');
     if (btnReplay) {
         if (examMode === 'strict') {
-            btnReplay.disabled = true;
-            btnReplay.classList.add('opacity-30', 'pointer-events-none');
+            btnReplay.classList.add('hidden');
         } else {
+            btnReplay.classList.remove('hidden');
             btnReplay.disabled = false;
             btnReplay.classList.remove('opacity-30', 'pointer-events-none');
         }
@@ -187,6 +214,21 @@ function runTTSFallback(text, onEndCallback) {
     }
 }
 
+// Helper cập nhật class cho nền và icon mic ở giữa vòng tròn đồng hồ
+function updateCenterMicUI(state) {
+    const bg = document.getElementById('speakingCenterMicBg');
+    const icon = document.getElementById('speakingRingIcon');
+    if (!bg || !icon) return;
+    
+    if (state === 'prep') {
+        bg.className = "h-14 w-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center z-10 transition duration-300";
+        icon.className = "fa-solid fa-hourglass-start text-lg text-amber-500";
+    } else if (state === 'recording') {
+        bg.className = "h-14 w-14 rounded-full bg-sky-500/10 border border-sky-500/30 flex items-center justify-center z-10 transition duration-300";
+        icon.className = "fa-solid fa-microphone text-lg text-sky-400 animate-pulse";
+    }
+}
+
 function startSpeakingState(state) {
     speakingState = state;
     clearInterval(speakingRingInterval);
@@ -195,32 +237,33 @@ function startSpeakingState(state) {
     const timerText = document.getElementById('speakingRingTimer');
     const titleText = document.getElementById('speakingStateTitle');
     const descText = document.getElementById('speakingStateDesc');
-    const iconEl = document.getElementById('speakingRingIcon');
     const btnStop = document.getElementById('btnSpeakingAction');
     const recognitionBar = document.getElementById('speakingTextRecognitionBar');
     
     const exVideo = document.getElementById('examinerVideo');
     const exPlaceholder = document.getElementById('examinerVideoPlaceholder');
 
-    const circumference = 2 * Math.PI * 65; // ~408.4
+    const circumference = 351.8; // r=56 => 2 * PI * 56 = 351.8
     const q = adaptiveDb.speaking[currentSpeakingQIdx];
 
     if (state === 'prep') {
         titleText.innerText = "Preparation...";
-        titleText.className = "text-sm font-extrabold text-amber-500 uppercase tracking-widest";
+        titleText.className = "text-xs font-black text-amber-500 uppercase tracking-widest animate-pulse";
         descText.innerText = "Thầy/Cô hãy chuẩn bị ý kiến. Giám khảo ảo đang đặt câu hỏi.";
-        iconEl.className = "fa-solid fa-hourglass-start text-amber-500 text-2xl mb-1.5";
+        
+        updateCenterMicUI('prep');
+        
         ringCircle.setAttribute("stroke", "#f59e0b");
         btnStop.disabled = true;
         if (recognitionBar) recognitionBar.classList.add('hidden');
 
-        // Bật nút Nghe lại câu hỏi ở chế độ Trải nghiệm, khóa ở chế độ Nghiêm túc
+        // Bật nút Nghe lại câu hỏi ở chế độ Trải nghiệm, ẩn ở chế độ Nghiêm túc
         const btnReplay = document.getElementById('btnSpeakingReplay');
         if (btnReplay) {
             if (examMode === 'strict') {
-                btnReplay.disabled = true;
-                btnReplay.classList.add('opacity-30', 'pointer-events-none');
+                btnReplay.classList.add('hidden');
             } else {
+                btnReplay.classList.remove('hidden');
                 btnReplay.disabled = false;
                 btnReplay.classList.remove('opacity-30', 'pointer-events-none');
             }
@@ -245,7 +288,7 @@ function startSpeakingState(state) {
             speakingSeconds = Math.ceil(duration);
             const totalDuration = speakingSeconds;
             
-            timerText.innerText = `00:${speakingSeconds.toString().padStart(2, '0')}`;
+            timerText.innerText = `00:00:${speakingSeconds.toString().padStart(2, '0')}`;
             ringCircle.style.strokeDashoffset = 0;
 
             speakingRingInterval = setInterval(() => {
@@ -256,7 +299,7 @@ function startSpeakingState(state) {
                 questionTimers[currentFocusQuestionId]++;
 
                 const printed = Math.max(0, speakingSeconds).toString().padStart(2, '0');
-                timerText.innerText = `00:${printed}`;
+                timerText.innerText = `00:00:${printed}`;
                 const offset = circumference - (Math.max(0, speakingSeconds) / totalDuration) * circumference;
                 ringCircle.style.strokeDashoffset = offset;
 
@@ -309,13 +352,15 @@ function startSpeakingState(state) {
     } else if (state === 'recording') {
         speakingSeconds = 10; // Đếm ngược 10 giây thu âm theo đề bài
         titleText.innerText = "Recording...";
-        titleText.className = "text-sm font-extrabold text-red-500 uppercase tracking-widest animate-pulse";
+        titleText.className = "text-xs font-black text-sky-400 uppercase tracking-widest animate-pulse";
         descText.innerText = "Micro đang mở. Thầy/Cô hãy trả lời trực tiếp câu hỏi bằng tiếng Anh.";
-        iconEl.className = "fa-solid fa-microphone text-red-500 text-2xl mb-1.5";
-        ringCircle.setAttribute("stroke", "#ef4444");
+        
+        updateCenterMicUI('recording');
+        
+        ringCircle.setAttribute("stroke", "#38bdf8"); // Màu xanh dương/sky mảnh
         btnStop.disabled = false;
 
-        // Khóa nút Nghe lại câu hỏi khi đang thu âm
+        // Khóa/ẩn nút Nghe lại câu hỏi khi đang thu âm
         const btnReplay = document.getElementById('btnSpeakingReplay');
         if (btnReplay) {
             btnReplay.disabled = true;
@@ -353,7 +398,7 @@ function startSpeakingState(state) {
             questionTimers[currentFocusQuestionId]++;
 
             const printed = speakingSeconds.toString().padStart(2, '0');
-            timerText.innerText = `00:${printed}`;
+            timerText.innerText = `00:00:${printed}`;
             const offset = circumference - (speakingSeconds / 10) * circumference;
             ringCircle.style.strokeDashoffset = offset;
 
@@ -388,7 +433,7 @@ function replaySpeakingQuestion() {
     let videoDuration = 5;
     let isTransitioning = false;
     
-    const circumference = 2 * Math.PI * 65;
+    const circumference = 351.8;
 
     const transitionToRecording = () => {
         if (isTransitioning) return;
@@ -406,7 +451,7 @@ function replaySpeakingQuestion() {
         speakingSeconds = Math.ceil(duration);
         const totalDuration = speakingSeconds;
         
-        timerText.innerText = `00:${speakingSeconds.toString().padStart(2, '0')}`;
+        timerText.innerText = `00:00:${speakingSeconds.toString().padStart(2, '0')}`;
         ringCircle.style.strokeDashoffset = 0;
 
         speakingRingInterval = setInterval(() => {
@@ -417,7 +462,7 @@ function replaySpeakingQuestion() {
             questionTimers[currentFocusQuestionId]++;
 
             const printed = Math.max(0, speakingSeconds).toString().padStart(2, '0');
-            timerText.innerText = `00:${printed}`;
+            timerText.innerText = `00:00:${printed}`;
             const offset = circumference - (Math.max(0, speakingSeconds) / totalDuration) * circumference;
             ringCircle.style.strokeDashoffset = offset;
 
