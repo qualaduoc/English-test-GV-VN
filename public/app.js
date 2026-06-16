@@ -448,15 +448,41 @@ function updateSidebarStatus() {
         const el = document.getElementById(`node-${node}`);
         const badge = document.getElementById(`badge-${node}`);
         
-        el.classList.add('opacity-50', 'pointer-events-none');
+        // Reset classes cơ bản
+        el.classList.remove('opacity-50', 'pointer-events-none', 'cursor-pointer');
         if (badge) badge.classList.add('hidden');
-    });
 
-    const activeNode = document.getElementById(`node-${currentSkill}`);
-    const activeBadge = document.getElementById(`badge-${currentSkill}`);
-    
-    if (activeNode) activeNode.classList.remove('opacity-50', 'pointer-events-none');
-    if (activeBadge) activeBadge.classList.remove('hidden');
+        // Lấy thẻ div chứa text tiêu đề kỹ năng để đổi màu chữ tùy trạng thái active
+        const titleContainer = el.querySelector('div.flex.items-center.justify-between') || el.firstElementChild;
+        if (titleContainer) {
+            titleContainer.classList.remove('text-white', 'text-slate-400', 'bg-slate-800/40', 'rounded-lg');
+        }
+
+        if (examMode === 'practice') {
+            // Chế độ TRẢI NGHIỆM: Cho phép click tự do chuyển kỹ năng
+            el.classList.add('cursor-pointer');
+            if (node === currentSkill) {
+                // Highlight kỹ năng đang làm
+                if (titleContainer) {
+                    titleContainer.classList.add('text-white', 'bg-slate-800/40', 'rounded-lg');
+                }
+                if (badge) badge.classList.remove('hidden');
+            } else {
+                if (titleContainer) titleContainer.classList.add('text-slate-400');
+            }
+        } else {
+            // Chế độ NGHIÊM TÚC: Khóa các kỹ năng khác, đi tuần tự
+            if (node === currentSkill) {
+                if (titleContainer) {
+                    titleContainer.classList.add('text-white');
+                }
+                if (badge) badge.classList.remove('hidden');
+            } else {
+                el.classList.add('opacity-50', 'pointer-events-none');
+                if (titleContainer) titleContainer.classList.add('text-slate-400');
+            }
+        }
+    });
 
     document.getElementById('readingSectionsList').classList.add('hidden');
     document.getElementById('listeningSectionsList').classList.add('hidden');
@@ -466,6 +492,49 @@ function updateSidebarStatus() {
     } else if (currentSkill === 'listening') {
         document.getElementById('listeningSectionsList').classList.remove('hidden');
     }
+}
+
+// Cho phép chuyển đổi kỹ năng tự do ở chế độ Trải nghiệm
+function onSidebarNodeClick(targetSkill) {
+    if (examMode !== 'practice') {
+        // Nếu ở chế độ nghiêm túc và đang thi, click vào sidebar sẽ hiện cảnh báo
+        if (appState === 'active_test') {
+            showStrictWarning();
+        }
+        return;
+    }
+    
+    if (currentSkill === targetSkill) return;
+
+    // Dừng các hoạt động của kỹ năng cũ
+    stopActiveAudio();
+    if (typeof listeningAudioPlaying !== 'undefined') {
+        listeningAudioPlaying = false;
+        const btnIcon = document.getElementById('listeningPlayIcon');
+        if (btnIcon) btnIcon.className = "fa-solid fa-play text-sm";
+        const progressBar = document.getElementById('listeningMediaProgressBar');
+        if (progressBar) progressBar.style.width = "0%";
+    }
+    
+    if (currentSkill === 'speaking') {
+        clearInterval(speakingRingInterval);
+        if (speechRecognitionObj) {
+            try { speechRecognitionObj.stop(); } catch(e) {}
+        }
+        const exVideo = document.getElementById('examinerVideo');
+        if (exVideo) {
+            exVideo.onended = null;
+            exVideo.onloadedmetadata = null;
+            exVideo.pause();
+        }
+    }
+    
+    // Đổi sang kỹ năng đích
+    currentSkill = targetSkill;
+    
+    // Khởi chạy kỹ năng đích
+    startSkillActiveTest();
+    updateSidebarStatus();
 }
 
 function toggleTextScaleSlider() {

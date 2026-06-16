@@ -57,6 +57,17 @@ function loadSpeakingQuestion(idx) {
 
     speakingReplays = 0; // Reset số lần nghe lại cho câu hỏi mới
 
+    const btnReplay = document.getElementById('btnSpeakingReplay');
+    if (btnReplay) {
+        if (examMode === 'strict') {
+            btnReplay.disabled = true;
+            btnReplay.classList.add('opacity-30', 'pointer-events-none');
+        } else {
+            btnReplay.disabled = false;
+            btnReplay.classList.remove('opacity-30', 'pointer-events-none');
+        }
+    }
+
     document.getElementById('speakingHeading').innerText = `Question ${idx + 1}`;
     
     // Render danh sách 22 câu hỏi Nói dưới video dạng cuộn ngang
@@ -203,9 +214,17 @@ function startSpeakingState(state) {
         btnStop.disabled = true;
         if (recognitionBar) recognitionBar.classList.add('hidden');
 
-        // Bật nút Nghe lại câu hỏi
+        // Bật nút Nghe lại câu hỏi ở chế độ Trải nghiệm, khóa ở chế độ Nghiêm túc
         const btnReplay = document.getElementById('btnSpeakingReplay');
-        if (btnReplay) btnReplay.disabled = false;
+        if (btnReplay) {
+            if (examMode === 'strict') {
+                btnReplay.disabled = true;
+                btnReplay.classList.add('opacity-30', 'pointer-events-none');
+            } else {
+                btnReplay.disabled = false;
+                btnReplay.classList.remove('opacity-30', 'pointer-events-none');
+            }
+        }
 
         let videoDuration = 5; // Mặc định 5s
         let isTransitioning = false;
@@ -298,7 +317,10 @@ function startSpeakingState(state) {
 
         // Khóa nút Nghe lại câu hỏi khi đang thu âm
         const btnReplay = document.getElementById('btnSpeakingReplay');
-        if (btnReplay) btnReplay.disabled = true;
+        if (btnReplay) {
+            btnReplay.disabled = true;
+            btnReplay.classList.add('opacity-30', 'pointer-events-none');
+        }
         
         // Hiện khung nhận dạng chữ chạy trực tiếp
         if (recognitionBar) {

@@ -143,7 +143,8 @@ function sendExamResultToSupabase(overall, reading, listening, speaking, writing
         speaking_feedback: speakingAiResult,
         writing_cefr: writing,
         writing_feedback: writingAiResult,
-        time_stats: stats
+        time_stats: stats,
+        exam_mode: examMode
     };
 
     console.log("[Supabase] Đang gửi kết quả thi lên backend...");

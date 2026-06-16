@@ -430,7 +430,8 @@ async function handleSaveResult(req, res) {
                 speaking_feedback: encryptedSpeaking,
                 writing_cefr: data.writing_cefr,
                 writing_feedback: encryptedWriting,
-                time_stats: data.time_stats
+                time_stats: data.time_stats,
+                exam_mode: data.exam_mode || "practice"
             });
             
             // Cập nhật bảng xếp hạng

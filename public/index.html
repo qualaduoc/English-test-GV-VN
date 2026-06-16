@@ -91,7 +91,7 @@
                 <!-- Cấu trúc cây kỹ năng phân tầng thích ứng -->
                 <div class="space-y-4">
                     <!-- READING SKILL NODE -->
-                    <div id="node-reading" class="sidebar-node space-y-2 relative">
+                    <div id="node-reading" onclick="onSidebarNodeClick('reading')" class="sidebar-node space-y-2 relative">
                         <div class="flex items-center justify-between px-2 py-1.5 rounded-lg text-sm font-bold text-white">
                             <div class="flex items-center space-x-3">
                                 <span class="h-6 w-6 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center text-xs">
@@ -116,7 +116,7 @@
                     </div>
 
                     <!-- LISTENING SKILL NODE -->
-                    <div id="node-listening" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3 space-y-2 relative">
+                    <div id="node-listening" onclick="onSidebarNodeClick('listening')" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3 space-y-2 relative">
                         <div class="flex items-center justify-between px-2 py-1.5 text-sm font-bold text-slate-400">
                             <div class="flex items-center space-x-3">
                                 <span class="h-6 w-6 rounded-full bg-slate-850 text-slate-400 flex items-center justify-center text-xs">
@@ -140,7 +140,7 @@
                     </div>
 
                     <!-- SPEAKING SKILL NODE -->
-                    <div id="node-speaking" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3">
+                    <div id="node-speaking" onclick="onSidebarNodeClick('speaking')" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3">
                         <div class="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-slate-400">
                             <div class="flex items-center space-x-3">
                                 <span class="h-6 w-6 rounded-full bg-slate-850 text-slate-400 flex items-center justify-center text-xs">
@@ -152,7 +152,7 @@
                     </div>
 
                     <!-- WRITING SKILL NODE -->
-                    <div id="node-writing" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3">
+                    <div id="node-writing" onclick="onSidebarNodeClick('writing')" class="sidebar-node opacity-50 pointer-events-none border-t border-slate-800 pt-3">
                         <div class="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-slate-400">
                             <div class="flex items-center space-x-3">
                                 <span class="h-6 w-6 rounded-full bg-slate-850 text-slate-400 flex items-center justify-center text-xs">
