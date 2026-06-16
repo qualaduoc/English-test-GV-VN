@@ -1865,18 +1865,6 @@ function initSpeakingExam() {
     // Khởi tạo Speech Recognition
     initSpeechRecognition();
     
-    // Thiết lập nguồn video giám khảo
-    const exVideo = document.getElementById('examinerVideo');
-    if (exVideo) {
-        exVideo.src = 'video/speaking_examiner.mp4';
-        exVideo.load();
-        
-        exVideo.onerror = () => {
-            console.warn("[Examiner Video] Lỗi load file hoặc không có file video. Chuyển chế độ TTS fallback.");
-            isVideoPlayable = false;
-        };
-    }
-    
     loadSpeakingQuestion(0);
 }
 
@@ -1912,6 +1900,19 @@ function loadSpeakingQuestion(idx) {
     sel.innerHTML = html;
     document.getElementById('speakingProgressText').innerText = `Đang thực hiện: Câu ${(idx + 1).toString().padStart(2, '0')} / ${adaptiveDb.speaking.length.toString().padStart(2, '0')}`;
 
+    // Thiết lập nguồn video giám khảo riêng biệt cho từng câu
+    const exVideo = document.getElementById('examinerVideo');
+    if (exVideo) {
+        isVideoPlayable = true;
+        exVideo.src = `video/Video ${idx + 1}.mp4`;
+        exVideo.load();
+        
+        exVideo.onerror = () => {
+            console.warn(`[Examiner Video] Không tìm thấy file video câu hỏi ${idx + 1}. Dùng TTS fallback.`);
+            isVideoPlayable = false;
+        };
+    }
+
     startSpeakingState("prep");
 }
 
@@ -1921,7 +1922,7 @@ function toggleSpeakingTranslation() {
 }
 
 // Fallback phát âm thanh bằng TTS
-function runTTSFallback(text) {
+function runTTSFallback(text, onEndCallback) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
@@ -1933,8 +1934,17 @@ function runTTSFallback(text) {
         
         utter.onend = () => {
             if (pulse) pulse.classList.add('hidden');
+            if (onEndCallback) onEndCallback();
+        };
+        utter.onerror = () => {
+            if (pulse) pulse.classList.add('hidden');
+            if (onEndCallback) onEndCallback();
         };
         window.speechSynthesis.speak(utter);
+    } else {
+        setTimeout(() => {
+            if (onEndCallback) onEndCallback();
+        }, 5000);
     }
 }
 
@@ -1957,57 +1967,93 @@ function startSpeakingState(state) {
     const q = adaptiveDb.speaking[currentSpeakingQIdx];
 
     if (state === 'prep') {
-        speakingSeconds = 5;
         titleText.innerText = "Preparation...";
         titleText.className = "text-sm font-extrabold text-amber-500 uppercase tracking-widest";
-        descText.innerText = "Thầy/Cô hãy chuẩn bị ý kiến trong 5 giây. Giám khảo ảo đang đặt câu hỏi.";
+        descText.innerText = "Thầy/Cô hãy chuẩn bị ý kiến. Giám khảo ảo đang đặt câu hỏi.";
         iconEl.className = "fa-solid fa-hourglass-start text-amber-500 text-2xl mb-1.5";
         ringCircle.setAttribute("stroke", "#f59e0b");
         btnStop.disabled = true;
         if (recognitionBar) recognitionBar.classList.add('hidden');
 
+        let videoDuration = 5; // Mặc định 5s
+        let isTransitioning = false;
+
+        const transitionToRecording = () => {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            clearInterval(speakingRingInterval);
+            if (exVideo) {
+                exVideo.onended = null;
+                exVideo.onloadedmetadata = null;
+                exVideo.pause();
+            }
+            startSpeakingState("recording");
+        };
+
+        const startTimer = (duration) => {
+            speakingSeconds = Math.ceil(duration);
+            const totalDuration = speakingSeconds;
+            
+            timerText.innerText = `00:${speakingSeconds.toString().padStart(2, '0')}`;
+            ringCircle.style.strokeDashoffset = 0;
+
+            speakingRingInterval = setInterval(() => {
+                speakingSeconds--;
+                if (!questionTimers[currentFocusQuestionId]) {
+                    questionTimers[currentFocusQuestionId] = 0;
+                }
+                questionTimers[currentFocusQuestionId]++;
+
+                const printed = Math.max(0, speakingSeconds).toString().padStart(2, '0');
+                timerText.innerText = `00:${printed}`;
+                const offset = circumference - (Math.max(0, speakingSeconds) / totalDuration) * circumference;
+                ringCircle.style.strokeDashoffset = offset;
+
+                saveProgressToLocalStorage();
+
+                if (speakingSeconds <= 0) {
+                    transitionToRecording();
+                }
+            }, 1000);
+        };
+
         // Điều khiển Video giám khảo phát câu hỏi
         if (exVideo && isVideoPlayable) {
-            exVideo.currentTime = q.start;
+            exVideo.onended = () => {
+                console.log("[Video Ended] Hoàn thành phát video câu hỏi.");
+                transitionToRecording();
+            };
+
+            const onMetadataLoaded = () => {
+                if (exVideo.duration && !isNaN(exVideo.duration)) {
+                    videoDuration = exVideo.duration;
+                }
+                startTimer(videoDuration);
+            };
+
+            // Nếu metadata đã load sẵn
+            if (exVideo.readyState >= 1) {
+                onMetadataLoaded();
+            } else {
+                exVideo.onloadedmetadata = onMetadataLoaded;
+            }
+
             exVideo.play()
                 .then(() => {
                     if (exPlaceholder) exPlaceholder.classList.add('hidden');
                 })
                 .catch(err => {
-                    console.warn("[Video Play Failed] Chuyển TTS fallback:", err.message);
+                    console.warn("[Video Play Failed] Dùng TTS fallback:", err.message);
                     if (exPlaceholder) exPlaceholder.classList.remove('hidden');
-                    runTTSFallback(q.prompt);
+                    isVideoPlayable = false;
+                    runTTSFallback(q.prompt, transitionToRecording);
+                    startTimer(5);
                 });
         } else {
             if (exPlaceholder) exPlaceholder.classList.remove('hidden');
-            runTTSFallback(q.prompt);
+            runTTSFallback(q.prompt, transitionToRecording);
+            startTimer(5);
         }
-
-        speakingRingInterval = setInterval(() => {
-            speakingSeconds--;
-            
-            if (!questionTimers[currentFocusQuestionId]) {
-                questionTimers[currentFocusQuestionId] = 0;
-            }
-            questionTimers[currentFocusQuestionId]++;
-
-            timerText.innerText = `00:0${speakingSeconds}`;
-            const offset = circumference - (speakingSeconds / 5) * circumference;
-            ringCircle.style.strokeDashoffset = offset;
-
-            saveProgressToLocalStorage();
-
-            // Nếu video chạm mốc end sớm hoặc đếm ngược hết giờ
-            if (exVideo && isVideoPlayable && exVideo.currentTime >= q.end) {
-                exVideo.pause();
-            }
-
-            if (speakingSeconds <= 0) {
-                clearInterval(speakingRingInterval);
-                if (exVideo && isVideoPlayable) exVideo.pause();
-                startSpeakingState("recording");
-            }
-        }, 1000);
 
     } else if (state === 'recording') {
         speakingSeconds = 10; // Đếm ngược 10 giây thu âm theo đề bài
