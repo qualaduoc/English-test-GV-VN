@@ -18,75 +18,83 @@ const MIME_TYPES = {
     '.json': 'application/json'
 };
 
-// Tự động load file .env ở local nếu tồn tại (đường dẫn ở thư mục cha vì file index.js nằm trong api/)
-const envPath = path.join(__dirname, '..', '.env');
-if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split(/\r?\n/).forEach(line => {
-        if (!line || line.trim().startsWith('#')) return;
-        const parts = line.split('=');
-        if (parts.length >= 2) {
-            const key = parts[0].trim();
-            let value = parts.slice(1).join('=').trim();
-            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-                value = value.substring(1, value.length - 1);
-            }
-            process.env[key] = value;
-        }
-    });
-}
-
-// Danh sách các API Key của Gemini đọc từ biến môi trường (cách nhau bằng dấu phẩy)
-const GEMINI_KEYS = process.env.GEMINI_KEYS
-    ? process.env.GEMINI_KEYS.split(',').map(k => k.trim()).filter(Boolean)
-    : [];
+let initError = null;
+let GEMINI_KEYS = [];
 let currentKeyIndex = 0;
-
-// Cấu hình liên kết Supabase đọc từ biến môi trường
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-
-// Các biến môi trường bắt buộc để ứng dụng hoạt động chính xác
-const requiredEnvVars = [
-    { key: 'GEMINI_KEYS', desc: 'Danh sách API Keys của Google Gemini (xoay vòng)' },
-    { key: 'SUPABASE_URL', desc: 'Địa chỉ URL của dự án Supabase' },
-    { key: 'SUPABASE_SERVICE_ROLE_KEY', desc: 'Khóa Service Role của Supabase (để ghi dữ liệu bỏ qua RLS)' },
-    { key: 'ENCRYPTION_KEY', desc: 'Khóa mã hóa dữ liệu nhạy cảm AES-256 (bắt buộc dài ĐÚNG 32 ký tự)' }
-];
-
+let SUPABASE_URL = "";
+let SUPABASE_SERVICE_ROLE_KEY = "";
+let ENCRYPTION_KEY = "";
 let hasConfigError = false;
 let configErrorMessage = "";
-console.log("\x1b[36m%s\x1b[0m", "[Khởi tạo] Đang kiểm tra cấu hình môi trường bắt buộc...");
 
-requiredEnvVars.forEach(envVar => {
-    const val = process.env[envVar.key];
-    if (!val || val.trim() === "") {
-        const msg = `[LỖI CẤU HÌNH] Thiếu biến môi trường bắt buộc: ${envVar.key} (${envVar.desc})`;
-        console.error("\x1b[31m%s\x1b[0m", msg);
-        configErrorMessage += msg + "\n";
-        hasConfigError = true;
-    } else if (envVar.key === 'ENCRYPTION_KEY' && val.trim().length !== 32) {
-        const msg = `[LỖI CẤU HÌNH] Khóa ENCRYPTION_KEY phải dài ĐÚNG 32 ký tự (Hiện tại: ${val.trim().length} ký tự).`;
-        console.error("\x1b[31m%s\x1b[0m", msg);
-        configErrorMessage += msg + "\n";
-        hasConfigError = true;
+try {
+    // Tự động load file .env ở local nếu tồn tại (đường dẫn ở thư mục cha vì file index.js nằm trong api/)
+    const envPath = path.join(__dirname, '..', '.env');
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        envContent.split(/\r?\n/).forEach(line => {
+            if (!line || line.trim().startsWith('#')) return;
+            const parts = line.split('=');
+            if (parts.length >= 2) {
+                const key = parts[0].trim();
+                let value = parts.slice(1).join('=').trim();
+                if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                    value = value.substring(1, value.length - 1);
+                }
+                process.env[key] = value;
+            }
+        });
     }
-});
 
-if (hasConfigError) {
-    console.error("\x1b[31m%s\x1b[0m", "\n==============================================================");
-    console.error("\x1b[31m%s\x1b[0m", "💥 THIẾU HOẶC SAI BIẾN MÔI TRƯỜNG CỐT LÕI!");
-    console.error("\x1b[31m%s\x1b[0m", "Vui lòng kiểm tra lại file .env (ở local) hoặc cấu hình trong Settings -> Environment Variables trên Vercel Dashboard.");
-    console.error("\x1b[31m%s\x1b[0m", "==============================================================\n");
-    
-    // Nếu chạy local, crash server ngay lập tức để nhà phát triển phát hiện
-    if (!process.env.VERCEL) {
-        process.exit(1);
+    // Danh sách các API Key của Gemini đọc từ biến môi trường (cách nhau bằng dấu phẩy)
+    GEMINI_KEYS = process.env.GEMINI_KEYS
+        ? process.env.GEMINI_KEYS.split(',').map(k => k.trim()).filter(Boolean)
+        : [];
+
+    // Cấu hình liên kết Supabase đọc từ biến môi trường
+    SUPABASE_URL = process.env.SUPABASE_URL || "";
+    SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "";
+
+    // Các biến môi trường bắt buộc để ứng dụng hoạt động chính xác
+    const requiredEnvVars = [
+        { key: 'GEMINI_KEYS', desc: 'Danh sách API Keys của Google Gemini (xoay vòng)' },
+        { key: 'SUPABASE_URL', desc: 'Địa chỉ URL của dự án Supabase' },
+        { key: 'SUPABASE_SERVICE_ROLE_KEY', desc: 'Khóa Service Role của Supabase (để ghi dữ liệu bỏ qua RLS)' },
+        { key: 'ENCRYPTION_KEY', desc: 'Khóa mã hóa dữ liệu nhạy cảm AES-256 (bắt buộc dài ĐÚNG 32 ký tự)' }
+    ];
+
+    console.log("[Khởi tạo] Đang kiểm tra cấu hình môi trường bắt buộc...");
+
+    requiredEnvVars.forEach(envVar => {
+        const val = process.env[envVar.key];
+        if (!val || val.trim() === "") {
+            const msg = `[LỖI CẤU HÌNH] Thiếu biến môi trường bắt buộc: ${envVar.key} (${envVar.desc})`;
+            console.error(msg);
+            configErrorMessage += msg + "\n";
+            hasConfigError = true;
+        } else if (envVar.key === 'ENCRYPTION_KEY' && val.trim().length !== 32) {
+            const msg = `[LỖI CẤU HÌNH] Khóa ENCRYPTION_KEY phải dài ĐÚNG 32 ký tự (Hiện tại: ${val.trim().length} ký tự).`;
+            console.error(msg);
+            configErrorMessage += msg + "\n";
+            hasConfigError = true;
+        }
+    });
+
+    if (hasConfigError) {
+        // Nếu chạy local, crash server ngay lập tức để nhà phát triển phát hiện
+        if (!process.env.VERCEL) {
+            process.exit(1);
+        }
     }
+
+    console.log(`[Mã hóa] Đã khởi tạo thành công hệ thống mã hóa AES-256.`);
+    console.log(`[Cấu hình] Đã tải thành công ${GEMINI_KEYS.length} API Keys Gemini để xoay vòng.`);
+    console.log(`[Cấu hình] Đã nạp thành công thông tin Supabase: ${SUPABASE_URL}`);
+} catch (err) {
+    initError = err;
+    console.error("Lỗi khởi tạo module Serverless:", err);
 }
-
-// Cấu hình mã hóa dữ liệu
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
 // Hàm mã hóa AES-256-cbc
 function encrypt(text) {
@@ -114,10 +122,6 @@ function decrypt(text) {
         return null;
     }
 }
-
-console.log(`[Mã hóa] Đã khởi tạo thành công hệ thống mã hóa AES-256.`);
-console.log(`[Cấu hình] Đã tải thành công ${GEMINI_KEYS.length} API Keys Gemini để xoay vòng.`);
-console.log(`[Cấu hình] Đã nạp thành công thông tin Supabase: ${SUPABASE_URL}`);
 
 // Lấy API Key tiếp theo theo cơ chế xoay vòng vòng tròn (Round-robin)
 function getNextApiKey() {
@@ -449,6 +453,18 @@ function getCEFRNumericValue(level) {
 }
 
 const requestHandler = (req, res) => {
+    // Nếu có lỗi crash khi load module, trả về lỗi 500 kèm stack trace chi tiết
+    if (initError) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ 
+            success: false, 
+            error: 'Lỗi khởi tạo máy chủ Serverless (Init Error)',
+            message: initError.message,
+            stack: initError.stack
+        }));
+        return;
+    }
+
     // Nếu có lỗi cấu hình biến môi trường, trả về lỗi 500 chi tiết để hỗ trợ deploy Vercel
     if (hasConfigError) {
         res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -553,9 +569,9 @@ const requestHandler = (req, res) => {
                             } else {
                                 // Giữ nguyên điểm số cũ nhưng vẫn truyền các giá trị cũ khi upsert
                                 updateData.highest_reading = existingTeacher.highest_reading;
-                                updateData.highest_listening = existingTeacher.highest_listening;
-                                updateData.highest_speaking = existingTeacher.highest_speaking;
-                                updateData.highest_writing = existingTeacher.highest_writing;
+                                updateData.highest_listening = existingTeacher.listening_cefr;
+                                updateData.highest_speaking = existingTeacher.speaking_cefr;
+                                updateData.highest_writing = existingTeacher.writing_cefr;
                                 updateData.highest_overall_cefr = existingTeacher.highest_overall_cefr;
                                 updateData.highest_overall_score = oldScore;
                             }
