@@ -664,7 +664,7 @@
             </div>
 
             <!-- SCREEN 6: TOTAL ASSESSMENT RESULT PAGE (Dashboard) -->
-            <div id="screen-total-summary" class="hidden flex-1 max-w-4xl mx-auto py-4 space-y-6">
+            <div id="screen-total-summary" class="hidden flex-1 max-w-7xl mx-auto py-4 space-y-6 w-full">
                 <!-- Banner Kết quả tổng quát -->
                 <div class="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-slate-800 p-6 rounded-2xl text-center space-y-2 relative overflow-hidden">
                     <div class="absolute -right-12 -top-12 h-32 w-32 bg-blue-500/10 rounded-full blur-2xl"></div>
@@ -683,52 +683,52 @@
                 </div>
 
                 <!-- Bố cục so sánh các chuẩn quốc tế và kết quả kỹ năng -->
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                     <!-- Trái: Chi tiết từng kỹ năng -->
-                    <div class="md:col-span-5 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 space-y-4">
+                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4">
                         <span class="text-xs text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-800 pb-2">KẾT QUẢ TỪNG KỸ NĂNG</span>
                         
-                        <div class="space-y-3 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs flex-1">
                             <!-- Đọc -->
-                            <div class="p-3 bg-teal-500/5 border border-teal-500/20 rounded-xl space-y-2.5">
-                                <div class="flex justify-between items-center font-bold text-teal-400">
+                            <div class="p-3 bg-teal-500/5 border border-teal-500/20 rounded-xl flex flex-col justify-between space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-teal-400 mb-2">
                                     <span>Kỹ năng Đọc (Reading)</span>
-                                    <span id="summaryReadingCEFR" class="bg-teal-500/20 px-2 py-0.5 rounded text-xs">B2</span>
+                                    <span id="summaryReadingCEFR" class="bg-teal-500/20 px-2 py-0.5 rounded text-xs shrink-0">B2</span>
                                 </div>
-                                <button onclick="enterReviewMode('reading')" class="w-full py-2 bg-teal-600/90 text-white font-bold rounded-lg hover:bg-teal-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                <button onclick="enterReviewMode('reading')" class="w-full py-2 bg-teal-600/90 text-white font-bold rounded-lg hover:bg-teal-700 text-[10.5px] transition flex items-center justify-center gap-1 mt-auto">
                                     Xem lại bài đọc & đáp án <i class="fa-solid fa-arrow-right text-[9px]"></i>
                                 </button>
                             </div>
 
                             <!-- Nghe -->
-                            <div class="p-3 bg-lime-500/5 border border-lime-500/20 rounded-xl space-y-2.5">
-                                <div class="flex justify-between items-center font-bold text-lime-400">
+                            <div class="p-3 bg-lime-500/5 border border-lime-500/20 rounded-xl flex flex-col justify-between space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-lime-400 mb-2">
                                     <span>Kỹ năng Nghe (Listening)</span>
-                                    <span id="summaryListeningCEFR" class="bg-lime-500/20 px-2 py-0.5 rounded text-xs">B1</span>
+                                    <span id="summaryListeningCEFR" class="bg-lime-500/20 px-2 py-0.5 rounded text-xs shrink-0">B1</span>
                                 </div>
-                                <button onclick="enterReviewMode('listening')" class="w-full py-2 bg-lime-600/90 text-white font-bold rounded-lg hover:bg-lime-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                <button onclick="enterReviewMode('listening')" class="w-full py-2 bg-lime-600/90 text-white font-bold rounded-lg hover:bg-lime-700 text-[10.5px] transition flex items-center justify-center gap-1 mt-auto">
                                     Xem lại bài nghe & đáp án <i class="fa-solid fa-arrow-right text-[9px]"></i>
                                 </button>
                             </div>
 
                             <!-- Nói -->
-                            <div class="p-3 bg-sky-500/5 border border-sky-500/20 rounded-xl space-y-2.5">
-                                <div class="flex justify-between items-center font-bold text-sky-400">
+                            <div class="p-3 bg-sky-500/5 border border-sky-500/20 rounded-xl flex flex-col justify-between space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-sky-400 mb-2">
                                     <span>Kỹ năng Nói (Speaking)</span>
-                                    <span id="summarySpeakingCEFR" class="bg-sky-500/20 px-2 py-0.5 rounded text-xs">A2</span>
+                                    <span id="summarySpeakingCEFR" class="bg-sky-500/20 px-2 py-0.5 rounded text-xs shrink-0">A2</span>
                                 </div>
-                                <button onclick="enterReviewMode('speaking')" class="w-full py-2 bg-sky-600/90 text-white font-bold rounded-lg hover:bg-sky-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                <button onclick="enterReviewMode('speaking')" class="w-full py-2 bg-sky-600/90 text-white font-bold rounded-lg hover:bg-sky-700 text-[10.5px] transition flex items-center justify-center gap-1 mt-auto">
                                     Xem lại nhận xét từ AI <i class="fa-solid fa-arrow-right text-[9px]"></i>
                                 </button>
                             </div>
 
                             <!-- Viết -->
-                            <div class="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-2.5">
-                                <div class="flex justify-between items-center font-bold text-emerald-400">
+                            <div class="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl flex flex-col justify-between space-y-2.5">
+                                <div class="flex justify-between items-center font-bold text-emerald-400 mb-2">
                                     <span>Kỹ năng Viết (Writing)</span>
-                                    <span id="summaryWritingCEFR" class="bg-emerald-500/20 px-2 py-0.5 rounded text-xs">B1</span>
+                                    <span id="summaryWritingCEFR" class="bg-emerald-500/20 px-2 py-0.5 rounded text-xs shrink-0">B1</span>
                                 </div>
-                                <button onclick="enterReviewMode('writing')" class="w-full py-2 bg-emerald-600/90 text-white font-bold rounded-lg hover:bg-emerald-700 text-[10.5px] transition flex items-center justify-center gap-1">
+                                <button onclick="enterReviewMode('writing')" class="w-full py-2 bg-emerald-600/90 text-white font-bold rounded-lg hover:bg-emerald-700 text-[10.5px] transition flex items-center justify-center gap-1 mt-auto">
                                     Xem lại bài viết & nhận xét AI <i class="fa-solid fa-arrow-right text-[9px]"></i>
                                 </button>
                             </div>
@@ -736,12 +736,12 @@
                     </div>
 
                     <!-- Phải: 3 thanh so sánh chuẩn -->
-                    <div class="md:col-span-7 bg-[#0b0f19] border border-slate-800 rounded-xl p-6 space-y-6">
+                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-6 flex flex-col justify-between space-y-6">
                         <span class="text-xs text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-800 pb-2">BẢNG QUY ĐỔI CHUẨN QUỐC TẾ</span>
                         
                         <!-- Thang CEFR -->
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between text-xs">
+                        <div class="space-y-2 flex-1 flex flex-col justify-center">
+                            <div class="flex items-center justify-between text-xs mb-1">
                                 <span class="font-bold text-slate-300">Khung Tham Chiếu Châu Âu (CEFR)</span>
                                 <span class="font-black text-teal-400 text-sm" id="barCefrVal">B1</span>
                             </div>
@@ -757,8 +757,8 @@
                         </div>
 
                         <!-- Thang IELTS -->
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between text-xs">
+                        <div class="space-y-2 flex-1 flex flex-col justify-center border-t border-slate-800/30 pt-4">
+                            <div class="flex items-center justify-between text-xs mb-1">
                                 <span class="font-bold text-slate-300">Chuẩn Quốc tế IELTS</span>
                                 <span class="font-black text-sky-400 text-sm" id="barIeltsVal">4.0-5.0</span>
                             </div>
@@ -773,13 +773,13 @@
                         </div>
 
                         <!-- Thang VSTEP -->
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between text-xs">
+                        <div class="space-y-2 flex-1 flex flex-col justify-center border-t border-slate-800/30 pt-4">
+                            <div class="flex items-center justify-between text-xs mb-1">
                                 <span class="font-bold text-slate-300">Khung Năng Lực Việt Nam (VSTEP)</span>
                                 <span class="font-black text-emerald-400 text-sm" id="barVstepVal">Bậc 3</span>
                             </div>
                             <div class="relative h-7 bg-[#090d16] rounded-lg border border-slate-800 flex overflow-hidden p-0.5">
-                                <div class="compare-bar-segment" id="lbl-vstep-0">Dưới Bậc 1</div>
+                                <div class="compare-bar-segment" id="lbl-vstep-0">Dưới B1</div>
                                 <div class="compare-bar-segment" id="lbl-vstep-1">Bậc 1</div>
                                 <div class="compare-bar-segment" id="lbl-vstep-2">Bậc 2</div>
                                 <div class="compare-bar-segment" id="lbl-vstep-3">Bậc 3</div>
@@ -787,8 +787,6 @@
                                 <div class="compare-bar-segment" id="lbl-vstep-5">Bậc 5</div>
                                 <div class="compare-bar-segment" id="lbl-vstep-6">Bậc 6</div>
                             </div>
-                        </div>
-
                         </div>
                     </div>
                 </div>

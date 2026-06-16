@@ -293,39 +293,48 @@ input:checked + .slider:before {
 
 /* Results comparisons bars for CEFR / IELTS / VSTEP */
 .compare-bar-segment {
+    flex: 1;
+    min-width: 0;
     height: 100%;
     transition: all 0.4s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 800;
     color: var(--text-dark);
     border-right: 1px solid var(--bg-main);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding: 0 2px;
 }
 
 .compare-bar-segment.active-cefr {
     background-color: var(--color-reading);
     color: #ffffff;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 900;
     box-shadow: 0 0 12px rgba(20, 184, 166, 0.6);
+    overflow: visible;
 }
 
 .compare-bar-segment.active-ielts {
     background-color: var(--color-speaking);
     color: #ffffff;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 900;
     box-shadow: 0 0 12px rgba(14, 165, 233, 0.6);
+    overflow: visible;
 }
 
 .compare-bar-segment.active-vstep {
     background-color: var(--color-writing);
     color: #ffffff;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 900;
     box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+    overflow: visible;
 }
 
 /* Custom Warning Box standard styles */
