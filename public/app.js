@@ -189,6 +189,30 @@ function startTestFlow() {
     // Cập nhật hiển thị lên Header
     document.getElementById('userDisplayName').innerText = `Thầy/Cô ${teacherName}`;
 
+    // Gọi API đăng ký/lưu thông tin giáo viên vào database ngay khi bắt đầu thi
+    fetch('/api/register-teacher', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            teacher_name: teacherName,
+            phone: teacherPhone
+        })
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (res.success) {
+            console.log("[Supabase] Đăng ký thông tin giáo viên thành công!", res);
+            loadLeaderboard(); // Tải lại bảng vinh danh để cập nhật danh sách
+        } else {
+            console.error("[Supabase] Đăng ký thông tin giáo viên thất bại:", res.error);
+        }
+    })
+    .catch(err => {
+        console.error("[Supabase] Lỗi kết nối đăng ký giáo viên:", err);
+    });
+
     techieGreetingIdx = 0;
     document.getElementById('techieText').innerText = techieGreetings[0];
     document.getElementById('btnTechieNext').innerText = "Nhấn để tiếp tục";

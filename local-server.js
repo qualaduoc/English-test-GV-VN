@@ -7,6 +7,7 @@ const path = require('path');
 const handleAssess = require('./api/assess.js');
 const handleSaveResult = require('./api/save-result.js');
 const handleLeaderboard = require('./api/leaderboard.js');
+const handleRegisterTeacher = require('./api/register-teacher.js');
 
 const PORT = 3001;
 
@@ -36,6 +37,9 @@ const server = http.createServer((req, res) => {
     }
     if (safeUrl === '/api/leaderboard') {
         return handleLeaderboard(req, res);
+    }
+    if (safeUrl === '/api/register-teacher') {
+        return handleRegisterTeacher(req, res);
     }
 
     // Serve file tĩnh ở local từ thư mục public

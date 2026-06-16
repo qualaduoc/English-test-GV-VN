@@ -545,8 +545,68 @@ async function handleLeaderboard(req, res) {
     }
 }
 
+// 4. POST /api/register-teacher
+async function handleRegisterTeacher(req, res) {
+    if (checkConfigError(res)) return;
+    if (req.method !== 'POST') {
+        res.writeHead(405, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+        return;
+    }
+
+    let body = '';
+    req.on('data', chunk => body += chunk.toString());
+    req.on('end', async () => {
+        try {
+            const data = JSON.parse(body);
+            const phone = data.phone;
+            const name = data.teacher_name || "Giáo viên phổ thông";
+            
+            if (!phone) {
+                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ success: false, error: 'Thiếu số điện thoại' }));
+                return;
+            }
+
+            console.log(`[API register-teacher] Khởi tạo đăng ký/cập nhật thông tin cho SĐT: ${phone}`);
+            
+            const existingTeacher = await getTeacherFromLeaderboard(phone);
+            if (existingTeacher) {
+                // Đã tồn tại -> Chỉ cập nhật tên
+                await saveTeacherToLeaderboard({
+                    phone: phone,
+                    teacher_name: name,
+                    updated_at: new Date().toISOString()
+                });
+            } else {
+                // Chưa tồn tại -> Tạo mới với điểm mặc định N/A hoặc rỗng
+                await saveTeacherToLeaderboard({
+                    phone: phone,
+                    teacher_name: name,
+                    attempts_count: 0,
+                    highest_reading: "N/A",
+                    highest_listening: "N/A",
+                    highest_speaking: "N/A",
+                    highest_writing: "N/A",
+                    highest_overall_cefr: "N/A",
+                    highest_overall_score: 0,
+                    updated_at: new Date().toISOString()
+                });
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: true, message: 'Đăng ký thông tin giáo viên thành công' }));
+        } catch (error) {
+            console.error("[API register-teacher] Lỗi:", error);
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: false, error: error.message || 'Lỗi hệ thống' }));
+        }
+    });
+}
+
 module.exports = {
     handleAssess,
     handleSaveResult,
-    handleLeaderboard
+    handleLeaderboard,
+    handleRegisterTeacher
 };
