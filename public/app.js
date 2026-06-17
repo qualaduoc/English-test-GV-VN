@@ -989,6 +989,46 @@ function exportTimeStatsToExcel() {
     document.body.removeChild(link);
 }
 
+// Tạo hiệu ứng số chạy tăng dần cho con số hiển thị sinh động
+function animateNumberCounter(element, targetValue, duration = 1500) {
+    if (!element) return;
+    const startValue = parseInt(element.innerText) || 0;
+    if (startValue === targetValue) return;
+    
+    const startTime = performance.now();
+    
+    function updateCounter(currentTime) {
+        const elapsedTime = currentTime - startTime;
+        if (elapsedTime >= duration) {
+            element.innerText = targetValue;
+            return;
+        }
+        
+        const progress = elapsedTime / duration;
+        // Sử dụng easeOutQuad để con số chạy mượt mà và chậm dần về cuối
+        const easeOutProgress = progress * (2 - progress);
+        const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOutProgress);
+        
+        element.innerText = currentValue;
+        requestAnimationFrame(updateCounter);
+    }
+    
+    requestAnimationFrame(updateCounter);
+}
+
+// Biến lưu định kỳ cập nhật bảng xếp hạng tự động
+let leaderboardInterval = null;
+
+function startLeaderboardRealtimeUpdate() {
+    if (leaderboardInterval) clearInterval(leaderboardInterval);
+    leaderboardInterval = setInterval(() => {
+        if (appState === 'landing') {
+            console.log("[Realtime] Tự động làm mới bảng xếp hạng...");
+            loadLeaderboard();
+        }
+    }, 30000); // Tự động cập nhật mỗi 30 giây
+}
+
 // Tải bảng xếp hạng thi đua giáo viên từ Supabase qua backend
 function loadLeaderboard() {
     const tbody = document.getElementById('leaderboardBody');
@@ -1001,10 +1041,10 @@ function loadLeaderboard() {
             leaderboardData = res.data;
             renderLeaderboardTable(leaderboardData);
             
-            // Hiển thị tổng số giáo viên đã test thử
+            // Hiển thị tổng số giáo viên đã test thử kèm hiệu ứng chạy số sinh động
             const totalEl = document.getElementById('totalTeachersCount');
             if (totalEl && res.totalCount !== undefined) {
-                totalEl.innerText = res.totalCount;
+                animateNumberCounter(totalEl, res.totalCount, 1500);
             }
         } else {
             throw new Error(res.error || "Không thể tải dữ liệu");
@@ -1294,4 +1334,6 @@ window.onload = function() {
         // Tải bảng vinh danh giáo viên
         loadLeaderboard();
     }
+    // Bắt đầu cập nhật bảng xếp hạng theo thời gian thực (real-time update)
+    startLeaderboardRealtimeUpdate();
 };

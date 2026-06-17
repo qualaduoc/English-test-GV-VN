@@ -525,7 +525,7 @@ async function handleLeaderboard(req, res) {
             let data = '';
             getRes.on('data', chunk => data += chunk);
             getRes.on('end', () => {
-                if (getRes.statusCode === 200) {
+                if (getRes.statusCode === 200 || getRes.statusCode === 206) {
                     const contentRange = getRes.headers['content-range'];
                     let totalCount = 0;
                     if (contentRange) {
