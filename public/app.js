@@ -10,6 +10,59 @@ let leaderboardData = [];
 let textScale = 2; // 1: small, 2: medium, 3: large
 let globalBilingualMode = false; // Mặc định TẮT song ngữ toàn hệ thống
 let viewingPastStage = null; // Theo dõi lượt cũ đang xem lại
+let selectedTestId = 1; // 1: Đề 1, 2: Đề 2
+let hasShownHeaderTooltip = false; // Theo dõi trạng thái đã hiển thị bóng bóng chú ý chọn đề
+
+// Đăng ký sự kiện nạp giọng đọc TTS để trình duyệt tải trước
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    }
+}
+
+// Tìm giọng đọc tiếng Anh tự nhiên chất lượng cao nhất có sẵn trên hệ thống/trình duyệt
+function getBestEnglishVoice() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    // Các từ khóa giọng đọc chất lượng tốt theo thứ tự ưu tiên
+    const priorityKeywords = [
+        "natural",
+        "neural",
+        "online",
+        "google us english",
+        "google uk english",
+        "guy",
+        "aria",
+        "zira",
+        "hazel",
+        "samantha",
+        "microsoft"
+    ];
+
+    // Lọc các giọng tiếng Anh (en-US, en-GB, en-AU,...)
+    const enVoices = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
+    if (enVoices.length === 0) return null;
+
+    // Tìm kiếm giọng phù hợp nhất theo độ ưu tiên từ khóa
+    for (const keyword of priorityKeywords) {
+        const found = enVoices.find(v => v.name.toLowerCase().includes(keyword));
+        if (found) {
+            console.log(`[TTS Voice] Đã chọn giọng nói chất lượng cao: ${found.name} (${found.lang})`);
+            return found;
+        }
+    }
+
+    // Fallback: Tìm giọng en-US bất kỳ
+    const enUSVoice = enVoices.find(v => v.lang.toLowerCase() === 'en-us');
+    if (enUSVoice) return enUSVoice;
+
+    return enVoices[0];
+}
 
 // Quản lý đồng hồ
 let headerTimerObj = null;
@@ -112,6 +165,32 @@ function setAppState(state) {
         headerCtrls.classList.add('hidden');
         fontAdjustBtn.classList.add('hidden');
     }
+
+    // Quản lý hiển thị bộ chọn đề thi trên Header và Tooltip chú ý
+    const testSelectorContainer = document.getElementById('headerTestSelectorContainer');
+    const headerTooltip = document.getElementById('headerTestTooltip');
+    if (testSelectorContainer) {
+        if (state === 'instruction' || state === 'active_test') {
+            testSelectorContainer.classList.remove('hidden');
+            testSelectorContainer.classList.add('flex');
+            
+            // Chỉ hiển thị tooltip chú ý chọn đề khác khi giáo viên mới bước vào xem hướng dẫn lần đầu của kỹ năng Đọc
+            if (headerTooltip && !hasShownHeaderTooltip && state === 'instruction' && currentSkill === 'reading') {
+                headerTooltip.classList.remove('hidden');
+                hasShownHeaderTooltip = true;
+                // Tự động ẩn sau 10 giây để tránh làm phiền
+                setTimeout(() => {
+                    dismissHeaderTooltip();
+                }, 10000);
+            }
+        } else {
+            testSelectorContainer.classList.remove('flex');
+            testSelectorContainer.classList.add('hidden');
+            if (headerTooltip) {
+                headerTooltip.classList.add('hidden');
+            }
+        }
+    }
 }
 
 // Chạy bong bóng lời chào Techie
@@ -175,6 +254,11 @@ function startTestFlow() {
     const selectedMode = document.querySelector('input[name="testMode"]:checked');
     examMode = selectedMode ? selectedMode.value : "practice";
     
+    // Đọc đề thi khảo sát được chọn từ dropdown trên Header
+    const headerTestSelector = document.getElementById('headerTestSelector');
+    selectedTestId = headerTestSelector ? parseInt(headerTestSelector.value) : 1;
+    adaptiveDb = window[`adaptiveDbTest${selectedTestId}`] || adaptiveDbTest1;
+    
     // Nếu là chế độ nghiêm túc, gán sự kiện chặn thoát trang/reload
     if (examMode === 'strict') {
         window.onbeforeunload = function(e) {
@@ -227,6 +311,96 @@ function startTestFlow() {
     viewingPastStage = null;
 
     // Bắt đầu ở Đọc
+    loadSkillInstruction("reading");
+}
+
+// Dừng tất cả âm thanh (bao gồm HTML5 audio và TTS speechSynthesis) đang phát trong hệ thống
+function stopAllAudioAndTTS() {
+    // 1. Dừng HTML5 Audio
+    if (typeof activeHtml5Audio !== 'undefined' && activeHtml5Audio) {
+        try { activeHtml5Audio.pause(); } catch(e){}
+        activeHtml5Audio = null;
+    }
+    if (typeof preloadedAudioObj !== 'undefined' && preloadedAudioObj) {
+        try { preloadedAudioObj.pause(); } catch(e){}
+        preloadedAudioObj = null;
+    }
+    // 2. Dừng giọng đọc TTS
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch(e){}
+    }
+    // 3. Dừng bộ đếm thời gian của Nói (Speaking) nếu có
+    if (typeof speakingRingInterval !== 'undefined' && speakingRingInterval) {
+        clearInterval(speakingRingInterval);
+        speakingRingInterval = null;
+    }
+}
+
+// Chuyển đổi đề thi khảo sát trực tiếp từ thanh Header Bar
+function changeTestFromHeader(value) {
+    const newTestId = parseInt(value);
+    if (newTestId === selectedTestId) return;
+
+    // Cảnh báo giáo viên trước khi thay đổi đề thi
+    if (appState === 'active_test' || appState === 'instruction') {
+        const confirmChange = confirm("Thầy/Cô có chắc chắn muốn chuyển sang đề thi khác? Toàn bộ tiến trình làm bài hiện tại sẽ bị xóa và bắt đầu lại từ đầu với đề thi mới.");
+        if (!confirmChange) {
+            // Đặt lại giá trị của select trên Header về đề cũ
+            const headerSelector = document.getElementById('headerTestSelector');
+            if (headerSelector) headerSelector.value = selectedTestId;
+            return;
+        }
+    }
+
+    // Thực hiện dừng tất cả âm thanh đang chạy và dừng bộ đếm thời gian
+    stopAllAudioAndTTS();
+    clearInterval(headerTimerObj);
+
+    // Cập nhật trạng thái đề thi
+    selectedTestId = newTestId;
+    adaptiveDb = window[`adaptiveDbTest${selectedTestId}`] || adaptiveDbTest1;
+
+    // Reset toàn bộ dữ liệu thích ứng và bài làm của giáo viên
+    readingAdaptive = { currentLevel: "B1", stages: [], results: {}, answers: {}, finalLevel: "Pre-A1", isFinished: false };
+    listeningAdaptive = { currentLevel: "B1", stages: [], results: {}, answers: {}, finalLevel: "Pre-A1", isFinished: false };
+    speakingAnswers = [];
+    writingAnswerText = "";
+    viewingPastStage = null;
+    speakingAiResult = null;
+    writingAiResult = null;
+    currentSpeakingQIdx = 0;
+    speakingReplays = 0;
+    questionTimers = {};
+    currentFocusQuestionId = null;
+
+    // Ẩn các badge kỹ năng và reset Sidebar
+    const badgeReading = document.getElementById('badge-reading');
+    if (badgeReading) badgeReading.classList.add('hidden');
+    const badgeListening = document.getElementById('badge-listening');
+    if (badgeListening) badgeListening.classList.add('hidden');
+
+    const nodeListening = document.getElementById('node-listening');
+    if (nodeListening) {
+        nodeListening.classList.add('opacity-50', 'pointer-events-none');
+        nodeListening.classList.remove('cursor-pointer');
+        const list = document.getElementById('listeningSectionsList');
+        if (list) list.classList.add('hidden');
+    }
+    const nodeSpeaking = document.getElementById('node-speaking');
+    if (nodeSpeaking) {
+        nodeSpeaking.classList.add('opacity-50', 'pointer-events-none');
+        nodeSpeaking.classList.remove('cursor-pointer');
+    }
+    const nodeWriting = document.getElementById('node-writing');
+    if (nodeWriting) {
+        nodeWriting.classList.add('opacity-50', 'pointer-events-none');
+        nodeWriting.classList.remove('cursor-pointer');
+    }
+
+    // Lưu lại trạng thái sạch vào LocalStorage
+    saveProgressToLocalStorage();
+
+    // Chuyển hướng về phần hướng dẫn làm bài kỹ năng đầu tiên (Đọc - Reading)
     loadSkillInstruction("reading");
 }
 
@@ -612,6 +786,14 @@ function closeSimpleWarning() {
     document.getElementById('modalSimpleWarning').classList.add('hidden');
 }
 
+// Đóng tooltip chú ý chọn đề thi trên Header
+function dismissHeaderTooltip() {
+    const tooltip = document.getElementById('headerTestTooltip');
+    if (tooltip) {
+        tooltip.classList.add('hidden');
+    }
+}
+
 function logoutToLanding() {
     if (examMode === 'strict' && appState === 'active_test') {
         showStrictWarning();
@@ -624,6 +806,7 @@ function logoutToLanding() {
     clearProgressFromLocalStorage();
     window.onbeforeunload = null; // Gỡ bỏ chặn reload trang khi thực sự thoát
 
+    hasShownHeaderTooltip = false; // Reset trạng thái hiển thị tooltip khi thoát
     teacherName = "Giáo viên phổ thông";
     teacherPhone = "";
     const headerDisplay = document.getElementById('userDisplayName');
@@ -672,6 +855,7 @@ function saveProgressToLocalStorage() {
         writingAiResult,
         questionTimers,
         currentFocusQuestionId,
+        selectedTestId,
         timestamp: Date.now()
     };
     
@@ -722,6 +906,14 @@ function loadProgressFromLocalStorage() {
         
         questionTimers = data.questionTimers || {};
         currentFocusQuestionId = data.currentFocusQuestionId || null;
+        selectedTestId = data.selectedTestId || 1;
+        adaptiveDb = window[`adaptiveDbTest${selectedTestId}`] || adaptiveDbTest1;
+        
+        // Đồng bộ hóa bộ chọn đề trên Header
+        const headerSelector = document.getElementById('headerTestSelector');
+        if (headerSelector) {
+            headerSelector.value = selectedTestId;
+        }
         
         // Khôi phục UI cỡ chữ
         adjustTextScale(textScale);

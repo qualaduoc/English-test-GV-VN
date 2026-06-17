@@ -119,14 +119,18 @@ function loadSpeakingQuestion(idx) {
     // Thiết lập nguồn video giám khảo riêng biệt cho từng câu
     const exVideo = document.getElementById('examinerVideo');
     if (exVideo) {
-        isVideoPlayable = true;
-        exVideo.src = `video/Video ${idx + 1}.mp4`;
-        exVideo.load();
-        
-        exVideo.onerror = () => {
-            console.warn(`[Examiner Video] Không tìm thấy file video câu hỏi ${idx + 1}. Dùng TTS fallback.`);
+        if (selectedTestId >= 2) {
             isVideoPlayable = false;
-        };
+        } else {
+            isVideoPlayable = true;
+            exVideo.src = `video/Video ${idx + 1}.mp4`;
+            exVideo.load();
+            
+            exVideo.onerror = () => {
+                console.warn(`[Examiner Video] Không tìm thấy file video câu hỏi ${idx + 1}. Dùng TTS fallback.`);
+                isVideoPlayable = false;
+            };
+        }
     }
 
     startSpeakingState("prep");
@@ -193,7 +197,20 @@ function runTTSFallback(text, onEndCallback) {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = "en-US";
-        utter.rate = 0.85;
+        
+        // Áp dụng giọng đọc tiếng Anh tự nhiên chất lượng cao nhất của hệ thống
+        if (typeof getBestEnglishVoice === 'function') {
+            const bestVoice = getBestEnglishVoice();
+            if (bestVoice) utter.voice = bestVoice;
+        }
+        
+        // Thiết lập tốc độ đọc AI theo độ khó tăng dần
+        let ttsRate = 0.82; // Mặc định Dễ (Đề 1, 2, 3)
+        if (typeof selectedTestId !== 'undefined') {
+            if (selectedTestId >= 8) ttsRate = 0.95; // Khó (Đề 8, 9, 10)
+            else if (selectedTestId >= 4) ttsRate = 0.85; // Vừa (Đề 4, 5, 6, 7)
+        }
+        utter.rate = ttsRate;
         
         const pulse = document.getElementById('speakingVideoPulse');
         if (pulse) pulse.classList.remove('hidden');

@@ -1,5 +1,5 @@
 // --- NGÂN HÀNG ĐỀ THI THÍCH ỨNG SONG NGỮ (A1 - C2) ---
-const adaptiveDb = {
+const adaptiveDbTest1 = {
     reading: {
         A1: {
             media: `<strong>Mô-đun Đọc A1 (Elementary Level)</strong><br><br>Hello, my name is John. I am thirty years old. I live in a small apartment in London. I work as an English teacher in a primary school near my home. I walk to work every day because it is good for my health. In my free time, I like reading books, playing tennis on weekends, and cooking dinner for my family.`,
@@ -567,3 +567,492 @@ const adaptiveDb = {
         sampleAnswer: "While technological tools offer rich interactive materials, human teacher-student relationships are irreplaceable. A blended learning approach represents the optimal solution."
     }
 };
+
+const adaptiveDbTest2 = {
+    reading: {
+        A1: {
+            media: `<strong>Mô-đun Đọc A1 (Elementary Level)</strong><br><br>Puerto Rico is an island southeast of Florida and north of Venezuela, located between the Atlantic Ocean and the Caribbean Sea. It is not far from Haiti and the Dominican Republic. Puerto Rico has many beautiful beaches that stretch for miles along the coast. It also has mountains and valleys with good land for farming. Puerto Rico means "rich port" in Spanish. Christopher Columbus landed there in 1493.`,
+            mediaTranslation: `Puerto Rico là một hòn đảo ở phía đông nam Florida và phía bắc Venezuela, nằm giữa Đại Tây Dương và Biển Caribe. Nó không xa Haiti và Cộng hòa Dominica. Puerto Rico có nhiều bãi biển đẹp trải dài hàng dặm dọc theo bờ biển. Nơi đây cũng có những ngọn núi và thung lũng với đất đai màu mỡ để trồng trọt. Puerto Rico có nghĩa là "cảng giàu có" trong tiếng Tây Ban Nha. Christopher Columbus đã đặt chân đến đây vào năm 1493.`,
+            task: "1. Read the article. Choose the correct answers.",
+            questions: [
+                {
+                    id: "r2_a1_1",
+                    q: "Where is Puerto Rico located?",
+                    qTranslation: "Puerto Rico nằm ở đâu?",
+                    options: ["Among the ocean", "Between the Atlantic Ocean and the Caribbean Sea", "Across Venezuela"],
+                    optionsTranslation: ["Giữa lòng đại dương", "Giữa Đại Tây Dương và Biển Caribe", "Băng qua Venezuela"],
+                    correct: 1
+                },
+                {
+                    id: "r2_a1_2",
+                    q: "What does Puerto Rico mean in Spanish?",
+                    qTranslation: "Puerto Rico có nghĩa là gì trong tiếng Tây Ban Nha?",
+                    options: ["Rich port", "Beautiful beach", "Green land"],
+                    optionsTranslation: ["Cảng giàu có", "Bãi biển đẹp", "Đất xanh"],
+                    correct: 0
+                },
+                {
+                    id: "r2_a1_3",
+                    q: "When did Christopher Columbus land in Puerto Rico?",
+                    qTranslation: "Christopher Columbus đặt chân đến Puerto Rico khi nào?",
+                    options: ["In 1508", "In 1493", "Recently"],
+                    optionsTranslation: ["Vào năm 1508", "Vào năm 1493", "Gần đây"],
+                    correct: 1
+                }
+            ]
+        },
+        A2: {
+            media: `<strong>Mô-đun Đọc A2 (Pre-Intermediate Level)</strong><br><br>Fifteen years after Christopher Columbus arrived, the Spanish explorer Juan Ponce de Leon settled there with people from Spain who came to live in the New World. Native Indians had lived on the island of Puerto Rico for hundreds of years. Tragically, many of them died in wars with the Spanish and from diseases brought from Europe. Today, the people in Puerto Rico speak Spanish – but they also speak English.`,
+            mediaTranslation: `Mười lăm năm sau khi Christopher Columbus đến, nhà thám hiểm người Tây Ban Nha Juan Ponce de Leon đã đến định cư ở đây cùng với những người từ Tây Ban Nha đến sống ở Thế giới Mới. Người Ấn Độ bản địa đã sống trên đảo Puerto Rico hàng trăm năm. Thật bi thảm, nhiều người trong số họ đã chết trong các cuộc chiến tranh với người Tây Ban Nha và do các dịch bệnh mang từ châu Âu sang. Ngày nay, người dân ở Puerto Rico nói tiếng Tây Ban Nha – nhưng họ cũng nói tiếng Anh.`,
+            task: "1. Read the article. Choose the correct answers.",
+            questions: [
+                {
+                    id: "r2_a2_1",
+                    q: "Who settled in Puerto Rico fifteen years after Columbus?",
+                    qTranslation: "Ai đã định cư ở Puerto Rico 15 năm sau Columbus?",
+                    options: ["Juan Ponce de Leon", "Christopher Columbus", "Native Indians"],
+                    optionsTranslation: ["Juan Ponce de Leon", "Christopher Columbus", "Người Ấn Độ bản địa"],
+                    correct: 0
+                },
+                {
+                    id: "r2_a2_2",
+                    q: "Why did many native Indians die on the island?",
+                    qTranslation: "Tại sao nhiều người Ấn Độ bản địa chết trên đảo?",
+                    options: ["Due to warm climate", "In wars and from European diseases", "Because they moved to Spain"],
+                    optionsTranslation: ["Do khí hậu ấm áp", "Trong chiến tranh và do dịch bệnh từ Châu Âu", "Bởi vì họ chuyển sang Tây Ban Nha"],
+                    correct: 1
+                },
+                {
+                    id: "r2_a2_3",
+                    q: "What languages do people in Puerto Rico speak today?",
+                    qTranslation: "Người dân Puerto Rico ngày nay nói ngôn ngữ gì?",
+                    options: ["Only Spanish", "Only English", "Spanish and also English"],
+                    optionsTranslation: ["Chỉ tiếng Tây Ban Nha", "Chỉ tiếng Anh", "Tiếng Tây Ban Nha và cả tiếng Anh"],
+                    correct: 2
+                }
+            ]
+        },
+        B1: {
+            media: `<strong>Mô-đun Đọc B1 (Intermediate Level)</strong><br><br>Some scientists have predicted that healthy adults and children may one day take drugs to improve their intelligence and intellectual performance. A research group has suggested that such drugs might become as common as coffee or tea within the next couple of decades. To counter this, students taking exams might have to take drugs tests like athletes. There are already drugs that are known to improve mental performance, like Ritalin, which is given to children with problems concentrating. These drugs raise serious legal and moral questions, such as deciding at what point a food supplement becomes an unfair drug in an examination.`,
+            mediaTranslation: `Một số nhà khoa học đã dự đoán rằng những người lớn và trẻ em khỏe mạnh một ngày nào đó có thể sử dụng các loại thuốc để cải thiện trí thông minh và hiệu suất trí tuệ của họ. Một nhóm nghiên cứu đã gợi ý rằng những loại thuốc như vậy có thể trở nên phổ biến như cà phê hoặc trà trong vòng vài thập kỷ tới. Để chống lại điều này, học sinh đi thi có thể phải trải qua các cuộc kiểm tra chất kích thích như các vận động viên. Đã có những loại thuốc được biết đến là giúp cải thiện hiệu suất tinh thần, như Ritalin, loại thuốc được trao cho trẻ em gặp vấn đề về tập trung. Những loại thuốc này đặt ra các câu hỏi nghiêm trọng về mặt pháp lý và đạo đức, chẳng hạn như quyết định thời điểm một chất bổ sung dinh dưỡng trở thành một loại thuốc gian lận không công bằng trong kỳ thi.`,
+            task: "1. Read the passage and choose the best answer.",
+            questions: [
+                {
+                    id: "r2_b1_1",
+                    q: "What does the passage mainly discuss?",
+                    qTranslation: "Đoạn văn chủ yếu thảo luận về vấn đề gì?",
+                    options: ["Drugs for students", "Drugs that improve mental performance", "How to make coffee and tea"],
+                    optionsTranslation: ["Thuốc cho học sinh", "Các loại thuốc giúp cải thiện hiệu suất tinh thần", "Cách pha trà và cà phê"],
+                    correct: 1
+                },
+                {
+                    id: "r2_b1_2",
+                    q: "Ritalin is a drug commonly given to children who have problems with:",
+                    qTranslation: "Ritalin là một loại thuốc thường được trao cho trẻ em gặp vấn đề về:",
+                    options: ["Concentrating", "Sleeping", "Running"],
+                    optionsTranslation: ["Tập trung", "Ngủ", "Chạy bộ"],
+                    correct: 0
+                },
+                {
+                    id: "r2_b1_3",
+                    q: "According to the passage, what difficulty might arise during exams in the future?",
+                    qTranslation: "Theo đoạn văn, khó khăn nào có thể phát sinh trong các kỳ thi trong tương lai?",
+                    options: ["Deciding if food supplements are unfair drugs", "Providing coffee or tea to students", "Testing athletes for drugs"],
+                    optionsTranslation: ["Quyết định xem chất bổ sung có phải chất cấm gian lận không", "Cung cấp trà hoặc cà phê cho học sinh", "Kiểm tra chất kích thích ở vận động viên"],
+                    correct: 0
+                }
+            ]
+        },
+        B2: {
+            media: `<strong>Mô-đun Đọc B2 (Upper-Intermediate Level)</strong><br><br>When gas station manager Roger Randolph realized it was costing him money each time someone filled up with $4-a-gallon gas, he hung a sign on his pumps: "No more credit cards". Gas station operators nationwide are reporting similar woes as higher prices translate into higher credit card fees the managers must pay, squeezing profits at the pump. "The more they buy, the more we lose," said Randolph. His complaints target the so-called interchange fee - a fixed percentage of the sale price paid to credit card companies (usually at just under 2 percent). As gas tops $4 a gallon, fees reach 10 cents a gallon. Convenience stores paid roughly $7.6 billion in credit card fees last year, while making $3.4 billion in profits.`,
+            mediaTranslation: `Khi quản lý trạm xăng Roger Randolph nhận ra rằng mỗi lần ai đó đổ xăng giá 4 USD một gallon đều khiến ông tốn tiền, ông đã treo một tấm biển trên máy bơm của mình: "Không chấp nhận thẻ tín dụng". Các chủ trạm xăng trên toàn quốc cũng đang báo cáo những nỗi lo tương tự khi giá xăng cao hơn đồng nghĩa với phí thẻ tín dụng cao hơn mà họ phải trả, làm bóp nghẹt lợi nhuận tại cây xăng. "Họ càng mua nhiều, chúng tôi càng lỗ nhiều," Randolph nói. Những lời than phiền của ông nhằm vào khoản phí gọi là phí dịch vụ giao dịch (interchange fee) - một tỷ lệ phần trăm cố định trên giá bán được trả cho các công ty thẻ tín dụng (thường là dưới 2%). Khi giá xăng vượt 4 USD/gallon, phí giao dịch lên tới 10 cent/gallon. Các cửa hàng tiện lợi đã phải trả khoảng 7,6 tỷ USD phí thẻ tín dụng vào năm ngoái, trong khi chỉ thu về 3,4 tỷ USD lợi nhuận.`,
+            task: "1. Read the passage and choose the best answer.",
+            questions: [
+                {
+                    id: "r2_b2_1",
+                    q: "Why did some gas station owners decide to ban credit cards?",
+                    qTranslation: "Tại sao một số chủ trạm xăng quyết định cấm thanh toán thẻ tín dụng?",
+                    options: ["Because of high credit card interchange fees", "Because they prefer digital banking", "Because gas prices are decreasing"],
+                    optionsTranslation: ["Do phí giao dịch thẻ tín dụng quá cao", "Bởi vì họ thích ngân hàng số hơn", "Do giá xăng đang giảm xuống"],
+                    correct: 0
+                },
+                {
+                    id: "r2_b2_2",
+                    q: "What is the average interchange fee percentage paid to credit card companies?",
+                    qTranslation: "Tỷ lệ phần trăm phí giao dịch trung bình trả cho công ty thẻ tín dụng là bao nhiêu?",
+                    options: ["Exactly 10 percent", "About 11 to 12 cents", "Just under 2 percent"],
+                    optionsTranslation: ["Đúng 10 phần trăm", "Khoảng 11 đến 12 cent", "Dưới 2 phần trăm"],
+                    correct: 2
+                },
+                {
+                    id: "r2_b2_3",
+                    q: "How much did convenience stores pay in credit card fees last year compared to their profits?",
+                    qTranslation: "Năm ngoái các cửa hàng tiện lợi đã trả bao nhiêu phí thẻ tín dụng so với lợi nhuận của họ?",
+                    options: ["Paid $7.6 billion in fees, made $3.4 billion in profits", "Paid $3.4 billion in fees, made $7.6 billion in profits", "Paid 10 cents in fees, made 11 cents in profits"],
+                    optionsTranslation: ["Trả 7,6 tỷ USD phí, thu về 3,4 tỷ USD lợi nhuận", "Trả 3,4 tỷ USD phí, thu về 7,6 tỷ USD lợi nhuận", "Trả 10 cent phí, thu về 11 cent lợi nhuận"],
+                    correct: 0
+                }
+            ]
+        },
+        C1: {
+            media: `<strong>Mô-đun Đọc C1 (Advanced Level)</strong><br><br>The world's oceans have warmed 50 percent faster over the last 40 years than previously thought due to climate change, Australian and US researchers reported. Higher ocean temperatures expand the volume of water, contributing to a rise in sea levels that is submerging small island nations and threatening low-lying delta regions. Rising sea levels are driven by thermal expansion and additional water from melting sources of ice, both caused by global warming. For example, the ice sheet that sits atop Greenland contains enough water to raise world ocean levels by seven meters, which would bury sea-level cities from Dhaka to Shanghai. Trying to figure out how much each factor contributes to rising sea levels is critically important.`,
+            mediaTranslation: `Các nhà nghiên cứu khí hậu của Úc và Mỹ báo cáo rằng các đại dương trên thế giới đã ấm lên nhanh hơn 50% trong 40 năm qua so với suy nghĩ trước đây do biến đổi khí hậu. Nhiệt độ đại dương cao hơn làm giãn nở thể tích nước, góp phần làm tăng mực nước biển đang nhấn chìm các quốc gia đảo nhỏ và đe dọa các vùng đồng bằng trũng thấp. Mực nước biển dâng cao được thúc đẩy bởi sự giãn nở nhiệt và nước bổ sung từ các nguồn băng tan, cả hai đều do hiện tượng ấm lên toàn cầu gây ra. Ví dụ, dải băng nằm trên đỉnh đảo Greenland chứa đủ nước để nâng mực nước đại dương thế giới lên 7 mét, điều này sẽ nhấn chìm các thành phố ngang mực nước biển từ Dhaka đến Thượng Hải. Cố gắng tìm ra mức độ đóng góp của mỗi yếu tố đối với mực nước biển dâng là vô cùng quan trọng.`,
+            task: "1. Read the article and choose the correct answers.",
+            questions: [
+                {
+                    id: "r2_c1_1",
+                    q: "What is the primary cause of the fast warming of the world's oceans?",
+                    qTranslation: "Nguyên nhân chính của việc đại dương ấm lên nhanh chóng là gì?",
+                    options: ["Industrial shipping emissions", "Climate change and global warming", "Undersea volcanic activity"],
+                    optionsTranslation: ["Khí thải từ ngành vận tải biển", "Biến đổi khí hậu và ấm lên toàn cầu", "Hoạt động núi lửa dưới lòng biển"],
+                    correct: 1
+                },
+                {
+                    id: "r2_c1_2",
+                    q: "Greenland's ice sheet contains enough water to raise ocean levels by:",
+                    qTranslation: "Dải băng của Greenland chứa đủ nước để nâng mực nước đại dương lên:",
+                    options: ["Seven meters", "Twenty-three meters", "Fifty percent"],
+                    optionsTranslation: ["Bảy mét", "Hai mươi ba mét", "Năm mươi phần trăm"],
+                    correct: 0
+                },
+                {
+                    id: "r2_c1_3",
+                    q: "Which two factors drive the rising sea levels?",
+                    qTranslation: "Hai yếu tố nào thúc đẩy mực nước biển dâng cao?",
+                    options: ["Undersea earthquakes and heavy rain", "Thermal expansion of seawater and water from melting ice", "Increased shipping and industrial waste"],
+                    optionsTranslation: ["Động đất dưới biển và mưa lớn", "Giãn nở nhiệt của nước biển và nước từ băng tan", "Tăng hoạt động vận tải biển và rác thải công nghiệp"],
+                    correct: 1
+                }
+            ]
+        },
+        C2: {
+            media: `<strong>Mô-đun Đọc C2 (Proficiency Level)</strong><br><br>Japan's 24-hour convenience stores, already struggling with lagging sales and growth, may soon face moves to limit business hours and close the stores late at night to reduce carbon dioxide emissions and cut energy use. The prefecture of Saitama may follow the footsteps of Kyoto and urge stores to close from 11 p.m. to 7 a.m. This move is strongly opposed by the industry, which fears a withering impact. Seven-Eleven Japan's president, Toshiro Yamaguchi, stated that even if they operate for 16 hours, they cannot stop the refrigerators. He estimated that such cuts in operating hours would reduce each store's profit by 20 percent, destroying their current business model. Nomura Securities analyst Masafumi Shoda added that while urban stores do better, some in the countryside are inefficient.`,
+            mediaTranslation: `Các cửa hàng tiện lợi hoạt động 24 giờ của Nhật Bản, vốn đã gặp khó khăn do doanh số và mức tăng trưởng chậm chạp, có thể sớm phải đối mặt với các động thái hạn chế giờ làm việc và đóng cửa vào ban đêm nhằm giảm lượng khí thải carbon dioxide và tiết kiệm năng lượng. Tỉnh Saitama có thể đi theo bước chân của Kyoto và kêu gọi các cửa hàng tiện lợi đóng cửa từ 11 giờ đêm đến 7 giờ sáng. Động thái này vấp phải sự phản đối mạnh mẽ từ ngành công nghiệp vì họ lo sợ một tác động suy tàn nghiêm trọng. Chủ tịch Seven-Eleven Nhật Bản, ông Toshiro Yamaguchi, tuyên bố rằng ngay cả khi họ chỉ hoạt động trong 16 giờ, họ cũng không thể tắt tủ lạnh. Ông ước tính rằng việc cắt giảm giờ hoạt động như vậy sẽ làm giảm 20% lợi nhuận của mỗi cửa hàng, phá hủy hoàn toàn mô hình kinh doanh hiện tại. Nhà phân tích Masafumi Shoda của Nomura Securities nói thêm rằng trong khi các cửa hàng đô thị hoạt động hiệu quả hơn, một số cửa hàng ở nông thôn tỏ ra kém hiệu quả.`,
+            task: "1. Read the passage and choose the best answer.",
+            questions: [
+                {
+                    id: "r2_c2_1",
+                    q: "Why do local governments in Japan propose to close 24-hour convenience stores at night?",
+                    qTranslation: "Tại sao chính quyền địa phương ở Nhật Bản đề xuất đóng cửa các cửa hàng tiện lợi 24h vào ban đêm?",
+                    options: ["To reduce carbon dioxide emissions and cut down energy use", "To prevent convenience store thefts and robberies", "To encourage residents to sleep earlier"],
+                    optionsTranslation: ["Để giảm khí thải carbon và cắt giảm sử dụng năng lượng", "Để ngăn chặn các vụ trộm cướp cửa hàng tiện lợi", "Để khuyến khích người dân đi ngủ sớm hơn"],
+                    correct: 0
+                },
+                {
+                    id: "r2_c2_2",
+                    q: "According to the president of Seven-Eleven Japan, closing stores at night would reduce profit by:",
+                    qTranslation: "Theo chủ tịch Seven-Eleven Nhật Bản, đóng cửa cửa hàng vào ban đêm sẽ làm giảm lợi nhuận:",
+                    options: ["50 percent", "16 percent", "20 percent"],
+                    optionsTranslation: ["50 phần trăm", "16 phần trăm", "20 phần trăm"],
+                    correct: 2
+                },
+                {
+                    id: "r2_c2_3",
+                    q: "What difficulty does Seven-Eleven face regarding late night store closures?",
+                    qTranslation: "Seven-Eleven gặp khó khăn gì liên quan đến việc đóng cửa cửa hàng vào ban đêm?",
+                    options: ["Refrigerators cannot be stopped even during closure hours", "They cannot hire enough staff for night shifts", "Tobacco taxes are too high in cities"],
+                    optionsTranslation: ["Tủ lạnh không thể tắt ngay cả trong những giờ đóng cửa", "Họ không thể thuê đủ nhân viên trực ca đêm", "Thuế thuốc lá quá cao trong các thành phố"],
+                    correct: 0
+                }
+            ]
+        }
+    },
+    listening: {
+        A1: {
+            media: "<strong>Mô-đun Nghe A1 (Elementary Level)</strong><br><br>🔊 Vui lòng đeo tai nghe, bấm nút Play để nghe hội thoại ngắn và trả lời câu hỏi.",
+            mediaTranslation: "Lắng nghe đoạn băng tự giới thiệu bản thân đơn giản của David.",
+            task: "1. Chọn phương án trả lời chính xác nhất.",
+            audioText: "Hello. My name is David. I am from Canada. I am twenty-five years old. I live in Hanoi now. I like Vietnamese food very much, especially Pho. I also enjoy teaching English here.",
+            questions: [
+                {
+                    id: "l2_a1_1",
+                    q: "Where is David from?",
+                    qTranslation: "David đến từ đâu?",
+                    options: ["Canada", "America", "England"],
+                    optionsTranslation: ["Canada", "Mỹ", "Anh"],
+                    correct: 0
+                },
+                {
+                    id: "l2_a1_2",
+                    q: "How old is David?",
+                    qTranslation: "David bao nhiêu tuổi?",
+                    options: ["20 years old", "25 years old", "30 years old"],
+                    optionsTranslation: ["20 tuổi", "25 tuổi", "30 tuổi"],
+                    correct: 1
+                },
+                {
+                    id: "l2_a1_3",
+                    q: "What Vietnamese food does David like especially?",
+                    qTranslation: "Món ăn Việt Nam nào David đặc biệt thích?",
+                    options: ["Banh mi", "Pho", "Bun cha"],
+                    optionsTranslation: ["Bánh mì", "Phở", "Bún chả"],
+                    correct: 1
+                }
+            ]
+        },
+        A2: {
+            media: "<strong>Mô-đun Nghe A2 (Pre-Intermediate Level)</strong><br><br>🔊 Lắng nghe chia sẻ của người nói thứ nhất về ngày đầu đi làm.",
+            mediaTranslation: "Lắng nghe Speaker 1 kể về trải nghiệm ngày đầu tiên nhận việc.",
+            task: "1. Chọn phương án trả lời đúng nhất.",
+            audioText: "It was my first day at the office. I didn't know anyone, and my hands were shaking when I met the manager. I was so worried about making mistakes. Fortunately, the team was very friendly.",
+            questions: [
+                {
+                    id: "l2_a2_1",
+                    q: "How did Speaker 1 feel on their first day at work?",
+                    qTranslation: "Speaker 1 cảm thấy thế nào trong ngày đầu đi làm?",
+                    options: ["Annoyed", "Embarrassed", "Nervous"],
+                    optionsTranslation: ["Bực bội", "Xấu hổ", "Lo lắng"],
+                    correct: 2
+                },
+                {
+                    id: "l2_a2_2",
+                    q: "Where did Speaker 1 work?",
+                    qTranslation: "Speaker 1 làm việc ở đâu?",
+                    options: ["At home", "In an office", "At a hospital"],
+                    optionsTranslation: ["Tại nhà", "Trong văn phòng", "Tại bệnh viện"],
+                    correct: 1
+                },
+                {
+                    id: "l2_a2_3",
+                    q: "What happened to Speaker 1's hands when meeting the manager?",
+                    qTranslation: "Tay của Speaker 1 bị làm sao khi gặp quản lý?",
+                    options: ["They were cold", "They were shaking", "They were warm"],
+                    optionsTranslation: ["Chúng bị lạnh", "Chúng bị run rẩy", "Chúng bị ấm"],
+                    correct: 1
+                }
+            ]
+        },
+        B1: {
+            media: "<strong>Mô-đun Nghe B1 (Intermediate Level)</strong><br><br>🔊 Lắng nghe chia sẻ của người nói thứ hai về ngày đầu đi làm.",
+            mediaTranslation: "Lắng nghe Speaker 2 chia sẻ sự hào hứng trong ngày đầu nhận việc.",
+            task: "1. Chọn phương án trả lời chính xác nhất.",
+            audioText: "I was so thrilled and excited to start my new job! The office was very modern, the team was incredibly welcoming, and I couldn't wait to begin working on the new projects.",
+            questions: [
+                {
+                    id: "l2_b1_1",
+                    q: "How did Speaker 2 feel about starting the new job?",
+                    qTranslation: "Speaker 2 cảm thấy thế nào về việc bắt đầu công việc mới?",
+                    options: ["Nervous", "Apologetic", "Excited"],
+                    optionsTranslation: ["Lo lắng", "Biết lỗi", "Hào hứng"],
+                    correct: 2
+                },
+                {
+                    id: "l2_b1_2",
+                    q: "What was Speaker 2's impression of the office?",
+                    qTranslation: "Ấn tượng của Speaker 2 về văn phòng là gì?",
+                    options: ["It was old", "It was modern", "It was small"],
+                    optionsTranslation: ["Nó cũ kỹ", "Nó hiện đại", "Nó nhỏ bé"],
+                    correct: 1
+                },
+                {
+                    id: "l2_b1_3",
+                    q: "What did Speaker 2 eagerly want to do?",
+                    qTranslation: "Speaker 2 hào hứng muốn làm điều gì?",
+                    options: ["Go home early", "Meet client", "Begin working on new projects"],
+                    optionsTranslation: ["Về nhà sớm", "Gặp gỡ khách hàng", "Bắt đầu làm việc với các dự án mới"],
+                    correct: 2
+                }
+            ]
+        },
+        B2: {
+            media: "<strong>Mô-đun Nghe B2 (Upper-Intermediate Level)</strong><br><br>🔊 Lắng nghe chia sẻ của người nói thứ ba về sự cố ngày đầu đi làm.",
+            mediaTranslation: "Lắng nghe Speaker 3 chia sẻ một sự cố dở khóc dở cười ngày đầu nhận việc.",
+            task: "1. Chọn phương án trả lời đúng nhất.",
+            audioText: "I accidentally spilled my hot coffee all over my new boss's keyboard within the first ten minutes of arriving at the office. My face turned completely red and I felt so embarrassed.",
+            questions: [
+                {
+                    id: "l2_b2_1",
+                    q: "How did Speaker 3 feel after the incident?",
+                    qTranslation: "Speaker 3 cảm thấy thế nào sau sự cố?",
+                    options: ["Annoyed", "Embarrassed", "Surprised"],
+                    optionsTranslation: ["Bực bội", "Ngượng ngùng / Xấu hổ", "Ngạc nhiên"],
+                    correct: 1
+                },
+                {
+                    id: "l2_b2_2",
+                    q: "What did Speaker 3 spill?",
+                    qTranslation: "Speaker 3 đã làm đổ thứ gì?",
+                    options: ["Hot tea", "Cold water", "Hot coffee"],
+                    optionsTranslation: ["Trà nóng", "Nước lạnh", "Cà phê nóng"],
+                    correct: 2
+                },
+                {
+                    id: "l2_b2_3",
+                    q: "When did the incident occur?",
+                    qTranslation: "Sự cố xảy ra khi nào?",
+                    options: ["Within the first ten minutes of arriving", "At the end of the day", "During lunch time"],
+                    optionsTranslation: ["Trong vòng 10 phút đầu tiên khi đến nơi", "Vào cuối ngày làm việc", "Vào giờ ăn trưa"],
+                    correct: 0
+                }
+            ]
+        },
+        C1: {
+            media: "<strong>Mô-đun Nghe C1 (Advanced Level)</strong><br><br>🔊 Lắng nghe chia sẻ của người nói thứ tư về lý do họ tức giận.",
+            mediaTranslation: "Lắng nghe Speaker 4 kể về một sự việc bất công ngày đầu làm việc.",
+            task: "1. Chọn phương án trả lời chính xác nhất.",
+            audioText: "My coworker took credit for all the presentation slides I prepared, and told the supervisor he did it all himself. I was absolutely boiling with anger and felt furious.",
+            questions: [
+                {
+                    id: "l2_c1_1",
+                    q: "How did Speaker 4 feel on their first day?",
+                    qTranslation: "Speaker 4 cảm thấy thế nào trong ngày đầu đi làm?",
+                    options: ["Amused", "Furious", "Embarrassed"],
+                    optionsTranslation: ["Vui vẻ", "Giận dữ / Furious", "Ngượng ngùng"],
+                    correct: 1
+                },
+                {
+                    id: "l2_c1_2",
+                    q: "What did the coworker take credit for?",
+                    qTranslation: "Người đồng nghiệp đã giành công lao cho việc gì?",
+                    options: ["Writing email", "Presentation slides", "Serving coffee"],
+                    optionsTranslation: ["Viết email", "Các slide thuyết trình", "Phục vụ cà phê"],
+                    correct: 1
+                },
+                {
+                    id: "l2_c1_3",
+                    q: "Who did the coworker lie to?",
+                    qTranslation: "Người đồng nghiệp đã nói dối ai?",
+                    options: ["The supervisor", "Speaker 4's parents", "A client"],
+                    optionsTranslation: ["Người giám sát", "Bố mẹ Speaker 4", "Khách hàng"],
+                    correct: 0
+                }
+            ]
+        },
+        C2: {
+            media: "<strong>Mô-đun Nghe C2 (Proficiency Level)</strong><br><br>🔊 Lắng nghe chia sẻ của người nói thứ năm về sự thất vọng ngày đầu đi làm.",
+            mediaTranslation: "Lắng nghe Speaker 5 kể về những bất tiện kỹ thuật gặp phải khi nhận việc.",
+            task: "1. Chọn phương án trả lời chính xác nhất.",
+            audioText: "The computer they gave me kept crashing every five minutes, and the IT support was busy all day. I couldn't complete a single task and felt so frustrated.",
+            questions: [
+                {
+                    id: "l2_c2_1",
+                    q: "How did Speaker 5 feel?",
+                    qTranslation: "Speaker 5 cảm thấy thế nào?",
+                    options: ["Frustrated", "Amused", "Annoyed"],
+                    optionsTranslation: ["Bất lực / Nản lòng", "Thích thú", "Bực mình"],
+                    correct: 0
+                },
+                {
+                    id: "l2_c2_2",
+                    q: "What was wrong with the computer?",
+                    qTranslation: "Có vấn đề gì xảy ra với máy tính?",
+                    options: ["It kept crashing every five minutes", "It had no internet connection", "The screen was broken"],
+                    optionsTranslation: ["Nó bị sập nguồn liên tục mỗi 5 phút", "Nó không có kết nối internet", "Màn hình bị hỏng"],
+                    correct: 0
+                },
+                {
+                    id: "l2_c2_3",
+                    q: "Why couldn't Speaker 5 get help?",
+                    qTranslation: "Tại sao Speaker 5 không nhận được sự giúp đỡ?",
+                    options: ["The boss didn't allow it", "IT support was busy all day", "No IT support existed"],
+                    optionsTranslation: ["Sếp không cho phép", "Đội hỗ trợ IT bận rộn cả ngày", "Không có đội hỗ trợ IT"],
+                    correct: 1
+                }
+            ]
+        }
+    },
+    speaking: [
+        {
+            id: "s2_1",
+            prompt: "Tell me about yourself and your family.",
+            promptTranslation: "Hãy giới thiệu về bản thân bạn và gia đình của bạn.",
+            sampleAnswer: "I am an English teacher. I live in a warm family with my spouse and two children. We love spending weekends cooking and relaxing together.",
+            start: 0,
+            end: 8
+        },
+        {
+            id: "s2_2",
+            prompt: "Tell me about your hometown. What do you like or dislike about it?",
+            promptTranslation: "Hãy kể về quê hương của bạn. Bạn thích hay không thích điều gì về nơi đó?",
+            sampleAnswer: "My hometown is a beautiful city with rich history and delicious food. I love the friendly people, but the traffic congestion is sometimes annoying.",
+            start: 8,
+            end: 16
+        },
+        {
+            id: "s2_3",
+            prompt: "What do you like or dislike about your current job?",
+            promptTranslation: "Bạn thích hay không thích điều gì về công việc hiện tại của bạn?",
+            sampleAnswer: "I love teaching because I enjoy helping students grow. However, grading exams and handling paperwork can be time-consuming.",
+            start: 16,
+            end: 24
+        },
+        {
+            id: "s2_4",
+            prompt: "What do people in your hometown usually do in their free time?",
+            promptTranslation: "Người dân ở quê hương bạn thường làm gì vào thời gian rảnh rỗi?",
+            sampleAnswer: "People in my hometown love gathering at local coffee shops, walking in public parks, and having dinner with families on weekends.",
+            start: 24,
+            end: 32
+        },
+        {
+            id: "s2_5",
+            prompt: "Do you like travelling? Where in your hometown do you think people should visit?",
+            promptTranslation: "Bạn có thích đi du lịch không? Nơi nào ở quê hương bạn mà bạn nghĩ mọi người nên ghé thăm?",
+            sampleAnswer: "Yes, I travel to relax. In my hometown, tourists should visit the ancient pagoda in the city center and the beautiful lake nearby.",
+            start: 32,
+            end: 40
+        },
+        {
+            id: "s2_6",
+            prompt: "How long have you been learning English, and what do you think is the most difficult aspect of English?",
+            promptTranslation: "Bạn đã học tiếng Anh bao lâu rồi, và bạn nghĩ khía cạnh khó khăn nhất của tiếng Anh là gì?",
+            sampleAnswer: "I have been learning English for over ten years. In my opinion, mastering English speaking and natural pronunciation is the most challenging part.",
+            start: 40,
+            end: 48
+        },
+        {
+            id: "s2_7",
+            prompt: "Do you have many friends? What do you usually do together in your free time?",
+            promptTranslation: "Bạn có nhiều bạn bè không? Các bạn thường làm gì cùng nhau vào thời gian rảnh rỗi?",
+            sampleAnswer: "Yes, I have a few close friends. In our free time, we usually meet up at cozy cafes, play badminton, or discuss our teaching experiences.",
+            start: 48,
+            end: 56
+        },
+        {
+            id: "s2_8",
+            prompt: "Describe a close friend. You should say: how long you have known this person, how you met, what kind of person he or she is, and explain why you like him or her.",
+            promptTranslation: "Hãy miêu tả một người bạn thân. Bạn nên nói: bạn biết người đó bao lâu, gặp nhau thế nào, họ là kiểu người gì, và giải thích tại sao bạn quý mến họ.",
+            sampleAnswer: "I have known my close friend, Lan, for five years. We met at university. She is extremely kind, supportive, and humorous, which is why I enjoy her company.",
+            start: 56,
+            end: 80
+        },
+        {
+            id: "s2_9",
+            prompt: "What do you expect in a good friend?",
+            promptTranslation: "Bạn kỳ vọng điều gì ở một người bạn tốt?",
+            sampleAnswer: "I believe a good friend should be honest, loyal, and supportive. They should be willing to listen to you and help you during difficult times.",
+            start: 80,
+            end: 90
+        },
+        {
+            id: "s2_10",
+            prompt: "Which are more important to you – your family or your friends?",
+            promptTranslation: "Đối với bạn, gia đình hay bạn bè quan trọng hơn?",
+            sampleAnswer: "Both are valuable, but my family is always my top priority because their love is unconditional and they are always by my side.",
+            start: 90,
+            end: 100
+        },
+        {
+            id: "s2_11",
+            prompt: "Is it possible to make friends with people of the opposite sex?",
+            promptTranslation: "Có thể làm bạn thân với người khác giới được không?",
+            sampleAnswer: "Yes, absolutely. Platonic friendships between opposite sexes are common, based on shared values, professional respect, and mutual understanding.",
+            start: 100,
+            end: 110
+        }
+    ],
+    writing: {
+        media: "<strong>Đề bài viết số 2: Chọn 1 trong 2 chủ đề viết thư dưới đây (Writing Task 1)</strong><br><br><strong>Chủ đề 1 (Singapore Lost Suitcase):</strong> You travelled last week from Singapore to Ho Chi Minh City and your suitcase was lost. Although you have informed the Lost and Found Office at the airport, you have heard nothing from the airline company. Write a letter of no more than 150 words to the airline company to provide detailed information about the incident. Describe your suitcase, its contents, and ask what they are going to do about it.<br><br><strong>Chủ đề 2 (Cruise Disappointment):</strong> You travelled last week on a five-star cruise around South East Asia, yet you were upset and disappointed with the experience. Write a letter of no more than 150 words to the cruise provider specifying your disappointments (what went wrong, how you felt) and what you want them to do about it.",
+        mediaTranslation: "<strong>Bản dịch đề bài viết:</strong><br><strong>Chủ đề 1 (Mất hành lý):</strong> Tuần trước bạn đi du lịch từ Singapore về TP.HCM và bị thất lạc vali. Dù đã khai báo với phòng Thất lạc hành lý ở sân bay, bạn vẫn chưa nhận được tin tức gì từ hãng bay. Hãy viết thư dưới 150 từ cho hãng bay cung cấp chi tiết sự việc, miêu tả vali, đồ đạc bên trong và hỏi giải pháp xử lý.<br><br><strong>Chủ đề 2 (Thất vọng về chuyến tàu):</strong> Tuần trước bạn đi du thuyền 5 sao quanh Đông Nam Á và cảm thấy vô cùng thất vọng về trải nghiệm này. Hãy viết thư dưới 150 từ gửi công ty điều hành du thuyền nêu chi tiết lý do thất vọng, cảm xúc của bạn và yêu cầu bồi thường/xin lỗi.",
+        prompt: "Write a letter of no more than 150 words.",
+        sampleAnswer: "Dear Customer Support, I am writing to complain about my lost suitcase on flight SQ172 from Singapore to Ho Chi Minh City on June 10th. It is a large black Samsonite suitcase containing important clothes and electronic devices. I reported to Lost and Found but received no updates. Please check and compensate as soon as possible. Sincerely."
+    }
+};
+
+// Gắn các đề thi vào đối tượng window để các module khác truy cập đồng bộ
+if (typeof window !== 'undefined') {
+    window.adaptiveDbTest1 = adaptiveDbTest1;
+    window.adaptiveDbTest2 = adaptiveDbTest2;
+}
+
+let adaptiveDb = adaptiveDbTest1;

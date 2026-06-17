@@ -70,7 +70,20 @@ function playAudioWithFallback(localUrl, onlineUrl, ttsText, onPlayCallback, onE
             if ('speechSynthesis' in window) {
                 const utter = new SpeechSynthesisUtterance(ttsText);
                 utter.lang = "en-US";
-                utter.rate = 0.82;
+                
+                // Áp dụng giọng đọc tiếng Anh tự nhiên chất lượng cao nhất của hệ thống
+                if (typeof getBestEnglishVoice === 'function') {
+                    const bestVoice = getBestEnglishVoice();
+                    if (bestVoice) utter.voice = bestVoice;
+                }
+                
+                // Thiết lập tốc độ đọc AI theo độ khó tăng dần
+                let ttsRate = 0.82; // Mặc định Dễ (Đề 1, 2, 3)
+                if (typeof selectedTestId !== 'undefined') {
+                    if (selectedTestId >= 8) ttsRate = 0.95; // Khó (Đề 8, 9, 10)
+                    else if (selectedTestId >= 4) ttsRate = 0.85; // Vừa (Đề 4, 5, 6, 7)
+                }
+                utter.rate = ttsRate;
                 utter.onstart = () => {
                     if (onPlayCallback) onPlayCallback();
                 };
@@ -672,8 +685,8 @@ function toggleMediaListeningAudio() {
     const level = viewingPastStage !== null ? viewingPastStage : listeningAdaptive.currentLevel;
     const text = adaptiveDb.listening[level].audioText;
     
-    const localUrl = `audio/listening_${level.toLowerCase()}.mp3`;
     const onlineUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=2`;
+    const localUrl = selectedTestId >= 2 ? onlineUrl : `audio/listening_${level.toLowerCase()}.mp3`;
 
     playAudioWithFallback(
         localUrl,
