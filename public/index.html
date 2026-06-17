@@ -451,7 +451,7 @@
             <div id="screen-test-area" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
                 
                 <!-- Cột trái: Văn bản/Bài đọc/Trình phát Audio -->
-                <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col overflow-hidden md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none relative">
+                <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col overflow-hidden md:h-[780px] h-auto min-h-[350px] max-h-[720px] md:max-h-none relative">
                     <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
                         <span id="mediaPaneHeader" class="text-xs font-extrabold text-teal-400 uppercase tracking-widest">Tài liệu thi</span>
                         <div class="flex items-center space-x-2">
@@ -490,7 +490,7 @@
                 </div>
 
                 <!-- Cột phải: Câu hỏi trắc nghiệm -->
-                <div class="lg:col-span-6 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                <div class="lg:col-span-6 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[780px] h-auto min-h-[350px] max-h-[720px] md:max-h-none">
                     <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
                         <span id="questionPanelTaskHeader" class="text-xs font-bold text-slate-300">1. Read the article. Then choose the correct options.</span>
                     </div>
@@ -523,7 +523,7 @@
             <div id="screen-test-speaking" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
                 
                 <!-- Cột trái: Trình phát câu hỏi từ Giám khảo (Tăng tỷ lệ từ col-span-7 lên col-span-8) -->
-                <div class="lg:col-span-8 bg-[#0b0f19] border border-slate-800 rounded-xl p-3 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                <div class="lg:col-span-8 bg-[#0b0f19] border border-slate-800 rounded-xl p-3 flex flex-col justify-between md:h-[780px] h-auto min-h-[350px] max-h-[720px] md:max-h-none">
                     
                     <!-- Trình chiếu video câu hỏi của Giám khảo ảo (Không có header text rườm rà như giao diện gốc) -->
                     <div class="flex-1 bg-[#090d16] border border-slate-800/80 rounded-lg relative overflow-hidden flex items-center justify-center">
@@ -587,7 +587,7 @@
                 </div>
 
                 <!-- Cột phải: Đồng hồ đếm ngược Prep / Recording (Đổi sang col-span-4 và thiết kế tối giản) -->
-                <div class="lg:col-span-4 bg-[#0e1322] border border-slate-800 rounded-xl p-4 flex flex-col justify-between items-center md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                <div class="lg:col-span-4 bg-[#0e1322] border border-slate-800 rounded-xl p-4 flex flex-col justify-between items-center md:h-[780px] h-auto min-h-[350px] max-h-[720px] md:max-h-none">
                     <div class="border-b border-slate-800/80 pb-3 mb-4 w-full text-left flex justify-between items-center">
                         <span id="speakingHeading" class="text-xs font-bold text-slate-300">Question 1</span>
                         <button id="btnSubtitleToggle" onclick="cycleSubtitleMode()" class="btn-translate-toggle flex items-center gap-1 text-[10px] bg-slate-800 border border-slate-700 hover:bg-slate-700 text-sky-400 px-2.5 py-1 rounded transition">
@@ -632,7 +632,7 @@
             <!-- SCREEN 5: WRITING ROOM -->
             <div id="screen-test-writing" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[500px]">
                 <!-- Trái: Đề bài luận -->
-                <div class="lg:col-span-5 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                <div class="lg:col-span-5 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[780px] h-auto min-h-[350px] max-h-[720px] md:max-h-none">
                     <div class="space-y-4">
                         <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-400">Đề bài luận (IELTS Writing Task 2)</span>
@@ -655,7 +655,7 @@
                 </div>
 
                 <!-- Phải: Soạn thảo bài làm -->
-                <div class="lg:col-span-7 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[540px] h-auto min-h-[350px] max-h-[500px] md:max-h-none">
+                <div class="lg:col-span-7 bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col justify-between md:h-[780px] h-auto min-h-[350px] max-h-[720px] md:max-h-none">
                     <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-300">Bài viết của Thầy/Cô (Your Essay Submission)</span>
                         <span id="wordCounter" class="px-3 py-1 bg-[#0b0f19] border border-slate-800 rounded-full text-emerald-400 text-xs font-bold">
@@ -839,7 +839,7 @@
                 <!-- Bố cục 2 cột xem lại bài -->
                 <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[480px]">
                     <!-- Trái: Nội dung câu trả lời -->
-                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[480px] h-auto min-h-[300px] max-h-[450px] md:max-h-none overflow-hidden">
+                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[720px] h-auto min-h-[300px] max-h-[660px] md:max-h-none overflow-hidden">
                         <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 border-b border-slate-800 pb-1.5">TÀI LIỆU VÀ BÀI LÀM CỦA BẠN</span>
                         <div id="reviewMediaText" class="flex-1 overflow-y-auto pr-2 text-slate-300 leading-relaxed font-size-medium">
                             <!-- Nội dung bài làm được nộp -->
@@ -847,7 +847,7 @@
                     </div>
 
                     <!-- Phải: Nhận xét chi tiết từ AI Feedback -->
-                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[480px] h-auto min-h-[300px] max-h-[450px] md:max-h-none overflow-hidden">
+                    <div class="lg:col-span-6 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col md:h-[720px] h-auto min-h-[300px] max-h-[660px] md:max-h-none overflow-hidden">
                         <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 border-b border-slate-800 pb-1.5">KẾT QUẢ CHI TIẾT & ĐÁNH GIÁ (AI FEEDBACK)</span>
                         <div id="reviewFeedbackPane" class="flex-1 overflow-y-auto pr-2 space-y-4">
                             <!-- Khung nhận xét AI Feedback -->
