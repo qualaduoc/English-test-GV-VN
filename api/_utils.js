@@ -515,7 +515,8 @@ async function handleLeaderboard(req, res) {
             method: 'GET',
             headers: {
                 'apikey': SUPABASE_SERVICE_ROLE_KEY,
-                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                'Prefer': 'count=exact'
             },
             timeout: 5000
         };
@@ -525,8 +526,20 @@ async function handleLeaderboard(req, res) {
             getRes.on('data', chunk => data += chunk);
             getRes.on('end', () => {
                 if (getRes.statusCode === 200) {
+                    const contentRange = getRes.headers['content-range'];
+                    let totalCount = 0;
+                    if (contentRange) {
+                        const parts = contentRange.split('/');
+                        if (parts.length > 1) {
+                            totalCount = parseInt(parts[1], 10);
+                        }
+                    }
                     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                    res.end(JSON.stringify({ success: true, data: JSON.parse(data) }));
+                    res.end(JSON.stringify({ 
+                        success: true, 
+                        data: JSON.parse(data),
+                        totalCount: totalCount
+                    }));
                 } else {
                     res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
                     res.end(JSON.stringify({ success: false, error: `Lỗi kết nối Supabase: ${getRes.statusCode}` }));

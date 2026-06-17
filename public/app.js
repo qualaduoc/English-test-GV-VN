@@ -1000,6 +1000,12 @@ function loadLeaderboard() {
         if (res.success && Array.isArray(res.data)) {
             leaderboardData = res.data;
             renderLeaderboardTable(leaderboardData);
+            
+            // Hiển thị tổng số giáo viên đã test thử
+            const totalEl = document.getElementById('totalTeachersCount');
+            if (totalEl && res.totalCount !== undefined) {
+                totalEl.innerText = res.totalCount;
+            }
         } else {
             throw new Error(res.error || "Không thể tải dữ liệu");
         }
