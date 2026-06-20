@@ -506,7 +506,16 @@ async function handleLeaderboard(req, res) {
     }
 
     try {
-        const url = `${SUPABASE_URL}/rest/v1/teachers?order=highest_overall_score.desc,updated_at.asc&limit=10`;
+        // Phân tích tham số limit từ query string (mặc định là 10, giới hạn tối đa 1000 để bảo mật/hiệu năng)
+        const reqUrl = new URL(req.url, 'http://localhost');
+        let limit = parseInt(reqUrl.searchParams.get('limit'), 10) || 10;
+        if (isNaN(limit) || limit <= 0) {
+            limit = 10;
+        } else if (limit > 1000) {
+            limit = 1000;
+        }
+
+        const url = `${SUPABASE_URL}/rest/v1/teachers?order=highest_overall_score.desc,updated_at.asc&limit=${limit}`;
         const parsedUrl = new URL(url);
         
         const options = {

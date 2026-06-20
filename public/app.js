@@ -7,6 +7,7 @@ let appState = "landing"; // landing, instruction, active_test, summary, review
 let teacherName = "Giáo viên phổ thông";
 let teacherPhone = "";
 let leaderboardData = [];
+let currentLeaderboardLimit = 10; // Giới hạn số lượng giáo viên hiển thị mặc định trên bảng vinh danh
 let textScale = 2; // 1: small, 2: medium, 3: large
 let globalBilingualMode = false; // Mặc định TẮT song ngữ toàn hệ thống
 let viewingPastStage = null; // Theo dõi lượt cũ đang xem lại
@@ -1226,7 +1227,7 @@ function loadLeaderboard() {
     const tbody = document.getElementById('leaderboardBody');
     if (!tbody) return;
 
-    fetch('/api/leaderboard')
+    fetch(`/api/leaderboard?limit=${currentLeaderboardLimit}`)
     .then(res => res.json())
     .then(res => {
         if (res.success && Array.isArray(res.data)) {
@@ -1246,6 +1247,28 @@ function loadLeaderboard() {
         console.warn("[Leaderboard] Gặp lỗi khi tải bảng vinh danh:", err);
         tbody.innerHTML = `<tr><td colspan="4" class="text-center text-rose-500/70 py-4 text-[10px]">Không thể kết nối máy chủ để tải bảng xếp hạng.</td></tr>`;
     });
+}
+
+// Thay đổi số lượng giáo viên hiển thị trên bảng vinh danh (TOP 10, 100, 200, 500, 1000)
+function changeLeaderboardLimit(limit) {
+    const limits = [10, 100, 200, 500, 1000];
+    if (!limits.includes(limit)) return;
+    
+    currentLeaderboardLimit = limit;
+    
+    // Cập nhật trạng thái hiển thị (class CSS active) của các nút chọn limit
+    limits.forEach(l => {
+        const btn = document.getElementById(`btn-limit-${l}`);
+        if (!btn) return;
+        if (l === limit) {
+            btn.className = "px-2.5 py-1 rounded bg-blue-600 text-white font-bold transition focus:outline-none text-[9px] shadow shadow-blue-500/20";
+        } else {
+            btn.className = "px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]";
+        }
+    });
+    
+    // Tải lại dữ liệu bảng vinh danh theo giới hạn mới
+    loadLeaderboard();
 }
 
 // Ẩn 4 chữ số ở giữa số điện thoại để đảm bảo bảo mật riêng tư
