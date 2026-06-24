@@ -11,16 +11,25 @@ let lectureSpeechUtterance = null;
 let explanationSpeechUtterance = null;
 let currentPlayingSpeechIdx = null;
 
-// Các chỉ số hành vi đo lường trắc nghiệm
-let questionStartTime = 0;
-let dwellTimes = [0, 0, 0];
-let optionSwitches = [0, 0, 0];
-let currentSelectedAnswers = [null, null, null];
-let activeQuestionIdx = 0;
-let isQuizActive = false;
+// Quản lý phát Google Translate TTS & Preload
+let googleAudioQueue = [];
+let currentAudioIndex = 0;
+let currentHtmlAudio = null;
+let isAudioPlaying = false;
+let viSpeechVoice = null;
 
 // Khởi chạy chế độ học tập
 function initLearningCoach() {
+    // 1. Tải trước giọng nói tiếng Việt chuẩn
+    preloadVietnameseVoice();
+    
+    // 2. Thử khôi phục trạng thái ôn tập từ LocalStorage
+    const loaded = loadLearningState();
+    if (loaded) {
+        console.log("Đã khôi phục trạng thái ôn tập từ LocalStorage.");
+        return;
+    }
+
     selectedLevel = document.getElementById('learningLevelSelect').value || "A1";
     selectedMode = document.getElementById('learningModeSelect').value || "B";
     bilingualTheoryActive = true;
@@ -32,11 +41,53 @@ function initLearningCoach() {
     
     const btnBilingual = document.getElementById('btnBilingualTheoryToggle');
     if (btnBilingual) {
-        if (bilingualTheoryActive) btnBilingual.classList.add('active');
-        else btnBilingual.classList.remove('active');
-    }
-
-    loadCurrentLevelContent();
+        if (bilingualTheoryActive) btnBilingual.classList.add('active// Render Câu hỏi trắc nghiệm ra giao diện
+function renderPracticeQuestions(material) {
+    const practiceContainer = document.getElementById('practiceQuestionsContainer');
+    practiceContainer.innerHTML = '';
+    material.questions.forEach((qObj, qIdx) => {
+        const qCard = document.createElement('div');
+        qCard.className = 'bg-[#141b2d] border border-slate-800 rounded-xl p-4.5 space-y-3 relative';
+        
+        // Tiêu đề câu hỏi
+        const qTitle = document.createElement('div');
+        qTitle.className = 'text-slate-250 text-xs font-bold leading-normal';
+        qTitle.innerHTML = `<span class="text-teal-400">Câu ${qIdx + 1}:</span> ${qObj.q}`;
+        qCard.appendChild(qTitle);
+        
+        // Bản dịch câu hỏi
+        const qTrans = document.createElement('div');
+        qTrans.id = `learning-q-trans-${qIdx}`;
+        qTrans.className = `text-[10.5px] text-slate-405 pl-4 border-l border-slate-800 ${bilingualTheoryActive ? '' : 'hidden'}`;
+        qTrans.innerText = qObj.qTranslation;
+        qCard.appendChild(qTrans);
+        
+        // Danh sách lựa chọn
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'flex flex-col gap-2 pt-1';
+        
+        qObj.options.forEach((opt, optIdx) => {
+            const optBtn = document.createElement('div');
+            optBtn.id = `learning-opt-${qIdx}-${optIdx}`;
+            optBtn.className = 'flex items-center justify-between p-3 bg-[#0b0f19] border border-slate-850 hover:border-slate-700 rounded-xl cursor-pointer transition select-none text-xs text-slate-300';
+            optBtn.onclick = () => trackOptionClick(qIdx, optIdx);
+            
+            const optText = document.createElement('span');
+            optText.innerHTML = opt;
+            optBtn.appendChild(optText);
+            
+            // Bản dịch lựa chọn
+            const optTrans = document.createElement('span');
+            optTrans.className = `option-translation text-[10.5px] text-slate-500 italic ml-2 ${bilingualTheoryActive ? '' : 'hidden'}`;
+            optTrans.innerText = qObj.optionsTranslation[optIdx];
+            optBtn.appendChild(optTrans);
+            
+            optionsDiv.appendChild(optBtn);
+        });
+        
+        qCard.appendChild(optionsDiv);
+        practiceContainer.appendChild(qCard);
+    });
 }
 
 // Nạp nội dung lý thuyết & câu hỏi theo cấp độ được chọn
@@ -75,51 +126,7 @@ function loadCurrentLevelContent() {
     `;
 
     // 2. Render Câu hỏi trắc nghiệm ở cột trái
-    const practiceContainer = document.getElementById('practiceQuestionsContainer');
-    practiceContainer.innerHTML = '';
-    material.questions.forEach((qObj, qIdx) => {
-        const qCard = document.createElement('div');
-        qCard.className = 'bg-[#141b2d] border border-slate-800 rounded-xl p-4.5 space-y-3 relative';
-        
-        // Tiêu đề câu hỏi
-        const qTitle = document.createElement('div');
-        qTitle.className = 'text-slate-200 text-xs font-bold leading-normal';
-        qTitle.innerHTML = `<span class="text-teal-400">Câu ${qIdx + 1}:</span> ${qObj.q}`;
-        qCard.appendChild(qTitle);
-        
-        // Bản dịch câu hỏi
-        const qTrans = document.createElement('div');
-        qTrans.id = `learning-q-trans-${qIdx}`;
-        qTrans.className = `text-[10.5px] text-slate-400 pl-4 border-l border-slate-800 ${bilingualTheoryActive ? '' : 'hidden'}`;
-        qTrans.innerText = qObj.qTranslation;
-        qCard.appendChild(qTrans);
-        
-        // Danh sách lựa chọn
-        const optionsDiv = document.createElement('div');
-        optionsDiv.className = 'flex flex-col gap-2 pt-1';
-        
-        qObj.options.forEach((opt, optIdx) => {
-            const optBtn = document.createElement('div');
-            optBtn.id = `learning-opt-${qIdx}-${optIdx}`;
-            optBtn.className = 'flex items-center justify-between p-3 bg-[#0b0f19] border border-slate-850 hover:border-slate-700 rounded-xl cursor-pointer transition select-none text-xs text-slate-300';
-            optBtn.onclick = () => trackOptionClick(qIdx, optIdx);
-            
-            const optText = document.createElement('span');
-            optText.innerHTML = opt;
-            optBtn.appendChild(optText);
-            
-            // Bản dịch lựa chọn
-            const optTrans = document.createElement('span');
-            optTrans.className = `option-translation text-[10.5px] text-slate-500 italic ml-2 ${bilingualTheoryActive ? '' : 'hidden'}`;
-            optTrans.innerText = qObj.optionsTranslation[optIdx];
-            optBtn.appendChild(optTrans);
-            
-            optionsDiv.appendChild(optBtn);
-        });
-        
-        qCard.appendChild(optionsDiv);
-        practiceContainer.appendChild(qCard);
-    });
+    renderPracticeQuestions(material);
 
     // 3. Thiết lập chế độ hiển thị
     const theoryPane = document.getElementById('learningTheoryArea');
@@ -155,7 +162,10 @@ function loadCurrentLevelContent() {
         questionStartTime = Date.now();
     }
 
-    // 4. Kích hoạt bộ đếm thời gian học
+    // 4. Lưu trạng thái ôn tập khởi đầu
+    saveLearningState();
+
+    // 5. Kích hoạt bộ đếm thời gian học
     startStudyTimer();
 }
 
@@ -167,11 +177,9 @@ function startStudyTimer() {
         const secs = (studySeconds % 60).toString().padStart(2, '0');
         document.getElementById('statStudyTime').innerText = `${mins}:${secs}`;
         
-        // Cập nhật dwell time cho câu hiện tại nếu đang trong quá trình thi
-        if (isQuizActive) {
-            // Định kỳ cộng dồn thời gian
-            const elapsed = Math.round((Date.now() - questionStartTime) / 1000);
-            // Gán tạm vào câu hiện tại để hiển thị nếu cần thiết
+        // Định kỳ lưu trạng thái ôn tập 3 giây một lần để đảm bảo chính xác thời gian
+        if (studySeconds % 3 === 0) {
+            saveLearningState();
         }
     }, 1000);
 }
@@ -208,6 +216,9 @@ function switchToPracticeMode() {
     document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-blue-400 animate-pulse";
     
     document.getElementById('coachBubbleText').innerText = "Tuyệt vời! Bây giờ Thầy/Cô hãy tập trung làm 3 câu trắc nghiệm nhanh ở bên dưới. Đừng vội vàng, hãy đọc kỹ câu hỏi nhé!";
+    
+    // Lưu trạng thái ôn tập
+    saveLearningState();
 }
 
 // Theo dõi việc click chọn đáp án
@@ -248,6 +259,9 @@ function trackOptionClick(qIdx, optIdx) {
     questionStartTime = now;
 
     updatePracticeProgress();
+    
+    // Lưu trạng thái ôn tập
+    saveLearningState();
 }
 
 // Cập nhật nhãn tiến trình làm bài
@@ -390,6 +404,9 @@ async function submitPracticeQuiz() {
 
     // 4. Hiển thị giải thích đáp án chi tiết từng câu hỏi dưới giao diện
     renderPracticeExplanations(correctCount);
+
+    // 5. Lưu trạng thái ôn tập sau khi nộp bài và nhận phản hồi
+    saveLearningState();
 }
 
 // Hiển thị đáp án đúng/sai trực quan và khung giải thích
@@ -510,13 +527,55 @@ function changeLearningMode(val) {
 
 // --- CÁC HÀM HỖ TRỢ GIỌNG NÓI THÔNG MINH (TTS) & PHÓNG TO ---
 
-// Dừng tất cả giọng nói đang phát và khôi phục trạng thái nút
+// Tải trước danh sách giọng đọc tiếng Việt của Web Speech API
+function preloadVietnameseVoice() {
+    if (!('speechSynthesis' in window)) return;
+    
+    const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        // Ưu tiên các giọng nữ tiếng Việt chuẩn của Google hoặc Microsoft HoaiMy / An
+        const preferredVoices = [
+            v => v.lang.startsWith('vi') && v.name.includes('Google'),
+            v => v.lang.startsWith('vi') && v.name.includes('Microsoft') && v.name.includes('HoaiMy'),
+            v => v.lang.startsWith('vi') && v.name.includes('Microsoft') && v.name.includes('An'),
+            v => v.lang.startsWith('vi') && v.name.includes('Microsoft'),
+            v => v.lang.startsWith('vi')
+        ];
+
+        for (let predicate of preferredVoices) {
+            const voice = voices.find(predicate);
+            if (voice) {
+                viSpeechVoice = voice;
+                console.log("Đã nạp giọng nữ tiếng Việt chuẩn:", voice.name);
+                break;
+            }
+        }
+    };
+
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+}
+
+// Dừng tất cả giọng nói đang phát (cả Google TTS và Web Speech API)
 function stopAllSpeech() {
+    // 1. Dừng Web Speech API
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
     }
     lectureSpeechUtterance = null;
     explanationSpeechUtterance = null;
+
+    // 2. Dừng Google TTS Audio HTML5
+    isAudioPlaying = false;
+    if (currentHtmlAudio) {
+        currentHtmlAudio.pause();
+        currentHtmlAudio.src = "";
+        currentHtmlAudio = null;
+    }
+    googleAudioQueue = [];
+    currentAudioIndex = 0;
     
     // Khôi phục nút Giảng bài
     const btnPlayLectureText = document.getElementById('btnPlayLectureText');
@@ -533,15 +592,171 @@ function stopAllSpeech() {
     }
 }
 
-// Bật/Tắt phát giọng nói bài giảng lý thuyết
-function toggleLectureSpeech() {
-    if (!('speechSynthesis' in window)) {
-        alert("Rất tiếc, trình duyệt của Thầy/Cô không hỗ trợ chức năng phát giọng nói (Text-to-Speech).");
+// Chia nhỏ văn bản tiếng Việt thành các đoạn dưới 180 ký tự để Google Translate TTS hoạt động ổn định
+function splitTextForGoogleTTS(text) {
+    const limit = 180;
+    const sentences = text.match(/[^.!?，。]+[.!?，。]*/g) || [text];
+    const chunks = [];
+    let currentChunk = "";
+
+    for (let sentence of sentences) {
+        sentence = sentence.trim();
+        if (!sentence) continue;
+
+        if ((currentChunk + " " + sentence).length <= limit) {
+            currentChunk += (currentChunk ? " " : "") + sentence;
+        } else {
+            if (currentChunk) {
+                chunks.push(currentChunk);
+            }
+            if (sentence.length > limit) {
+                const subParts = sentence.split(/[,，;；]/);
+                let subChunk = "";
+                for (let part of subParts) {
+                    part = part.trim();
+                    if ((subChunk + " " + part).length <= limit) {
+                        subChunk += (subChunk ? ", " : "") + part;
+                    } else {
+                        if (subChunk) chunks.push(subChunk);
+                        subChunk = part;
+                    }
+                }
+                if (subChunk) currentChunk = subChunk;
+            } else {
+                currentChunk = sentence;
+            }
+        }
+    }
+    if (currentChunk) {
+        chunks.push(currentChunk);
+    }
+    return chunks;
+}
+
+// Chạy hàng đợi phát Google Translate TTS
+function playGoogleTTSQueue(text, onStartCallback, onEndCallback, onErrorCallback) {
+    const chunks = splitTextForGoogleTTS(text);
+    if (chunks.length === 0) {
+        if (onErrorCallback) onErrorCallback();
         return;
     }
 
-    // Nếu đang phát chính bài giảng này, nhấn lại sẽ dừng
-    if (window.speechSynthesis.speaking && lectureSpeechUtterance) {
+    googleAudioQueue = chunks.map(chunk => {
+        return `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+    });
+
+    currentAudioIndex = 0;
+    isAudioPlaying = true;
+    if (onStartCallback) onStartCallback();
+
+    playNextAudioInQueue(onEndCallback, onErrorCallback);
+}
+
+// Phát phần tử tiếp theo trong hàng đợi Google TTS
+function playNextAudioInQueue(onEndCallback, onErrorCallback) {
+    if (!isAudioPlaying) return;
+
+    if (currentAudioIndex >= googleAudioQueue.length) {
+        isAudioPlaying = false;
+        if (onEndCallback) onEndCallback();
+        return;
+    }
+
+    const url = googleAudioQueue[currentAudioIndex];
+    currentHtmlAudio = new Audio(url);
+
+    currentHtmlAudio.onended = () => {
+        currentAudioIndex++;
+        playNextAudioInQueue(onEndCallback, onErrorCallback);
+    };
+
+    currentHtmlAudio.onerror = (e) => {
+        console.error("Lỗi phát audio Google TTS:", e);
+        if (onErrorCallback) onErrorCallback();
+    };
+
+    currentHtmlAudio.play().catch(err => {
+        console.error("Lỗi trình duyệt chặn tự động phát audio Google TTS:", err);
+        if (onErrorCallback) onErrorCallback();
+    });
+}
+
+// Phát giọng nói thông qua Web Speech API (Hàm dự phòng ngoại tuyến)
+function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallback) {
+    if (!('speechSynthesis' in window)) {
+        if (onErrorCallback) onErrorCallback();
+        return;
+    }
+
+    window.speechSynthesis.cancel();
+    
+    // Tách văn bản thành câu ngắn tránh bị timeout
+    const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
+    let sIdx = 0;
+
+    const speakSentence = () => {
+        if (sIdx >= sentences.length) {
+            if (onEndCallback) onEndCallback();
+            return;
+        }
+
+        const sentenceText = sentences[sIdx].trim();
+        const utterance = new SpeechSynthesisUtterance(sentenceText);
+        
+        if (viSpeechVoice) {
+            utterance.voice = viSpeechVoice;
+        } else {
+            const voices = window.speechSynthesis.getVoices();
+            const fallbackVoice = voices.find(v => v.lang.startsWith('vi'));
+            if (fallbackVoice) utterance.voice = fallbackVoice;
+        }
+
+        utterance.rate = 0.95;
+
+        utterance.onstart = () => {
+            if (sIdx === 0 && onStartCallback) onStartCallback();
+        };
+
+        utterance.onend = () => {
+            sIdx++;
+            speakSentence();
+        };
+
+        utterance.onerror = (e) => {
+            console.error("Lỗi Web Speech API ở câu:", sentenceText, e);
+            if (onErrorCallback) onErrorCallback();
+        };
+
+        lectureSpeechUtterance = utterance;
+        window.speechSynthesis.speak(utterance);
+    };
+
+    speakSentence();
+}
+
+// Hàm phát giọng nói thông minh kết hợp Google TTS và Web Speech API làm dự phòng
+function speakSmart(text, onStartCallback, onEndCallback) {
+    stopAllSpeech(); // Dừng các âm thanh đang phát trước
+    
+    // Gọi Google TTS với giọng chuẩn tiếng Việt (nữ), nếu lỗi sẽ tự động fallback sang Web Speech
+    playGoogleTTSQueue(
+        text,
+        onStartCallback,
+        onEndCallback,
+        () => {
+            console.warn("Chuyển hướng dự phòng sang Web Speech API của trình duyệt...");
+            speakWithWebSpeech(text, onStartCallback, onEndCallback, () => {
+                alert("Không thể phát âm thanh. Trình duyệt của Thầy/Cô có thể đang chặn phát tự động.");
+                stopAllSpeech();
+            });
+        }
+    );
+}
+
+// Bật/Tắt phát giọng nói bài giảng lý thuyết
+function toggleLectureSpeech() {
+    // Nếu đang phát bài giảng, nhấn nút sẽ dừng phát
+    if ((isAudioPlaying && googleAudioQueue.length > 0) || (window.speechSynthesis.speaking && lectureSpeechUtterance)) {
         stopAllSpeech();
         return;
     }
@@ -552,51 +767,27 @@ function toggleLectureSpeech() {
         return;
     }
 
-    stopAllSpeech(); // Dừng các âm thanh khác trước
-
-    const textToSpeak = material.lectureText;
-    lectureSpeechUtterance = new SpeechSynthesisUtterance(textToSpeak);
-
-    // Tìm giọng đọc tiếng Việt chất lượng tốt nhất
-    const voices = window.speechSynthesis.getVoices();
-    const viVoice = voices.find(v => v.lang.startsWith('vi') || v.lang.includes('vi-VN'));
-    if (viVoice) {
-        lectureSpeechUtterance.voice = viVoice;
-    }
-    
-    lectureSpeechUtterance.rate = 0.95; // Tốc độ vừa phải cho giáo viên dễ tiếp thu
-
     const btnPlayLectureText = document.getElementById('btnPlayLectureText');
     const btnPlayLectureIcon = document.getElementById('btnPlayLectureIcon');
 
-    lectureSpeechUtterance.onstart = () => {
-        if (btnPlayLectureText && btnPlayLectureIcon) {
-            btnPlayLectureText.innerText = "Dừng giảng";
-            btnPlayLectureIcon.className = "fa-solid fa-circle-stop text-red-400 animate-pulse";
+    speakSmart(
+        material.lectureText,
+        () => {
+            if (btnPlayLectureText && btnPlayLectureIcon) {
+                btnPlayLectureText.innerText = "Dừng giảng";
+                btnPlayLectureIcon.className = "fa-solid fa-circle-stop text-red-405 animate-pulse";
+            }
+        },
+        () => {
+            stopAllSpeech();
         }
-    };
-
-    lectureSpeechUtterance.onend = () => {
-        stopAllSpeech();
-    };
-
-    lectureSpeechUtterance.onerror = (e) => {
-        console.error("Lỗi phát giọng nói bài giảng:", e);
-        stopAllSpeech();
-    };
-
-    window.speechSynthesis.speak(lectureSpeechUtterance);
+    );
 }
 
 // Phát âm thanh giải thích đáp án và mẹo học cho từng câu hỏi
 function speakExplanation(qIdx) {
-    if (!('speechSynthesis' in window)) {
-        alert("Rất tiếc, trình duyệt của Thầy/Cô không hỗ trợ chức năng phát giọng nói.");
-        return;
-    }
-
-    // Nếu đang phát chính câu hỏi này, nhấn lại sẽ dừng
-    if (window.speechSynthesis.speaking && currentPlayingSpeechIdx === qIdx) {
+    // Nếu đang phát chính câu này, nhấn lại sẽ dừng
+    if (currentPlayingSpeechIdx === qIdx) {
         stopAllSpeech();
         return;
     }
@@ -606,40 +797,24 @@ function speakExplanation(qIdx) {
 
     const question = material.questions[qIdx];
     
-    // Biên soạn nội dung đọc chi tiết bằng tiếng Việt
+    // Biên soạn nội dung đọc bằng tiếng Việt
     let textToSpeak = `Câu hỏi số ${qIdx + 1}. Nội dung câu hỏi: ${question.qTranslation}. `;
     textToSpeak += `Giải thích ngữ pháp: ${question.explanation}. `;
     if (question.studyTip) {
         textToSpeak += `Mẹo học dành cho Thầy Cô: ${question.studyTip}`;
     }
 
-    stopAllSpeech(); // Dừng các âm thanh cũ
-
     currentPlayingSpeechIdx = qIdx;
-    explanationSpeechUtterance = new SpeechSynthesisUtterance(textToSpeak);
 
-    const voices = window.speechSynthesis.getVoices();
-    const viVoice = voices.find(v => v.lang.startsWith('vi') || v.lang.includes('vi-VN'));
-    if (viVoice) {
-        explanationSpeechUtterance.voice = viVoice;
-    }
-    
-    explanationSpeechUtterance.rate = 0.95;
-
-    explanationSpeechUtterance.onstart = () => {
-        updateExplanationSpeechUI(qIdx, true);
-    };
-
-    explanationSpeechUtterance.onend = () => {
-        stopAllSpeech();
-    };
-
-    explanationSpeechUtterance.onerror = (e) => {
-        console.error("Lỗi phát giọng nói giải thích câu hỏi:", e);
-        stopAllSpeech();
-    };
-
-    window.speechSynthesis.speak(explanationSpeechUtterance);
+    speakSmart(
+        textToSpeak,
+        () => {
+            updateExplanationSpeechUI(qIdx, true);
+        },
+        () => {
+            stopAllSpeech();
+        }
+    );
 }
 
 // Cập nhật giao diện của nút Nghe giải thích tương ứng khi phát/dừng
@@ -699,11 +874,176 @@ function toggleZoomExplanation() {
     }
 }
 
-// Đăng ký trước danh sách giọng đọc của trình duyệt
-if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
+// --- CƠ CHẾ LOCALSTORAGE ĐỂ LƯU TRẠNG THÁI ÔN TẬP ---
+
+// Lưu trạng thái ôn tập hiện tại của giáo viên vào LocalStorage
+function saveLearningState() {
+    const statusEl = document.getElementById('statWorkStatus');
+    const explanationCard = document.getElementById('learningExplanationCard');
+    
+    const isSubmitted = !isQuizActive && 
+                        statusEl && statusEl.innerText !== "Chưa bắt đầu" && 
+                        explanationCard && !explanationCard.classList.contains('hidden');
+
+    const state = {
+        selectedLevel,
+        selectedMode,
+        studySeconds,
+        currentSelectedAnswers,
+        dwellTimes,
+        optionSwitches,
+        isQuizActive,
+        isSubmitted,
+        correctCount: currentSelectedAnswers.reduce((count, ans, qIdx) => {
+            const material = learningMaterialsDb[selectedLevel];
+            if (!material || ans === null) return count;
+            return count + (ans === material.questions[qIdx].correct ? 1 : 0);
+        }, 0),
+        coachBubbleText: document.getElementById('coachBubbleText').innerHTML,
+        coachSuggestionsHidden: document.getElementById('coachSuggestionsContainer').classList.contains('hidden'),
+        coachSuggestionsListHtml: document.getElementById('coachSuggestionsList').innerHTML,
+        statWorkStatusText: statusEl ? statusEl.innerText : "Chưa bắt đầu",
+        statWorkStatusClass: statusEl ? statusEl.className : "text-[10px] font-extrabold text-slate-500"
     };
+
+    localStorage.setItem('cefr_learning_state_v2', JSON.stringify(state));
+}
+
+// Khôi phục trạng thái ôn tập từ LocalStorage
+function loadLearningState() {
+    const raw = localStorage.getItem('cefr_learning_state_v2');
+    if (!raw) return false;
+
+    try {
+        const state = JSON.parse(raw);
+        selectedLevel = state.selectedLevel || "A1";
+        selectedMode = state.selectedMode || "B";
+        studySeconds = state.studySeconds || 0;
+        currentSelectedAnswers = state.currentSelectedAnswers || [null, null, null];
+        dwellTimes = state.dwellTimes || [0, 0, 0];
+        optionSwitches = state.optionSwitches || [0, 0, 0];
+        isQuizActive = state.isQuizActive || false;
+
+        // Cập nhật lại giá trị trên các dropdown bộ chọn cấp độ và lộ trình
+        const levelSelect = document.getElementById('learningLevelSelect');
+        const modeSelect = document.getElementById('learningModeSelect');
+        if (levelSelect) levelSelect.value = selectedLevel;
+        if (modeSelect) modeSelect.value = selectedMode;
+
+        // Cập nhật các thông số hiển thị
+        const mins = Math.floor(studySeconds / 60).toString().padStart(2, '0');
+        const secs = (studySeconds % 60).toString().padStart(2, '0');
+        document.getElementById('statStudyTime').innerText = `${mins}:${secs}`;
+        
+        const totalSwitches = optionSwitches.reduce((a, b) => a + b, 0);
+        document.getElementById('statHesitationCount').innerText = `${totalSwitches} lần`;
+
+        const statusEl = document.getElementById('statWorkStatus');
+        if (statusEl) {
+            statusEl.innerText = state.statWorkStatusText || "Chưa bắt đầu";
+            statusEl.className = state.statWorkStatusClass || "text-[10px] font-extrabold text-slate-500";
+        }
+
+        const material = learningMaterialsDb[selectedLevel];
+        if (!material) return false;
+
+        // Render lại Lý thuyết ở cột trái
+        const theoryArea = document.getElementById('learningTheoryArea');
+        theoryArea.innerHTML = `
+            <h3 class="text-base font-extrabold text-white">${material.title}</h3>
+            <p class="text-xs text-slate-400 italic">${material.description}</p>
+            <div class="border-t border-slate-800/80 pt-3 mt-2 text-xs leading-relaxed space-y-3">
+                ${material.theory}
+            </div>
+        `;
+
+        // Render lại câu hỏi trắc nghiệm
+        renderPracticeQuestions(material);
+
+        const theoryPane = document.getElementById('learningTheoryArea');
+        const practicePane = document.getElementById('learningPracticeArea');
+        const progressLabel = document.getElementById('practiceProgressLabel');
+        const btnSwitch = document.getElementById('btnSwitchToPractice');
+        const btnSubmit = document.getElementById('btnSubmitPractice');
+        const translateBtn = document.getElementById('btnBilingualTheoryToggle');
+
+        if (state.isSubmitted) {
+            // Nếu trạng thái trước đó là đã nộp bài
+            theoryPane.classList.add('hidden');
+            practicePane.classList.remove('hidden');
+            progressLabel.classList.remove('hidden');
+            btnSwitch.classList.add('hidden');
+            btnSubmit.classList.add('hidden');
+            translateBtn.classList.add('hidden');
+            document.getElementById('learningContentHeader').innerText = "BÀI TẬP THỰC HÀNH CỦNG CỐ";
+            
+            // Vẽ lại style đúng/sai của các đáp án và bảng giải thích
+            renderPracticeExplanations(state.correctCount);
+            
+            // Phục hồi lại bóng thoại tư vấn của AI
+            document.getElementById('coachBubbleText').innerHTML = state.coachBubbleText;
+            if (!state.coachSuggestionsHidden) {
+                document.getElementById('coachSuggestionsList').innerHTML = state.coachSuggestionsListHtml;
+                document.getElementById('coachSuggestionsContainer').classList.remove('hidden');
+            }
+        } else {
+            // Nếu trạng thái trước đó là chưa nộp
+            if (isQuizActive) {
+                // Đang làm trắc nghiệm dở dang
+                theoryPane.classList.add('hidden');
+                practicePane.classList.remove('hidden');
+                progressLabel.classList.remove('hidden');
+                btnSwitch.classList.add('hidden');
+                btnSubmit.classList.remove('hidden');
+                translateBtn.classList.add('hidden');
+                document.getElementById('learningContentHeader').innerText = "BÀI TẬP THỰC HÀNH CỦNG CỐ";
+                
+                // Khôi phục các style nút đáp án đã chọn
+                restoreSelectedOptionsStyle(material);
+                updatePracticeProgress();
+                questionStartTime = Date.now();
+            } else {
+                // Đang học lý thuyết
+                theoryPane.classList.remove('hidden');
+                practicePane.classList.add('hidden');
+                progressLabel.classList.add('hidden');
+                btnSwitch.classList.remove('hidden');
+                btnSubmit.classList.add('hidden');
+                translateBtn.classList.remove('hidden');
+                document.getElementById('learningContentHeader').innerText = "NỘI DUNG LÝ THUYẾT LỚP HỌC";
+                document.getElementById('coachBubbleText').innerText = `Thầy/Cô hãy đọc kỹ lý thuyết song ngữ bài học ${material.title} ở cột bên trái. Sau khi nắm vững, hãy bấm nút "Bắt đầu Thực hành" để làm bài test kiểm tra kiến thức nhé!`;
+            }
+        }
+
+        // Kích hoạt bộ đếm thời gian
+        startStudyTimer();
+        return true;
+    } catch (e) {
+        console.error("Lỗi khôi phục LocalStorage:", e);
+        return false;
+    }
+}
+
+// Xóa trạng thái LocalStorage để làm mới phiên học
+function clearLearningState() {
+    localStorage.removeItem('cefr_learning_state_v2');
+}
+
+// Khôi phục giao diện các nút lựa chọn đã bấm chọn trước đó
+function restoreSelectedOptionsStyle(material) {
+    currentSelectedAnswers.forEach((ans, qIdx) => {
+        if (ans === null) return;
+        material.questions[qIdx].options.forEach((_, idx) => {
+            const btn = document.getElementById(`learning-opt-${qIdx}-${idx}`);
+            if (btn) {
+                if (idx === ans) {
+                    btn.className = 'flex items-center justify-between p-3 bg-blue-950/40 border border-blue-500 text-blue-400 rounded-xl cursor-pointer transition select-none text-xs font-bold';
+                } else {
+                    btn.className = 'flex items-center justify-between p-3 bg-[#0b0f19] border border-slate-850 hover:border-slate-700 rounded-xl cursor-pointer transition select-none text-xs text-slate-300';
+                }
+            }
+        });
+    });
 }
 
 // Đăng ký các hàm ra phạm vi Window
@@ -720,4 +1060,7 @@ if (typeof window !== 'undefined') {
     window.speakExplanation = speakExplanation;
     window.toggleZoomExplanation = toggleZoomExplanation;
     window.stopAllSpeech = stopAllSpeech;
+    window.saveLearningState = saveLearningState;
+    window.loadLearningState = loadLearningState;
+    window.clearLearningState = clearLearningState;
 }
