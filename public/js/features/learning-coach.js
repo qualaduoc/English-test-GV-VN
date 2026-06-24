@@ -574,8 +574,13 @@ function stopAllSpeech() {
     lectureSpeechUtterance = null;
     explanationSpeechUtterance = null;
 
-    // 2. Dừng Google TTS Audio HTML5
+    // 2. Dừng Google TTS Audio (sử dụng cả thẻ DOM ẩn)
     isAudioPlaying = false;
+    const ttsPlayer = document.getElementById('learningTtsPlayer');
+    if (ttsPlayer) {
+        ttsPlayer.pause();
+        ttsPlayer.src = "";
+    }
     if (currentHtmlAudio) {
         currentHtmlAudio.pause();
         currentHtmlAudio.src = "";
@@ -670,22 +675,45 @@ function playNextAudioInQueue(onEndCallback, onErrorCallback) {
     }
 
     const url = googleAudioQueue[currentAudioIndex];
-    currentHtmlAudio = new Audio(url);
+    const ttsPlayer = document.getElementById('learningTtsPlayer');
 
-    currentHtmlAudio.onended = () => {
-        currentAudioIndex++;
-        playNextAudioInQueue(onEndCallback, onErrorCallback);
-    };
+    if (ttsPlayer) {
+        // Ưu tiên sử dụng phần tử audio DOM ẩn để bảo mật và tránh các hạn chế CORS trên Chrome
+        ttsPlayer.src = url;
+        
+        ttsPlayer.onended = () => {
+            currentAudioIndex++;
+            playNextAudioInQueue(onEndCallback, onErrorCallback);
+        };
 
-    currentHtmlAudio.onerror = (e) => {
-        console.error("Lỗi phát audio Google TTS:", e);
-        if (onErrorCallback) onErrorCallback();
-    };
+        ttsPlayer.onerror = (e) => {
+            console.error("Lỗi phát audio Google TTS qua thẻ DOM ẩn:", e);
+            if (onErrorCallback) onErrorCallback();
+        };
 
-    currentHtmlAudio.play().catch(err => {
-        console.error("Lỗi trình duyệt chặn tự động phát audio Google TTS:", err);
-        if (onErrorCallback) onErrorCallback();
-    });
+        ttsPlayer.play().catch(err => {
+            console.error("Lỗi trình duyệt chặn phát audio Google TTS DOM:", err);
+            if (onErrorCallback) onErrorCallback();
+        });
+    } else {
+        // Sử dụng Audio JavaScript động nếu không tìm thấy thẻ DOM
+        currentHtmlAudio = new Audio(url);
+
+        currentHtmlAudio.onended = () => {
+            currentAudioIndex++;
+            playNextAudioInQueue(onEndCallback, onErrorCallback);
+        };
+
+        currentHtmlAudio.onerror = (e) => {
+            console.error("Lỗi phát audio Google TTS động:", e);
+            if (onErrorCallback) onErrorCallback();
+        };
+
+        currentHtmlAudio.play().catch(err => {
+            console.error("Lỗi trình duyệt chặn phát audio Google TTS động:", err);
+            if (onErrorCallback) onErrorCallback();
+        });
+    }
 }
 
 // Phát giọng nói thông qua Web Speech API (Hàm dự phòng ngoại tuyến)
@@ -731,7 +759,10 @@ function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallbac
 
         utterance.onerror = (e) => {
             console.error("Lỗi Web Speech API ở câu:", sentenceText, e);
-            if (onErrorCallback) onErrorCallback();
+            // CHỈ kích hoạt callback báo lỗi nếu lỗi đó không phải do việc bị hủy chéo hoặc bị dừng đột ngột
+            if (e.error !== 'interrupted' && e.error !== 'canceled') {
+                if (onErrorCallback) onErrorCallback();
+            }
         };
 
         lectureSpeechUtterance = utterance;
