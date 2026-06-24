@@ -14,17 +14,105 @@ async function handleCoachFeedback(req, res) {
     req.on('end', async () => {
         try {
             const data = JSON.parse(body);
-            const { teacherName, level, mode, results, metrics } = data;
+            const { 
+                teacherName, 
+                level, 
+                skill = 'quiz', 
+                lessonTitle,
+                results, 
+                metrics,
+                essay,
+                transcript,
+                prompt: questionPrompt,
+                sampleAnswer,
+                suggestedVocab
+            } = data;
 
-            if (!level || !results) {
+            if (!level) {
                 res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ success: false, error: 'Thiếu dữ liệu kết quả học tập hoặc cấp độ.' }));
+                res.end(JSON.stringify({ success: false, error: 'Thiếu dữ liệu cấp độ (level).' }));
                 return;
             }
 
-            console.log(`[API coach-feedback] Đang phân tích hành vi học tập cho GV: ${teacherName || 'Giáo viên'}, Cấp độ: ${level}`);
+            console.log(`[API coach-feedback] Đang phân tích kỹ năng: ${skill}, Giáo viên: ${teacherName || 'Giáo viên'}, Cấp độ: ${level}`);
 
-            const promptText = `
+            let promptText = '';
+
+            if (skill === 'speaking') {
+                // Đánh giá bài Nói
+                promptText = `
+Bạn là một huấn luyện viên ảo (Virtual Coach) giảng dạy Tiếng Anh theo chuẩn CEFR vô cùng ấm áp, tận tâm và giàu kinh nghiệm sư phạm tại Việt Nam.
+Đối tượng học viên của bạn là các Thầy/Cô giáo viên phổ thông Việt Nam đang ôn tập nâng cấp năng lực tiếng Anh, rất bận rộn, dễ tự ti và chịu nhiều áp lực thi cử.
+
+Hãy phân tích bài phát âm và câu trả lời Nói (đã được chuyển thành văn bản) của giáo viên dưới đây và đưa ra nhận xét, lời khuyên thực sự hữu ích, sửa lỗi chi tiết bằng Tiếng Việt (xưng "Em", gọi "Thầy/Cô").
+
+THÔNG TIN BÀI NÓI:
+- Tên giáo viên: ${teacherName || 'Thầy/Cô'}
+- Cấp độ CEFR ôn tập: ${level}
+- Bài học: ${lessonTitle || 'Chuyên đề học tập'}
+- Đề bài Nói (Speaking Prompt): ${questionPrompt}
+- Câu trả lời mẫu (Sample Answer): ${sampleAnswer}
+- Văn bản ghi âm thực tế từ giáo viên (Student Transcript): "${transcript}"
+
+YÊU CẦU ĐÁNH GIÁ:
+1. Đọc và phân tích văn bản ghi âm của giáo viên. Chỉ ra các lỗi sai ngữ pháp, dùng từ không chuẩn, hoặc cách phát âm có thể bị nhận dạng sai (nếu có).
+2. Viết phản hồi ấm áp, động viên Thầy/Cô. Khen ngợi nỗ lực nói của họ trước.
+3. Đưa ra 2-3 gợi ý cụ thể để nói trôi chảy, tự nhiên và chuyên nghiệp hơn (như cách nối âm, từ vựng đắt giá).
+4. Viết lại một đoạn văn nói đề xuất (Suggested Speech) dựa trên ý tưởng của họ nhưng mượt mà hơn và phù hợp với trình độ ${level}.
+
+ĐẦU RA: Bạn chỉ được phép trả về một chuỗi JSON duy nhất, không định dạng markdown, khớp hoàn toàn cấu trúc sau:
+{
+  "coachMessage": "Lời nhận xét tổng quan ấm áp, khích lệ nỗ lực nói của Thầy/Cô và phân tích ngắn gọn (dài khoảng 3-4 câu)...",
+  "grammarErrors": "Danh sách các lỗi sai ngữ pháp, cấu trúc câu hoặc từ vựng bị dùng sai trong bài nói và cách sửa (viết bằng tiếng Việt kèm ví dụ)...",
+  "suggestedText": "Đoạn văn nói đề xuất hoàn chỉnh được viết lại tự nhiên, trôi chảy bằng tiếng Anh...",
+  "suggestions": [
+    "Gợi ý cụ thể 1 (ví dụ: Chú ý nối âm giữa 'first' và 'of' thành 'fơ-stớp')",
+    "Gợi ý cụ thể 2..."
+  ]
+}
+`;
+            } else if (skill === 'writing') {
+                // Đánh giá bài Viết
+                promptText = `
+Bạn là một huấn luyện viên ảo (Virtual Coach) giảng dạy Tiếng Anh theo chuẩn CEFR vô cùng ấm áp, tận tâm và giàu kinh nghiệm sư phạm tại Việt Nam.
+Đối tượng học viên của bạn là các Thầy/Cô giáo viên phổ thông Việt Nam đang ôn tập nâng cấp năng lực tiếng Anh, rất bận rộn, dễ tự ti và chịu nhiều áp lực thi cử.
+
+Hãy phân tích bài Viết của giáo viên dưới đây và đưa ra nhận xét, sửa lỗi chi tiết chính tả, ngữ pháp, từ vựng bằng Tiếng Việt (xưng "Em", gọi "Thầy/Cô").
+
+THÔNG TIN BÀI VIẾT:
+- Tên giáo viên: ${teacherName || 'Thầy/Cô'}
+- Cấp độ CEFR ôn tập: ${level}
+- Bài học: ${lessonTitle || 'Chuyên đề học tập'}
+- Đề bài Viết (Writing Prompt): ${questionPrompt}
+- Từ vựng gợi ý (Suggested Vocabulary): ${suggestedVocab || 'Không có'}
+- Bài viết thực tế của giáo viên: "${essay}"
+
+YÊU CẦU ĐÁNH GIÁ:
+1. Sửa chi tiết tất cả các lỗi chính tả (spelling), ngữ pháp (grammar), dấu câu (punctuation), cách dùng từ (word choice).
+2. Nhận xét về độ mạch lạc (coherence), liên kết (cohesion) và khả năng hoàn thành yêu cầu đề bài.
+3. Nhận xét cực kỳ ấm áp sư phạm, tránh phán xét tiêu cực gây nản lòng, tôn vinh những câu viết hay.
+4. Biên soạn một bài mẫu đề xuất (Suggested Essay) được nâng cấp từ chính ý tưởng bài viết của giáo viên, đảm bảo tự nhiên và chuẩn CEFR ${level}.
+
+ĐẦU RA: Bạn chỉ được phép trả về một chuỗi JSON duy nhất, không định dạng markdown, khớp hoàn toàn cấu trúc sau:
+{
+  "coachMessage": "Lời nhận xét tổng quát ấm áp, đánh giá sự mạch lạc và cấu trúc bài viết của Thầy/Cô (dài khoảng 3-4 câu)...",
+  "grammarErrors": "Danh sách chi tiết các lỗi chính tả, ngữ pháp, dấu câu kèm cách sửa lỗi rõ ràng (viết bằng tiếng Việt)...",
+  "suggestedText": "Bài viết đề xuất hoàn chỉnh được viết lại trơn tru và chuẩn xác bằng tiếng Anh...",
+  "suggestions": [
+    "Gợi ý nâng cấp từ vựng 1 (ví dụ: Thay vì dùng 'very friendly', Thầy/Cô có thể dùng 'extremely hospitable')",
+    "Gợi ý nâng cấp 2..."
+  ]
+}
+`;
+            } else {
+                // Đánh giá bài trắc nghiệm (quiz - Reading / Listening)
+                if (!results) {
+                    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(JSON.stringify({ success: false, error: 'Thiếu dữ liệu kết quả trắc nghiệm.' }));
+                    return;
+                }
+                
+                promptText = `
 Bạn là một huấn luyện viên ảo (Virtual Coach) giảng dạy Tiếng Anh theo chuẩn CEFR vô cùng ấm áp, tận tâm và giàu kinh nghiệm sư phạm tại Việt Nam.
 Đối tượng học viên của bạn là các Thầy/Cô giáo viên phổ thông Việt Nam đang bị yếu tiếng Anh, rất bận rộn, dễ tự ti và chịu nhiều áp lực thi cử.
 
@@ -33,7 +121,7 @@ Hãy phân tích nhật ký hành vi làm bài của giáo viên dưới đây v
 THÔNG TIN HỌC VIÊN:
 - Tên giáo viên: ${teacherName || 'Thầy/Cô'}
 - Trình độ đang học: ${level}
-- Chế độ ôn tập: ${mode === 'A' ? 'Học qua lỗi sai (Luyện tập trước)' : 'Học lý thuyết trước rồi làm bài'}
+- Bài học: ${lessonTitle || 'Chuyên đề học tập'}
 
 KẾT QUẢ BÀI TẬP:
 - Điểm đạt được: ${results.score} (Số câu đúng trên tổng số câu).
@@ -60,6 +148,7 @@ HƯỚNG DẪN ĐÁNH GIÁ HÀNH VI CỦA BẠN:
   "focusGrammar": "Tên chủ điểm ngữ pháp cốt lõi họ cần ôn lại kỹ (ví dụ: Chia động từ số ít với ngôi thứ 3, hoặc Câu bị động thời Hiện tại hoàn thành)"
 }
 `;
+            }
 
             const payload = {
                 contents: [{ role: "user", parts: [{ text: promptText }] }],
