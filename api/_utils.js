@@ -696,5 +696,7 @@ module.exports = {
     handleSaveResult,
     handleLeaderboard,
     handleRegisterTeacher,
-    handleTeacherTimeStats
+    handleTeacherTimeStats,
+    callGeminiWithRetry,
+    checkConfigError
 };

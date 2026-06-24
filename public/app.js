@@ -126,6 +126,8 @@ function setAppState(state) {
     document.getElementById('screen-test-writing').classList.add('hidden');
     document.getElementById('screen-total-summary').classList.add('hidden');
     document.getElementById('screen-review-mode').classList.add('hidden');
+    const learningScreen = document.getElementById('screen-learning-practice');
+    if (learningScreen) learningScreen.classList.add('hidden');
 
     // Hiển thị màn hình mong muốn
     if (state === 'landing') {
@@ -136,6 +138,9 @@ function setAppState(state) {
         document.getElementById('screen-total-summary').classList.remove('hidden');
     } else if (state === 'review') {
         document.getElementById('screen-review-mode').classList.remove('hidden');
+    } else if (state === 'learning') {
+        const learningScreen = document.getElementById('screen-learning-practice');
+        if (learningScreen) learningScreen.classList.remove('hidden');
     } else if (state === 'active_test') {
         if (currentSkill === 'speaking') {
             document.getElementById('screen-test-speaking').classList.remove('hidden');
@@ -1532,6 +1537,63 @@ function exportModalTimeStatsToExcel() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+function startLearningFlow() {
+    const inputEl = document.getElementById('inputTeacherName');
+    const inputName = inputEl ? inputEl.value.trim() : "";
+    const phoneEl = document.getElementById('inputTeacherPhone');
+    const inputPhone = phoneEl ? phoneEl.value.trim() : "";
+
+    if (!inputName || inputName.length < 3) {
+        if (inputEl) {
+            inputEl.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+            setTimeout(() => inputEl.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500'), 3000);
+        }
+        showSimpleWarning("Yêu cầu Họ và Tên", "Thầy/Cô vui lòng điền Họ và tên chính thức để hệ thống ghi nhận tiến trình học tập.");
+        return;
+    }
+
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!inputPhone || !phoneRegex.test(inputPhone)) {
+        if (phoneEl) {
+            phoneEl.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+            setTimeout(() => phoneEl.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500'), 3000);
+        }
+        showSimpleWarning("Số điện thoại không hợp lệ", "Thầy/Cô vui lòng nhập đúng số điện thoại (từ 10 đến 11 chữ số) để làm định danh học tập.");
+        return;
+    }
+
+    teacherName = inputName;
+    teacherPhone = inputPhone;
+    document.getElementById('userDisplayName').innerText = `Thầy/Cô ${teacherName}`;
+
+    fetch('/api/register-teacher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacher_name: teacherName, phone: teacherPhone })
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (res.success) {
+            console.log("[Supabase] Đăng ký giáo viên thành công (Ôn Luyện)!");
+            loadLeaderboard();
+        }
+    })
+    .catch(err => console.error("Lỗi đăng ký giáo viên:", err));
+
+    setAppState('learning');
+
+    if (typeof initLearningCoach === 'function') {
+        initLearningCoach();
+    }
+}
+
+function backToLandingFromLearning() {
+    if (typeof stopLearningTimers === 'function') {
+        stopLearningTimers();
+    }
+    setAppState('landing');
 }
 
 // Khởi chạy hệ thống mặc định

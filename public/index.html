@@ -17,9 +17,8 @@
 </head>
 <body class="min-h-screen flex flex-col overflow-x-hidden">
 
-    <!-- HEADER BAR -->
     <header class="h-16 sticky top-0 z-40 bg-[#0e1322] border-b border-[#1e2942] w-full">
-        <div class="max-w-7xl w-full mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+        <div class="max-w-[1440px] w-full mx-auto px-4 md:px-6 h-full flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <img src="./logo.png" alt="Logo" class="h-9 w-auto object-contain">
                 <span class="text-xs text-slate-400 font-semibold hidden md:inline">| MÔ PHỎNG KHẢO SÁT TIẾNG ANH GIÁO VIÊN</span>
@@ -103,7 +102,7 @@
 
     <!-- MAIN APP BODY -->
     <!-- MAIN APP CARD CONTAINER -->
-    <div class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 flex flex-col overflow-hidden">
+    <div class="flex-1 max-w-[1440px] w-full mx-auto px-4 py-6 flex flex-col overflow-hidden">
         <div class="flex-1 flex flex-col md:flex-row bg-[#111827]/70 backdrop-blur-md border border-[#1e2942]/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.55)] p-4 md:p-6 gap-6 overflow-hidden">
 
         <!-- Sidebar dọc bên trái chứa sơ đồ cây thư mục bài làm thích ứng -->
@@ -342,12 +341,18 @@
                             </div>
                         </div>
 
-                        <button onclick="startTestFlow()" id="btnStartTest" class="px-8 py-3.5 btn-grad text-white font-bold rounded-xl transition flex items-center space-x-2 text-sm animate-fadeIn w-full sm:w-auto justify-center">
-                            <span>Bắt đầu khảo sát thích ứng</span>
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        <div class="flex flex-col sm:flex-row gap-3.5 w-full max-w-sm">
+                            <button onclick="startTestFlow()" id="btnStartTest" class="px-5 py-3.5 btn-grad text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 text-xs md:text-sm animate-fadeIn flex-1">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                                <span>Bắt đầu Khảo sát</span>
+                            </button>
+                            <button onclick="startLearningFlow()" id="btnStartLearning" class="px-5 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 text-xs md:text-sm animate-fadeIn flex-1 shadow-lg shadow-emerald-500/15 hover:scale-[1.02] active:scale-[0.98]">
+                                <i class="fa-solid fa-book-open-reader"></i>
+                                <span>Ôn Luyện Song Ngữ</span>
+                            </button>
+                        </div>
                         <p class="text-xs text-slate-400 flex items-center mt-3">
-                            <i class="fa-solid fa-circle-info mr-1.5 text-blue-400"></i> Bài thi tự động bắt đầu ở trình độ trung bình B1.
+                            <i class="fa-solid fa-circle-info mr-1.5 text-blue-400"></i> Khảo sát tự động bắt đầu ở trình độ trung bình B1.
                         </p>
                     </div>
                 </div>
@@ -421,6 +426,165 @@
                                 <button onclick="changeLeaderboardLimit(200)" id="btn-limit-200" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 200 giáo viên">200</button>
                                 <button onclick="changeLeaderboardLimit(500)" id="btn-limit-500" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 500 giáo viên">500</button>
                                 <button onclick="changeLeaderboardLimit(1000)" id="btn-limit-1000" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 1000 giáo viên">1000</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN: SMART LEARNING & PRACTICE (NEW) -->
+            <div id="screen-learning-practice" class="hidden flex-1 flex flex-col space-y-6 w-full animate-fadeIn">
+                <!-- Header của màn hình học tập -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <button onclick="backToLandingFromLearning()" class="flex items-center text-xs text-slate-400 hover:text-white transition font-semibold space-x-1.5 mb-1">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Quay lại trang chủ</span>
+                        </button>
+                        <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-book-open-reader text-emerald-450"></i>
+                            <span>Hệ Thống Ôn Luyện Tiếng Anh CEFR Thông Minh</span>
+                        </h2>
+                    </div>
+                    
+                    <!-- Lựa chọn Chế độ học & Cấp độ -->
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <div class="bg-[#141b2d] border border-slate-700 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase text-slate-400">Cấp độ:</span>
+                            <select id="learningLevelSelect" onchange="changeLearningLevel(this.value)" class="bg-transparent text-xs text-white font-bold focus:outline-none cursor-pointer">
+                                <option value="A1" class="bg-[#141b2d]">A1 (Cơ bản)</option>
+                                <option value="A2" class="bg-[#141b2d]">A2 (Sơ cấp)</option>
+                                <option value="B1" class="bg-[#141b2d]">B1 (Trung cấp)</option>
+                                <option value="B2" class="bg-[#141b2d]">B2 (Trung cấp khá)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="bg-[#141b2d] border border-slate-700 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase text-slate-400">Lộ trình:</span>
+                            <select id="learningModeSelect" onchange="changeLearningMode(this.value)" class="bg-transparent text-xs text-white font-bold focus:outline-none cursor-pointer">
+                                <option value="B" class="bg-[#141b2d]">Học lý thuyết trước (B)</option>
+                                <option value="A" class="bg-[#141b2d]">Luyện tập trước (A)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thân giao diện học tập: 2 cột (Split Screen) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch flex-1 min-h-[500px]">
+                    <!-- Cột trái (col-span-7): Nội dung chính (Lý thuyết hoặc Bài tập) -->
+                    <div class="lg:col-span-7 bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex flex-col justify-between overflow-hidden relative min-h-[450px]">
+                        <!-- Thanh điều khiển hiển thị tiêu đề nội dung -->
+                        <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
+                            <span id="learningContentHeader" class="text-xs font-extrabold text-teal-400 uppercase tracking-widest">NỘI DUNG LÝ THUYẾT LỚP HỌC</span>
+                            <div class="flex items-center gap-2">
+                                <button id="btnPlayLecture" onclick="toggleLectureSpeech()" class="px-3 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-650 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-500/10 focus:outline-none">
+                                    <i id="btnPlayLectureIcon" class="fa-solid fa-volume-high"></i> <span id="btnPlayLectureText">Giảng bài</span>
+                                </button>
+                                <button id="btnBilingualTheoryToggle" onclick="toggleBilingualTheory()" class="btn-translate-toggle active">
+                                    <i class="fa-solid fa-language text-xs"></i> <span>Dịch song ngữ</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Vùng hiển thị lý thuyết -->
+                        <div id="learningTheoryArea" class="flex-1 overflow-y-auto pr-1 space-y-4">
+                            <!-- Chèn lý thuyết tự động từ JS -->
+                        </div>
+
+                        <!-- Vùng hiển thị câu hỏi trắc nghiệm (ẩn mặc định nếu học lý thuyết trước) -->
+                        <div id="learningPracticeArea" class="hidden flex-1 flex flex-col justify-between overflow-y-auto pr-1">
+                            <div id="practiceQuestionsContainer" class="space-y-6">
+                                <!-- Chèn câu hỏi tự động từ JS -->
+                            </div>
+                        </div>
+
+                        <!-- Nút hành động chân cột trái -->
+                        <div class="border-t border-slate-800 pt-4 mt-4 flex items-center justify-between">
+                            <span id="practiceProgressLabel" class="text-[10px] text-slate-400 font-bold hidden">Tiến trình: 0 / 3 câu</span>
+                            <div class="flex items-center gap-3 ml-auto">
+                                <button id="btnSwitchToPractice" onclick="switchToPracticeMode()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-750 text-white font-bold text-xs rounded-lg transition-all duration-200 shadow shadow-emerald-500/10">
+                                    Bắt đầu Thực hành <i class="fa-solid fa-chevron-right text-[10px] ml-1"></i>
+                                </button>
+                                <button id="btnSubmitPractice" onclick="submitPracticeQuiz()" class="hidden px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-lg transition-all duration-200 shadow shadow-blue-500/10">
+                                    Nộp bài & Phân tích <i class="fa-solid fa-paper-plane text-[10px] ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cột phải (col-span-5): Huấn luyện viên ảo & Giải thích chi tiết -->
+                    <div class="lg:col-span-5 flex flex-col gap-6">
+                        <!-- Trực quan hóa HLV ảo Gemini & Phân tích hành vi (Đã thu ngắn lại) -->
+                        <div class="bg-[#141b2d] border border-slate-800 rounded-xl p-5 flex flex-col space-y-4 justify-between h-auto min-h-[220px]">
+                            <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-robot text-blue-450"></i> HLV Ảo Gemini Tư Vấn
+                                </span>
+                                <!-- Chỉ số Online/Pulsing -->
+                                <span class="text-[9px] bg-green-500/10 border border-green-550/30 text-green-400 px-2 py-0.5 rounded font-black tracking-wider flex items-center gap-1">
+                                    <span class="relative flex h-1.5 w-1.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                                    </span>
+                                    ONLINE
+                                </span>
+                            </div>
+
+                            <!-- Bong bóng thoại HLV -->
+                            <div class="flex-1 overflow-y-auto pr-1 flex flex-col justify-center py-2">
+                                <div class="flex items-start gap-3">
+                                    <div class="h-10 w-10 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 shadow-lg shadow-blue-500/5">
+                                        <i class="fa-solid fa-user-astronaut text-base"></i>
+                                    </div>
+                                    <div class="space-y-2 flex-1">
+                                        <div class="bg-[#0b0f19] border border-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-none p-3.5 leading-relaxed shadow relative">
+                                            <p id="coachBubbleText">
+                                                Chào mừng Thầy/Cô đã tham gia ôn luyện! Hãy chọn cấp độ ôn tập phù hợp và bắt đầu nhé. Em sẽ theo dõi hành vi học tập và phân vân của Thầy/Cô để tư vấn chuẩn xác nhất!
+                                            </p>
+                                            
+                                            <!-- Khung hiển thị các đề xuất học tập phụ thêm của HLV -->
+                                            <div id="coachSuggestionsContainer" class="hidden mt-3 pt-3 border-t border-slate-800 space-y-1.5">
+                                                <span class="text-[10px] text-amber-400 font-extrabold uppercase tracking-wider block">Gợi ý hành động:</span>
+                                                <ul id="coachSuggestionsList" class="list-disc pl-4 text-[10.5px] text-slate-400 space-y-1">
+                                                    <!-- Chèn tự động -->
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bảng thống kê hành vi thời gian thực -->
+                            <div class="p-3 bg-[#0b0f19]/70 border border-slate-800 rounded-xl space-y-2">
+                                <span class="text-[10px] text-slate-450 font-bold uppercase tracking-wider block">Các chỉ số đo lường hành vi:</span>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div class="bg-[#141b2d] border border-slate-800 p-2 rounded-lg space-y-0.5">
+                                        <span class="text-[9px] text-slate-500 block">Thời gian học</span>
+                                        <span id="statStudyTime" class="text-xs font-extrabold text-white font-mono">00:00</span>
+                                    </div>
+                                    <div class="bg-[#141b2d] border border-slate-800 p-2 rounded-lg space-y-0.5">
+                                        <span class="text-[9px] text-slate-500 block">Độ phân vân</span>
+                                        <span id="statHesitationCount" class="text-xs font-extrabold text-amber-400 font-mono">0 lần</span>
+                                    </div>
+                                    <div class="bg-[#141b2d] border border-slate-800 p-2 rounded-lg space-y-0.5">
+                                        <span class="text-[9px] text-slate-500 block">Trạng thái làm</span>
+                                        <span id="statWorkStatus" class="text-[10px] font-extrabold text-green-400">Chưa bắt đầu</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Khung giải thích chi tiết đáp án khi nộp bài (Phóng to lớn và rõ ràng) -->
+                        <div id="learningExplanationCard" class="hidden bg-[#0b0f19] border border-slate-800 rounded-xl p-5 flex-1 flex flex-col space-y-3 min-h-[380px] overflow-hidden relative transition-all duration-300">
+                            <div class="border-b border-slate-800 pb-2 flex items-center justify-between">
+                                <span class="text-xs font-extrabold text-emerald-450 uppercase tracking-widest block">GIẢI THÍCH CHI TIẾT ĐÁP ÁN</span>
+                                <button id="btnZoomExplanation" onclick="toggleZoomExplanation()" class="text-slate-400 hover:text-white transition p-1.5 text-xs flex items-center gap-1 focus:outline-none" title="Phóng to / Thu nhỏ">
+                                    <i id="zoomExplanationIcon" class="fa-solid fa-maximize text-slate-400"></i>
+                                    <span id="zoomExplanationText" class="text-[10px] hidden sm:inline font-bold">Phóng to</span>
+                                </button>
+                            </div>
+                            <div id="learningExplanationContent" class="overflow-y-auto flex-1 pr-1 text-xs text-slate-350 space-y-3 leading-relaxed">
+                                <!-- Điền tự động nội dung giải thích -->
                             </div>
                         </div>
                     </div>
@@ -737,7 +901,7 @@
             </div>
 
             <!-- SCREEN 6: TOTAL ASSESSMENT RESULT PAGE (Dashboard) -->
-            <div id="screen-total-summary" class="hidden flex-1 max-w-7xl mx-auto py-4 space-y-6 w-full">
+            <div id="screen-total-summary" class="hidden flex-1 max-w-[1440px] mx-auto py-4 space-y-6 w-full">
                 <!-- Banner Kết quả tổng quát -->
                 <div class="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-slate-800 p-6 rounded-2xl text-center space-y-2 relative overflow-hidden">
                     <div class="absolute -right-12 -top-12 h-32 w-32 bg-blue-500/10 rounded-full blur-2xl"></div>
@@ -1087,12 +1251,14 @@
     <!-- Nạp dữ liệu câu hỏi trước -->
     <script src="js/data/questions.js"></script>
     <script src="js/data/tests-extra.js"></script>
+    <script src="js/data/learning-materials.js"></script>
 
     <!-- Nạp các module tính năng -->
     <script src="js/features/adaptive-exam.js"></script>
     <script src="js/features/speaking.js"></script>
     <script src="js/features/writing.js"></script>
     <script src="js/features/dashboard-review.js"></script>
+    <script src="js/features/learning-coach.js"></script>
 
     <!-- Custom app logic script -->
     <script src="app.js"></script>

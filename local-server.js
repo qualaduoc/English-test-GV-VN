@@ -9,6 +9,7 @@ const handleSaveResult = require('./api/save-result.js');
 const handleLeaderboard = require('./api/leaderboard.js');
 const handleRegisterTeacher = require('./api/register-teacher.js');
 const handleTeacherTimeStats = require('./api/teacher-time-stats.js');
+const handleCoachFeedback = require('./api/coach-feedback.js');
 
 const PORT = 3001;
 
@@ -44,6 +45,9 @@ const server = http.createServer((req, res) => {
     }
     if (safeUrl === '/api/teacher-time-stats') {
         return handleTeacherTimeStats(req, res);
+    }
+    if (safeUrl === '/api/coach-feedback') {
+        return handleCoachFeedback(req, res);
     }
 
     // Serve file tĩnh ở local từ thư mục public
