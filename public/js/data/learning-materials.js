@@ -385,6 +385,26 @@ const learningMaterialsDb = {
                             correct: 1,
                             explanation: "Đoạn văn viết: 'The students wrote beautiful thank-you letters'.",
                             studyTip: "Mẹo: Từ 'wrote' là quá khứ của 'write'."
+                        },
+                        {
+                            id: "a2_l1_r2",
+                            q: "Where did the writer teach English last year?",
+                            qTranslation: "Người viết đã dạy tiếng Anh ở đâu vào năm ngoái?",
+                            options: ["At an urban school", "At a rural school", "At an international center"],
+                            optionsTranslation: ["Tại một ngôi trường thành thị", "Tại một ngôi trường nông thôn", "Tại một trung tâm quốc tế"],
+                            correct: 1,
+                            explanation: "Đoạn văn viết: 'I taught English at a rural school' (Tôi đã dạy tiếng Anh ở một trường nông thôn).",
+                            studyTip: "Mẹo: Từ 'rural' có nghĩa là nông thôn, trái nghĩa với 'urban'."
+                        },
+                        {
+                            id: "a2_l1_r3",
+                            q: "How did the teacher feel after receiving the letters?",
+                            qTranslation: "Giáo viên cảm thấy thế nào sau khi nhận được những lá thư?",
+                            options: ["Extremely happy", "Quite sad", "A bit tired"],
+                            optionsTranslation: ["Vô cùng hạnh phúc", "Khá buồn", "Hơi mệt mỏi"],
+                            correct: 0,
+                            explanation: "Đoạn văn viết: 'I felt extremely happy' (Tôi đã cảm thấy vô cùng hạnh phúc).",
+                            studyTip: "Mẹo: Từ 'extremely happy' chỉ trạng thái cảm xúc cực kỳ vui vẻ."
                         }
                     ]
                 },
@@ -401,6 +421,26 @@ const learningMaterialsDb = {
                             correct: 1,
                             explanation: "Băng nghe nói: 'school organized a big music festival'.",
                             studyTip: "Mẹo: Từ khóa nghe 'music festival'."
+                        },
+                        {
+                            id: "a2_l1_l2",
+                            q: "What did many classes perform?",
+                            qTranslation: "Nhiều lớp học đã biểu diễn cái gì?",
+                            options: ["Modern hiphop dances", "Traditional dances", "English plays"],
+                            optionsTranslation: ["Các điệu nhảy hiphop hiện đại", "Các điệu múa truyền thống", "Các vở kịch tiếng Anh"],
+                            correct: 1,
+                            explanation: "Băng nghe nói: 'Many classes performed traditional dances' (Nhiều lớp đã trình diễn các điệu múa truyền thống).",
+                            studyTip: "Mẹo: Chú ý nghe cụm từ 'traditional dances'."
+                        },
+                        {
+                            id: "a2_l1_l3",
+                            q: "What did they enjoy very much?",
+                            qTranslation: "Họ đã rất thích cái gì?",
+                            options: ["The decorations", "The music", "The food"],
+                            optionsTranslation: ["Đồ trang trí", "Âm nhạc", "Đồ ăn"],
+                            correct: 2,
+                            explanation: "Băng nghe nói: 'We enjoyed the food very much' (Chúng tôi đã thích đồ ăn ở đó rất nhiều).",
+                            studyTip: "Mẹo: Lắng nghe từ khóa cuối cùng 'food'."
                         }
                     ]
                 },

@@ -26,7 +26,8 @@ let currentSpeechRate = 1.0;
 // Các biến đo lường hành vi ôn tập
 let currentReadingAnswers = [null, null, null];
 let currentListeningAnswers = [null, null, null];
-let isQuizActive = false;
+let isReadingActive = false;
+let isListeningActive = false;
 let questionStartTime = 0;
 let dwellTimes = [0, 0, 0];
 let optionSwitches = [0, 0, 0];
@@ -315,7 +316,8 @@ function loadCurrentLesson() {
     optionSwitches = Array(Math.max(readingQCount, listeningQCount, 3)).fill(0);
     currentReadingAnswers = Array(readingQCount).fill(null);
     currentListeningAnswers = Array(listeningQCount).fill(null);
-    isQuizActive = true;
+    isReadingActive = true;
+    isListeningActive = true;
 
     // Reset bảng hiển thị chỉ số
     document.getElementById('statStudyTime').innerText = "00:00";
@@ -440,7 +442,8 @@ function renderSkillQuestions(skillType, questions) {
 
 // Xử lý chọn đáp án cho từng kỹ năng
 function trackSkillOptionClick(skillType, qIdx, optIdx) {
-    if (!isQuizActive) return;
+    const isActive = skillType === 'reading' ? isReadingActive : isListeningActive;
+    if (!isActive) return;
 
     const answersArray = skillType === 'reading' ? currentReadingAnswers : currentListeningAnswers;
     const prevSelected = answersArray[qIdx];
@@ -1489,7 +1492,8 @@ async function submitListeningQuiz() {
 
 // Hàm dùng chung cho nộp bài trắc nghiệm (Đọc/Nghe)
 async function submitQuizSkill(skillType) {
-    if (!isQuizActive) return;
+    const isActive = skillType === 'reading' ? isReadingActive : isListeningActive;
+    if (!isActive) return;
 
     const answersArray = skillType === 'reading' ? currentReadingAnswers : currentListeningAnswers;
     const unansweredIdx = answersArray.findIndex(ans => ans === null);
@@ -1504,7 +1508,8 @@ async function submitQuizSkill(skillType) {
     const lastActiveIdx = answersArray.length - 1;
     dwellTimes[lastActiveIdx] += elapsedSeconds;
 
-    isQuizActive = false;
+    if (skillType === 'reading') isReadingActive = false;
+    else isListeningActive = false;
     stopLearningTimers();
 
     document.getElementById('statWorkStatus').innerText = "Đang phân tích...";
@@ -1918,7 +1923,8 @@ function saveLearningState() {
         studySeconds,
         currentReadingAnswers,
         currentListeningAnswers,
-        isQuizActive,
+        isReadingActive,
+        isListeningActive,
         isSubmitted,
         coachBubbleText: document.getElementById('coachBubbleText').innerHTML,
         coachSuggestionsHidden: document.getElementById('coachSuggestionsContainer').classList.contains('hidden'),
@@ -1948,7 +1954,8 @@ function loadLearningState() {
         studySeconds = state.studySeconds || 0;
         currentReadingAnswers = state.currentReadingAnswers || [null, null, null];
         currentListeningAnswers = state.currentListeningAnswers || [null, null, null];
-        isQuizActive = state.isQuizActive !== undefined ? state.isQuizActive : true;
+        isReadingActive = state.isReadingActive !== undefined ? state.isReadingActive : true;
+        isListeningActive = state.isListeningActive !== undefined ? state.isListeningActive : true;
 
         const levelSelect = document.getElementById('learningLevelSelect');
         if (levelSelect) levelSelect.value = selectedLevel;
