@@ -788,18 +788,154 @@ function splitTextForGoogleTTS(text) {
     return chunks;
 }
 
-// Chạy hàng đợi phát Google Translate TTS
+// Hàm tự động phân tích văn bản hỗn hợp Việt - Anh thành các phân đoạn nhỏ kèm theo ngôn ngữ tương ứng
+function splitMixedText(text) {
+    if (!text) return [];
+    
+    // Bước 1: Khớp các từ (gồm chữ cái Latin và ký tự tiếng Việt) cùng dấu câu/khoảng trắng
+    const tokenRegex = /(\p{L}+(?:-\p{L}+)*)|([^\p{L}]+)/gu;
+    let match;
+    const tokens = [];
+    
+    while ((match = tokenRegex.exec(text)) !== null) {
+        if (match[1]) {
+            tokens.push({ type: 'word', text: match[1] });
+        } else if (match[2]) {
+            tokens.push({ type: 'non-word', text: match[2] });
+        }
+    }
+    
+    // Danh sách từ tiếng Việt không dấu phổ biến (đã bỏ dấu) để loại trừ nhận nhầm tiếng Anh
+    const viStopWords = new Set([
+        'chao', 'thay', 'co', 'sau', 'day', 'la', 'bai', 'giang', 've', 'cau', 'dieu', 'kien', 
+        'loai', 'va', 'ta', 'dung', 'cho', 'tinh', 'huong', 'that', 'hien', 'tai', 'tuong', 
+        'lai', 'voi', 'cong', 'thuc', 'neu', 'chu', 'ngu', 'dong', 'tu', 'o', 'don', 
+        'thi', 'nguyen', 'the', 'gia', 'thuyet', 'khong', 'qua', 'khu', 'cung',
+        'cua', 'nay', 'tren', 'trong', 'mot', 'con', 'se', 'nguoi', 'giao', 'vien', 'hoc', 
+        'sinh', 'truong', 'lop', 'ngoai', 'le', 'ra', 'di', 'lai', 'roi', 'ma', 'la', 'chua', 
+        'duoc', 'phai', 'nen', 'can', 'muon', 'biet', 'hieu', 'chia', 'cac', 'ngoi', 'bang', 
+        'cach', 'noi', 'nghe', 'doc', 'viet', 'thi', 'tu', 'nhu', 'nhung', 'de',
+        'cai', 'nao', 'ai', 'gi', 'dau', 'do', 'kia', 'ay', 'nho', 'lon',
+        'nhieu', 'it', 'moi', 'tung', 'deu', 'chi', 'tên', 'ten', 'câu', 'hỏi', 'hoi'
+    ]);
+
+    // Bảng chữ cái tiếng Việt có dấu
+    const viCharsRegex = /[ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ]/;
+
+    // Danh sách whitelist các thuật ngữ tiếng Anh luôn phát âm chuẩn tiếng Anh
+    const englishWhiteList = new Set([
+        'if', 'will', 'would', 'were', 'was', 'should', 'can', 'could', 'may', 'might', 'must',
+        'to', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'done', 'go', 'went', 'gone',
+        'who', 'whom', 'which', 'that', 'whose', 'where', 'when', 'why', 'how',
+        'simple', 'present', 'past', 'perfect', 'future', 'continuous', 'passive', 'active', 'voice',
+        'gerund', 'infinitive', 'cefr', 'ielts', 'reading', 'listening', 'speaking', 'writing',
+        'vocabulary', 'grammar', 'pronunciation', 'feedback', 'coaching', 'skills', 'skill',
+        'v-ing', 'to-infinitive', 'bare-infinitive', 'verbs', 'verb', 'nouns', 'noun', 'adjectives', 'adjective'
+    ]);
+
+    // Xác định ngôn ngữ của từ
+    const isEnglish = (word) => {
+        const lower = word.toLowerCase();
+        if (viCharsRegex.test(word)) return false;
+        if (englishWhiteList.has(lower)) return true;
+        if (viStopWords.has(lower)) return false;
+        if (/^[a-zA-Z]{2,}$/.test(word)) return true;
+        return false;
+    };
+
+    // Gán nhãn ngôn ngữ
+    const labeledTokens = tokens.map(token => {
+        if (token.type === 'word') {
+            return {
+                text: token.text,
+                lang: isEnglish(token.text) ? 'en' : 'vi'
+            };
+        } else {
+            return {
+                text: token.text,
+                lang: null
+            };
+        }
+    });
+
+    // Điền ngôn ngữ thừa hưởng cho các token không phải từ
+    let currentLang = 'vi';
+    for (let i = 0; i < labeledTokens.length; i++) {
+        if (labeledTokens[i].lang !== null) {
+            currentLang = labeledTokens[i].lang;
+        } else {
+            let nextLang = null;
+            for (let j = i + 1; j < labeledTokens.length; j++) {
+                if (labeledTokens[j].lang !== null) {
+                    nextLang = labeledTokens[j].lang;
+                    break;
+                }
+            }
+            labeledTokens[i].lang = nextLang || currentLang;
+        }
+    }
+
+    // Gộp các phân đoạn liên tiếp cùng ngôn ngữ
+    const segments = [];
+    if (labeledTokens.length === 0) return segments;
+
+    let currentSegment = {
+        text: labeledTokens[0].text,
+        lang: labeledTokens[0].lang
+    };
+
+    for (let i = 1; i < labeledTokens.length; i++) {
+        const token = labeledTokens[i];
+        if (token.lang === currentSegment.lang) {
+            currentSegment.text += token.text;
+        } else {
+            segments.push(currentSegment);
+            currentSegment = {
+                text: token.text,
+                lang: token.lang
+            };
+        }
+    }
+    segments.push(currentSegment);
+
+    return segments;
+}
+
+// Chạy hàng đợi phát Google Translate TTS hỗ trợ đa ngôn ngữ lai (code-switching)
 function playGoogleTTSQueue(text, onStartCallback, onEndCallback, onErrorCallback, lang = 'vi') {
-    const chunks = splitTextForGoogleTTS(text);
-    if (chunks.length === 0) {
+    let queueItems = [];
+    
+    if (lang === 'vi') {
+        // Tách câu để phát âm chuẩn từng phần tiếng Anh / tiếng Việt
+        const segments = splitMixedText(text);
+        segments.forEach(seg => {
+            const chunks = splitTextForGoogleTTS(seg.text);
+            chunks.forEach(chunk => {
+                queueItems.push({
+                    url: `/api/tts?text=${encodeURIComponent(chunk)}&lang=${seg.lang}`,
+                    lang: seg.lang,
+                    text: chunk
+                });
+            });
+        });
+    } else {
+        // Tiếng Anh chuẩn hoàn toàn (băng nghe)
+        const chunks = splitTextForGoogleTTS(text);
+        chunks.forEach(chunk => {
+            queueItems.push({
+                url: `/api/tts?text=${encodeURIComponent(chunk)}&lang=${lang}`,
+                lang: lang,
+                text: chunk
+            });
+        });
+    }
+
+    if (queueItems.length === 0) {
         if (onErrorCallback) onErrorCallback();
         return;
     }
 
-    googleAudioQueue = chunks.map(chunk => {
-        return `/api/tts?text=${encodeURIComponent(chunk)}&lang=${lang}`;
-    });
-
+    googleAudioQueue = queueItems;
     currentAudioIndex = 0;
     isAudioPlaying = true;
     if (onStartCallback) onStartCallback();
@@ -818,7 +954,8 @@ async function playNextAudioInQueue(onEndCallback, onErrorCallback) {
         return;
     }
 
-    const rawUrl = googleAudioQueue[currentAudioIndex];
+    const queueItem = googleAudioQueue[currentAudioIndex];
+    const rawUrl = queueItem.url;
     const ttsPlayer = document.getElementById('learningTtsPlayer');
 
     try {
@@ -932,67 +1069,76 @@ function getBestEnglishVoiceCoach() {
     return enVoices[0];
 }
 
-// Phát giọng nói thông qua Web Speech API (Hàm dự phòng ngoại tuyến)
+// Phát giọng nói thông qua Web Speech API (Hàm dự phòng ngoại tuyến hỗ trợ phát đa ngôn ngữ lai)
 function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallback, lang = 'vi') {
     if (!('speechSynthesis' in window)) {
         if (onErrorCallback) onErrorCallback();
         return;
     }
 
-    let voiceToUse = null;
-    let langCode = "vi-VN";
-
-    if (lang === 'en') {
-        voiceToUse = getBestEnglishVoiceCoach();
-        langCode = "en-US";
+    window.speechSynthesis.cancel();
+    
+    // Tách câu thành các phân đoạn ngôn ngữ
+    let segments = [];
+    if (lang === 'vi') {
+        segments = splitMixedText(text);
     } else {
-        voiceToUse = viSpeechVoice;
-        langCode = "vi-VN";
+        segments = [{ text: text, lang: 'en' }];
     }
 
-    if (!voiceToUse) {
-        console.warn(`Không tìm thấy giọng đọc phù hợp cho ngôn ngữ ${lang}. Bỏ qua phát Web Speech.`);
-        if (onErrorCallback) onErrorCallback();
+    const utterances = [];
+    
+    segments.forEach(seg => {
+        const sentences = seg.text.split(/[.!?]/).filter(s => s.trim().length > 0);
+        
+        sentences.forEach(sentenceText => {
+            const trimmed = sentenceText.trim();
+            if (trimmed.length === 0) return;
+            
+            const utterance = new SpeechSynthesisUtterance(trimmed);
+            
+            let voiceToUse = null;
+            let langCode = "vi-VN";
+
+            if (seg.lang === 'en') {
+                voiceToUse = getBestEnglishVoiceCoach();
+                langCode = "en-US";
+            } else {
+                voiceToUse = viSpeechVoice;
+                langCode = "vi-VN";
+            }
+            
+            if (voiceToUse) {
+                utterance.voice = voiceToUse;
+            }
+            utterance.lang = langCode;
+            utterance.rate = currentSpeechRate;
+            
+            utterances.push(utterance);
+        });
+    });
+
+    if (utterances.length === 0) {
+        if (onEndCallback) onEndCallback();
         return;
     }
 
-    window.speechSynthesis.cancel();
-    const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
-    let sIdx = 0;
-
-    const speakSentence = () => {
-        if (sIdx >= sentences.length) {
-            if (onEndCallback) onEndCallback();
-            return;
-        }
-
-        const sentenceText = sentences[sIdx].trim();
-        const utterance = new SpeechSynthesisUtterance(sentenceText);
-        utterance.voice = voiceToUse;
-        utterance.lang = langCode;
-        utterance.rate = currentSpeechRate;
-
-        utterance.onstart = () => {
-            if (sIdx === 0 && onStartCallback) onStartCallback();
-        };
-
-        utterance.onend = () => {
-            sIdx++;
-            speakSentence();
-        };
-
-        utterance.onerror = (e) => {
-            console.error("Lỗi Web Speech API ở câu:", sentenceText, e);
-            if (e.error !== 'interrupted' && e.error !== 'canceled') {
-                if (onErrorCallback) onErrorCallback();
-            }
-        };
-
-        lectureSpeechUtterance = utterance;
-        window.speechSynthesis.speak(utterance);
+    utterances[0].onstart = () => {
+        if (onStartCallback) onStartCallback();
     };
 
-    speakSentence();
+    utterances[utterances.length - 1].onend = () => {
+        if (onEndCallback) onEndCallback();
+    };
+
+    utterances.forEach(utterance => {
+        utterance.onerror = (e) => {
+            console.error("Lỗi Web Speech API:", e);
+        };
+        
+        lectureSpeechUtterance = utterance;
+        window.speechSynthesis.speak(utterance);
+    });
 }
 
 // Hàm phát giọng nói thông minh kết hợp Google TTS và Web Speech API làm dự phòng
@@ -1000,16 +1146,13 @@ function speakSmart(text, onStartCallback, onEndCallback, lang = 'vi') {
     stopAllSpeech();
     ttsRetryCount = 0;
     
-    // Chỉ Việt hóa nếu là ngôn ngữ tiếng Việt (phát bài giảng/giải thích)
-    const textToPlay = lang === 'vi' ? convertEnglishXenVi(text) : text;
-    
     playGoogleTTSQueue(
-        textToPlay,
+        text, // Giữ nguyên bản văn bản để hệ thống tự phân tách và đọc chuẩn en-vi
         onStartCallback,
         onEndCallback,
         () => {
             console.warn(`[TTS Fallback] Chuyển hướng dự phòng sang Web Speech API cho ngôn ngữ ${lang}...`);
-            speakWithWebSpeech(textToPlay, onStartCallback, onEndCallback, () => {
+            speakWithWebSpeech(text, onStartCallback, onEndCallback, () => {
                 stopAllSpeech();
             }, lang);
         },
