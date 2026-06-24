@@ -477,6 +477,13 @@
                         <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
                             <span id="learningContentHeader" class="text-xs font-extrabold text-teal-400 uppercase tracking-widest">NỘI DUNG LÝ THUYẾT LỚP HỌC</span>
                             <div class="flex items-center gap-2">
+                                <!-- Thanh trượt điều khiển tốc độ phát bài giảng -->
+                                <div class="flex items-center gap-1 bg-[#141b2d] border border-slate-800 rounded-lg px-2.5 py-1 text-[10px] h-[28px]">
+                                    <i class="fa-solid fa-gauge-high text-slate-400"></i>
+                                    <span class="text-slate-400">Tốc độ:</span>
+                                    <input id="speechSpeedRate" type="range" min="0.75" max="1.25" step="0.05" value="1.0" class="w-16 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-500" oninput="changeSpeechSpeed(this.value)">
+                                    <span id="speechSpeedValue" class="font-bold text-teal-400 w-7 text-right">1.0x</span>
+                                </div>
                                 <button id="btnPlayLecture" onclick="toggleLectureSpeech()" class="px-3 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-650 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-500/10 focus:outline-none">
                                     <i id="btnPlayLectureIcon" class="fa-solid fa-volume-high"></i> <span id="btnPlayLectureText">Giảng bài</span>
                                 </button>

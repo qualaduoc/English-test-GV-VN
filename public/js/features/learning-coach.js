@@ -19,8 +19,216 @@ let isAudioPlaying = false;
 let viSpeechVoice = null;
 let ttsRetryCount = 0;
 
+// Biến lưu trữ tốc độ phát (playbackRate)
+let currentSpeechRate = 1.0;
+
+// Bản đồ từ điển phiên âm các từ tiếng Anh thường dùng trong học liệu sang tiếng Việt gần đúng
+const englishToViPronunciationMap = {
+    "primary school": "pờ-rai-mờ-ri sờ-kul",
+    "primary": "pờ-rai-mờ-ri",
+    "school": "sờ-kul",
+    "tennis": "ten-nít",
+    "soccer": "sóc-cơ",
+    "weekend": "uých-en",
+    "weekends": "uých-en",
+    "cooking": "cúc-king",
+    "dinner": "din-nơ",
+    "hobbies": "hóp-bi",
+    "hobby": "hóp-bi",
+    "plastic": "pờ-lát-tích",
+    "pollution": "pô-lu-sơn",
+    "invented": "in-ven-tựt",
+    "extended": "ếch-ten-dựt",
+    "families": "phe-mi-li",
+    "family": "phe-mi-li",
+    "urban": "ơ-bần",
+    "migration": "mai-grê-sơn",
+    "career": "ca-ri-ơ",
+    "prevalent": "pờ-re-vơ-lần",
+    "libraries": "lai-bờ-ra-ri",
+    "library": "lai-bờ-ra-ri",
+    "physical": "phi-zi-cồ",
+    "critical thinking": "cờ-ri-ti-cồ thin-king",
+    "critical": "cờ-ri-ti-cồ",
+    "thinking": "thin-king",
+    "literacy": "li-tơ-rơ-si",
+    "digital": "di-ji-tồ",
+    "unverified": "ăn-ve-ri-phai",
+    "generative": "je-nơ-rây-típ",
+    "language": "leng-guých",
+    "models": "mô-đần",
+    "model": "mô-đần",
+    "cognitive": "cóc-ni-típ",
+    "dependency": "đi-pen-đơn-si",
+    "coaching": "cốu-ching",
+    "quantum": "quăn-tùm",
+    "silicon": "si-li-cơn",
+    "binary": "bai-nơ-ri",
+    "cryptography": "cờ-ríp-tô-gra-phi",
+    "vulnerable": "văn-nơ-rơ-bồ",
+    "protocols": "prô-tô-côn",
+    "protocol": "prô-tô-côn",
+    "nurse": "nơ-sơ",
+    "hospital": "hóp-pi-tồ",
+    "playground": "pờ-lây-grao",
+    "photography": "phơ-tó-gra-phi",
+    "camera": "ca-me-ra",
+    "debates": "đi-bết",
+    "debate": "đi-bết",
+    "metrics": "mét-trích",
+    "individuality": "in-đi-vi-du-e-li-ti",
+    "schema": "sờ-ki-ma",
+    "memory": "me-mơ-ri",
+    "transfer": "trán-sphơ",
+    "grammar": "gờ-ram-mơ",
+    "explanation": "ếch-spla-nê-sơn",
+    "study": "sờ-ta-di",
+    "tip": "típ",
+    "studyTip": "mẹo học",
+    "John": "Gian",
+    "Asian": "A-si-an",
+    "A1": "A Một",
+    "A2": "A Hai",
+    "B1": "B Một",
+    "B2": "B Hai",
+    "C1": "C Một",
+    "C2": "C Hai",
+    "CEFR": "Xê e ép rờ",
+    "Zalo": "Da-lô",
+    "Google": "Gu-gồ",
+    "Microsoft": "Mai-crô-sóp",
+    "TTS": "Tê tê ét",
+    "AI": "Ai",
+    "API": "A bê i",
+    "CORS": "Cót",
+    "Local": "Lô-cần",
+    "Online": "On-lai",
+    "Offline": "Off-lai",
+    "Web Speech": "Uét sờ-pít",
+    "Speech": "Sờ-pít",
+    "audio": "ao-đi-ô",
+    "english": "Anh-lịch",
+    "teacher": "ti-chơ",
+    "teachers": "ti-chơ"
+};
+
+// Hàm tự động phát hiện và chuyển từ tiếng Anh đan xen thành phiên âm tiếng Việt gần đúng
+function convertEnglishXenVi(text) {
+    if (!text) return "";
+    let processedText = text;
+    
+    // Sắp xếp các từ khóa theo chiều dài giảm dần để ưu tiên cụm từ dài trước (tránh thay thế từ con trước)
+    const sortedKeys = Object.keys(englishToViPronunciationMap).sort((a, b) => b.length - a.length);
+    
+    for (const key of sortedKeys) {
+        const value = englishToViPronunciationMap[key];
+        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+        processedText = processedText.replace(regex, value);
+    }
+    
+    return processedText;
+}
+
+// Thao tác với Cache API để lưu trữ âm thanh proxy TTS cục bộ trên trình duyệt
+async function getCachedTtsAudioUrl(textUrl) {
+    if (!('caches' in window)) {
+        return textUrl; // Fallback gọi trực tiếp
+    }
+    
+    try {
+        const cache = await caches.open('cefr-tts-cache-v1');
+        const cachedResponse = await cache.match(textUrl);
+        
+        if (cachedResponse) {
+            const blob = await cachedResponse.blob();
+            return URL.createObjectURL(blob);
+        }
+        
+        const response = await fetch(textUrl);
+        if (!response.ok) throw new Error("Không tải được âm thanh từ máy chủ");
+        
+        const responseToCache = response.clone();
+        await cache.put(textUrl, responseToCache);
+        
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    } catch (err) {
+        console.warn("[Cache API] Lỗi bộ nhớ cache, dùng link trực tiếp:", err);
+        return textUrl;
+    }
+}
+
+// Chạy ngầm tải trước và lưu cache âm thanh giải thích cho một câu trắc nghiệm
+function preloadExplanationAudio(qIdx) {
+    const material = learningMaterialsDb[selectedLevel];
+    if (!material || !material.questions[qIdx]) return;
+    
+    const question = material.questions[qIdx];
+    
+    // Biên soạn nội dung đọc tiếng Việt giống hệt lúc phát âm thanh thực tế
+    let textToSpeak = `Câu hỏi số ${qIdx + 1}. Nội dung câu hỏi: ${question.qTranslation}. `;
+    textToSpeak += `Giải thích ngữ pháp: ${question.explanation}. `;
+    if (question.studyTip) {
+        textToSpeak += `Mẹo học dành cho Thầy Cô: ${question.studyTip}`;
+    }
+
+    // Phiên âm từ tiếng Anh xen kẽ để khớp với URL cache thực tế
+    const viText = convertEnglishXenVi(textToSpeak);
+    const chunks = splitTextForGoogleTTS(viText);
+    
+    chunks.forEach(chunk => {
+        const textUrl = `/api/tts?text=${encodeURIComponent(chunk)}`;
+        getCachedTtsAudioUrl(textUrl).catch(() => {});
+    });
+}
+
+// Tải trước giải thích của toàn bộ 3 câu hỏi trắc nghiệm của cấp độ hiện tại
+function preloadAllPracticeExplanations() {
+    console.log(`[Audio Preload] Đang chạy ngầm tải trước âm thanh giải thích cấp độ ${selectedLevel}...`);
+    const material = learningMaterialsDb[selectedLevel];
+    if (!material || !material.questions) return;
+    
+    for (let i = 0; i < material.questions.length; i++) {
+        preloadExplanationAudio(i);
+    }
+}
+
+// Xử lý thay đổi tốc độ đọc từ thanh trượt giao diện
+function changeSpeechSpeed(val) {
+    currentSpeechRate = parseFloat(val);
+    
+    // Cập nhật giá trị hiển thị trên UI
+    const valEl = document.getElementById('speechSpeedValue');
+    if (valEl) {
+        valEl.innerText = `${currentSpeechRate.toFixed(2)}x`;
+    }
+    
+    // Đồng bộ tốc độ cho thanh trượt input (đề phòng thay đổi từ JS)
+    const inputEl = document.getElementById('speechSpeedRate');
+    if (inputEl) {
+        inputEl.value = currentSpeechRate;
+    }
+    
+    // Áp dụng tốc độ tức thì cho Audio DOM đang phát
+    const ttsPlayer = document.getElementById('learningTtsPlayer');
+    if (ttsPlayer) {
+        ttsPlayer.playbackRate = currentSpeechRate;
+    }
+    
+    // Lưu cấu hình tốc độ đọc vào LocalStorage
+    localStorage.setItem('cefr_speech_rate', currentSpeechRate);
+}
+
 // Khởi chạy chế độ học tập
 function initLearningCoach() {
+    // 0. Khôi phục cấu hình tốc độ đọc đã lưu
+    const savedRate = localStorage.getItem('cefr_speech_rate');
+    if (savedRate) {
+        changeSpeechSpeed(savedRate);
+    } else {
+        changeSpeechSpeed(1.0);
+    }
+
     // 1. Tải trước giọng nói tiếng Việt chuẩn
     preloadVietnameseVoice();
     
@@ -168,6 +376,9 @@ function loadCurrentLevelContent() {
         isQuizActive = true;
         updatePracticeProgress();
         questionStartTime = Date.now();
+        
+        // Tải trước ngầm tất cả âm thanh giải thích ngữ pháp
+        setTimeout(preloadAllPracticeExplanations, 1000);
     }
 
     // 4. Lưu trạng thái ôn tập khởi đầu
@@ -224,6 +435,9 @@ function switchToPracticeMode() {
     document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-blue-400 animate-pulse";
     
     document.getElementById('coachBubbleText').innerText = "Tuyệt vời! Bây giờ Thầy/Cô hãy tập trung làm 3 câu trắc nghiệm nhanh ở bên dưới. Đừng vội vàng, hãy đọc kỹ câu hỏi nhé!";
+    
+    // Tải trước ngầm tất cả âm thanh giải thích ngữ pháp
+    setTimeout(preloadAllPracticeExplanations, 1000);
     
     // Lưu trạng thái ôn tập
     saveLearningState();
@@ -679,7 +893,7 @@ function playGoogleTTSQueue(text, onStartCallback, onEndCallback, onErrorCallbac
 }
 
 // Phát phần tử tiếp theo trong hàng đợi Google TTS
-function playNextAudioInQueue(onEndCallback, onErrorCallback) {
+async function playNextAudioInQueue(onEndCallback, onErrorCallback) {
     if (!isAudioPlaying) return;
 
     if (currentAudioIndex >= googleAudioQueue.length) {
@@ -689,72 +903,98 @@ function playNextAudioInQueue(onEndCallback, onErrorCallback) {
         return;
     }
 
-    const url = googleAudioQueue[currentAudioIndex];
+    const rawUrl = googleAudioQueue[currentAudioIndex];
     const ttsPlayer = document.getElementById('learningTtsPlayer');
 
-    if (ttsPlayer) {
-        // Sử dụng phần tử audio DOM ẩn
-        ttsPlayer.src = url;
-        
-        ttsPlayer.onended = () => {
-            currentAudioIndex++;
-            ttsRetryCount = 0; // Reset số lần thử lại cho đoạn tiếp theo
-            playNextAudioInQueue(onEndCallback, onErrorCallback);
-        };
+    try {
+        // Lấy hoặc tải Blob âm thanh từ Cache API
+        const url = await getCachedTtsAudioUrl(rawUrl);
 
-        ttsPlayer.onerror = (e) => {
-            console.error("Lỗi phát audio Google TTS qua DOM:", e);
+        if (ttsPlayer) {
+            // Giải phóng Object URL cũ để tránh rò rỉ bộ nhớ
+            if (ttsPlayer.src && ttsPlayer.src.startsWith('blob:')) {
+                URL.revokeObjectURL(ttsPlayer.src);
+            }
             
-            // Cơ chế tự động thử lại 2 lần khi bị ngắt kết nối mạng hoặc lỗi server tạm thời
-            if (ttsRetryCount < 2) {
-                ttsRetryCount++;
-                console.log(`Đang thử lại lần thứ ${ttsRetryCount} cho đoạn âm thanh index ${currentAudioIndex} sau 800ms...`);
-                setTimeout(() => {
-                    if (isAudioPlaying) {
-                        ttsPlayer.src = url;
-                        ttsPlayer.play().catch(err => console.error("Lỗi phát lại audio:", err));
-                    }
-                }, 800);
-            } else {
-                ttsRetryCount = 0; // Reset
+            // Sử dụng phần tử audio DOM ẩn
+            ttsPlayer.src = url;
+            
+            ttsPlayer.onended = () => {
+                currentAudioIndex++;
+                ttsRetryCount = 0; // Reset số lần thử lại cho đoạn tiếp theo
+                playNextAudioInQueue(onEndCallback, onErrorCallback);
+            };
+
+            ttsPlayer.onerror = (e) => {
+                console.error("Lỗi phát audio Google TTS qua DOM:", e);
+                
+                // Cơ chế tự động thử lại 2 lần khi bị ngắt kết nối mạng hoặc lỗi server tạm thời
+                if (ttsRetryCount < 2) {
+                    ttsRetryCount++;
+                    console.log(`Đang thử lại lần thứ ${ttsRetryCount} cho đoạn âm thanh index ${currentAudioIndex} sau 800ms...`);
+                    setTimeout(async () => {
+                        if (isAudioPlaying) {
+                            const retryUrl = await getCachedTtsAudioUrl(rawUrl);
+                            ttsPlayer.src = retryUrl;
+                            ttsPlayer.play().then(() => {
+                                ttsPlayer.playbackRate = currentSpeechRate;
+                            }).catch(err => console.error("Lỗi phát lại audio:", err));
+                        }
+                    }, 800);
+                } else {
+                    ttsRetryCount = 0; // Reset
+                    if (onErrorCallback) onErrorCallback();
+                }
+            };
+
+            ttsPlayer.play().then(() => {
+                ttsPlayer.playbackRate = currentSpeechRate; // Áp dụng đúng tốc độ đọc đã lưu
+            }).catch(err => {
+                console.error("Lỗi trình duyệt chặn phát audio Google TTS DOM:", err);
                 if (onErrorCallback) onErrorCallback();
+            });
+        } else {
+            // Sử dụng Audio JavaScript động nếu không tìm thấy thẻ DOM
+            if (currentHtmlAudio && currentHtmlAudio.src && currentHtmlAudio.src.startsWith('blob:')) {
+                URL.revokeObjectURL(currentHtmlAudio.src);
             }
-        };
+            currentHtmlAudio = new Audio(url);
 
-        ttsPlayer.play().catch(err => {
-            console.error("Lỗi trình duyệt chặn phát audio Google TTS DOM:", err);
-            if (onErrorCallback) onErrorCallback();
-        });
-    } else {
-        // Sử dụng Audio JavaScript động nếu không tìm thấy thẻ DOM
-        currentHtmlAudio = new Audio(url);
-
-        currentHtmlAudio.onended = () => {
-            currentAudioIndex++;
-            ttsRetryCount = 0;
-            playNextAudioInQueue(onEndCallback, onErrorCallback);
-        };
-
-        currentHtmlAudio.onerror = (e) => {
-            console.error("Lỗi phát audio Google TTS động:", e);
-            if (ttsRetryCount < 2) {
-                ttsRetryCount++;
-                setTimeout(() => {
-                    if (isAudioPlaying) {
-                        currentHtmlAudio.src = url;
-                        currentHtmlAudio.play().catch(err => console.error("Lỗi phát lại audio động:", err));
-                    }
-                }, 800);
-            } else {
+            currentHtmlAudio.onended = () => {
+                currentAudioIndex++;
                 ttsRetryCount = 0;
-                if (onErrorCallback) onErrorCallback();
-            }
-        };
+                playNextAudioInQueue(onEndCallback, onErrorCallback);
+            };
 
-        currentHtmlAudio.play().catch(err => {
-            console.error("Lỗi trình duyệt chặn phát audio Google TTS động:", err);
-            if (onErrorCallback) onErrorCallback();
-        });
+            currentHtmlAudio.onerror = (e) => {
+                console.error("Lỗi phát audio Google TTS động:", e);
+                if (ttsRetryCount < 2) {
+                    ttsRetryCount++;
+                    setTimeout(async () => {
+                        if (isAudioPlaying) {
+                            const retryUrl = await getCachedTtsAudioUrl(rawUrl);
+                            currentHtmlAudio.src = retryUrl;
+                            currentHtmlAudio.play().then(() => {
+                                currentHtmlAudio.playbackRate = currentSpeechRate;
+                            }).catch(err => console.error("Lỗi phát lại audio động:", err));
+                        }
+                    }, 800);
+                } else {
+                    ttsRetryCount = 0;
+                    if (onErrorCallback) onErrorCallback();
+                }
+            };
+
+            currentHtmlAudio.play().then(() => {
+                currentHtmlAudio.playbackRate = currentSpeechRate;
+            }).catch(err => {
+                console.error("Lỗi trình duyệt chặn phát audio Google TTS động:", err);
+                if (onErrorCallback) onErrorCallback();
+            });
+        }
+    } catch (err) {
+        console.error("Lỗi lấy âm thanh từ Cache API:", err);
+        if (onErrorCallback) onErrorCallback();
     }
 }
 
@@ -788,7 +1028,7 @@ function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallbac
         const utterance = new SpeechSynthesisUtterance(sentenceText);
         utterance.voice = viSpeechVoice;
         utterance.lang = "vi-VN"; // Gán cụ thể mã ngôn ngữ tiếng Việt để trình duyệt xử lý tối ưu
-        utterance.rate = 0.95;
+        utterance.rate = currentSpeechRate; // Áp dụng tốc độ đọc đã lưu
 
         utterance.onstart = () => {
             if (sIdx === 0 && onStartCallback) onStartCallback();
@@ -818,15 +1058,18 @@ function speakSmart(text, onStartCallback, onEndCallback) {
     stopAllSpeech(); // Dừng các âm thanh đang phát trước
     ttsRetryCount = 0; // Reset số lần thử lại
     
+    // Tự động chuyển đổi các từ tiếng Anh xen kẽ sang phiên âm tiếng Việt trước khi đọc
+    const viText = convertEnglishXenVi(text);
+    
     // Gọi Google TTS với giọng chuẩn tiếng Việt (nữ), nếu lỗi sẽ tự động fallback sang Web Speech nếu có giọng tốt
     playGoogleTTSQueue(
-        text,
+        viText,
         onStartCallback,
         onEndCallback,
         () => {
             if (viSpeechVoice) {
                 console.warn("Chuyển hướng dự phòng sang Web Speech API chất lượng cao...");
-                speakWithWebSpeech(text, onStartCallback, onEndCallback, () => {
+                speakWithWebSpeech(viText, onStartCallback, onEndCallback, () => {
                     stopAllSpeech();
                 });
             } else {
@@ -1148,4 +1391,6 @@ if (typeof window !== 'undefined') {
     window.saveLearningState = saveLearningState;
     window.loadLearningState = loadLearningState;
     window.clearLearningState = clearLearningState;
+    window.changeSpeechSpeed = changeSpeechSpeed;
+    window.preloadAllPracticeExplanations = preloadAllPracticeExplanations;
 }
