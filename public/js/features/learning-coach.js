@@ -1952,8 +1952,6 @@ function loadLearningState() {
         selectedLessonIndex = state.selectedLessonIndex || 0;
         selectedSkill = state.selectedSkill || "theory";
         studySeconds = state.studySeconds || 0;
-        currentReadingAnswers = state.currentReadingAnswers || [null, null, null];
-        currentListeningAnswers = state.currentListeningAnswers || [null, null, null];
         isReadingActive = state.isReadingActive !== undefined ? state.isReadingActive : true;
         isListeningActive = state.isListeningActive !== undefined ? state.isListeningActive : true;
 
@@ -1964,6 +1962,33 @@ function loadLearningState() {
         
         const lessonSelect = document.getElementById('learningLessonSelect');
         if (lessonSelect) lessonSelect.value = selectedLessonIndex;
+
+        const material = learningMaterialsDb[selectedLevel];
+        if (!material || !material.lessons || !material.lessons[selectedLessonIndex]) return false;
+        const lesson = material.lessons[selectedLessonIndex];
+
+        const readingQCount = (lesson.reading && lesson.reading.questions) ? lesson.reading.questions.length : 0;
+        const listeningQCount = (lesson.listening && lesson.listening.questions) ? lesson.listening.questions.length : 0;
+
+        // Khởi tạo mảng đáp án động dựa trên số lượng câu hỏi thực tế của bài học
+        currentReadingAnswers = Array(readingQCount).fill(null);
+        if (state.currentReadingAnswers && Array.isArray(state.currentReadingAnswers)) {
+            for (let i = 0; i < Math.min(readingQCount, state.currentReadingAnswers.length); i++) {
+                currentReadingAnswers[i] = state.currentReadingAnswers[i];
+            }
+        }
+
+        currentListeningAnswers = Array(listeningQCount).fill(null);
+        if (state.currentListeningAnswers && Array.isArray(state.currentListeningAnswers)) {
+            for (let i = 0; i < Math.min(listeningQCount, state.currentListeningAnswers.length); i++) {
+                currentListeningAnswers[i] = state.currentListeningAnswers[i];
+            }
+        }
+
+        // Khởi tạo dwellTimes và optionSwitches dựa trên số câu thực tế để tránh lỗi chỉ số (index)
+        const maxQuestions = Math.max(readingQCount, listeningQCount, 3);
+        dwellTimes = Array(maxQuestions).fill(0);
+        optionSwitches = Array(maxQuestions).fill(0);
 
         const mins = Math.floor(studySeconds / 60).toString().padStart(2, '0');
         const secs = (studySeconds % 60).toString().padStart(2, '0');
@@ -1977,10 +2002,6 @@ function loadLearningState() {
             statusEl.innerText = state.statWorkStatusText || "Chưa bắt đầu";
             statusEl.className = state.statWorkStatusClass || "text-[10px] font-extrabold text-slate-500";
         }
-
-        const material = learningMaterialsDb[selectedLevel];
-        if (!material || !material.lessons || !material.lessons[selectedLessonIndex]) return false;
-        const lesson = material.lessons[selectedLessonIndex];
 
         // 1. Render Lý thuyết
         const theoryContent = document.getElementById('learningTheoryContent');
