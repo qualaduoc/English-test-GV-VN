@@ -691,12 +691,141 @@ async function handleTeacherTimeStats(req, res) {
     }
 }
 
+// 5. GET /api/diligent-leaderboard
+async function handleDiligentLeaderboard(req, res) {
+    if (checkConfigError(res)) return;
+    if (req.method !== 'GET') {
+        res.writeHead(405, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+        return;
+    }
+
+    try {
+        const reqUrl = new URL(req.url, 'http://localhost');
+        let limit = parseInt(reqUrl.searchParams.get('limit'), 10) || 10;
+        if (isNaN(limit) || limit <= 0) {
+            limit = 10;
+        } else if (limit > 1000) {
+            limit = 1000;
+        }
+
+        // Sắp xếp theo tổng thời gian học (study_seconds) và lượt học (study_count)
+        const url = `${SUPABASE_URL}/rest/v1/teachers?order=study_seconds.desc,study_count.desc,updated_at.asc&limit=${limit}`;
+        const parsedUrl = new URL(url);
+        
+        const options = {
+            hostname: parsedUrl.hostname,
+            path: parsedUrl.pathname + parsedUrl.search,
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                'Prefer': 'count=exact'
+            },
+            timeout: 5000
+        };
+
+        const getReq = https.request(options, (getRes) => {
+            let data = '';
+            getRes.on('data', chunk => data += chunk);
+            getRes.on('end', () => {
+                if (getRes.statusCode === 200 || getRes.statusCode === 206) {
+                    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(JSON.stringify({ 
+                        success: true, 
+                        data: JSON.parse(data)
+                    }));
+                } else {
+                    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(JSON.stringify({ success: false, error: `Lỗi kết nối Supabase: ${getRes.statusCode}` }));
+                }
+            });
+        });
+
+        getReq.on('error', err => {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+        });
+        getReq.end();
+    } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+}
+
+// 6. POST /api/record-study
+async function handleRecordStudy(req, res) {
+    if (checkConfigError(res)) return;
+    if (req.method !== 'POST') {
+        res.writeHead(405, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+        return;
+    }
+
+    let body = '';
+    req.on('data', chunk => body += chunk.toString());
+    req.on('end', async () => {
+        try {
+            const data = JSON.parse(body);
+            const phone = data.phone;
+            const studySeconds = parseInt(data.study_seconds, 10) || 0;
+            const name = data.teacher_name || "Giáo viên phổ thông";
+            
+            if (!phone) {
+                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ success: false, error: 'Thiếu số điện thoại' }));
+                return;
+            }
+
+            console.log(`[API record-study] Ghi nhận thời gian học cho SĐT: ${phone}, Số giây: ${studySeconds}s`);
+            
+            const existingTeacher = await getTeacherFromLeaderboard(phone);
+            if (existingTeacher) {
+                const newStudyCount = (existingTeacher.study_count || 0) + 1;
+                const newStudySeconds = (existingTeacher.study_seconds || 0) + studySeconds;
+                
+                await saveTeacherToLeaderboard({
+                    phone: phone,
+                    teacher_name: name || existingTeacher.teacher_name,
+                    study_count: newStudyCount,
+                    study_seconds: newStudySeconds,
+                    updated_at: new Date().toISOString()
+                });
+            } else {
+                await saveTeacherToLeaderboard({
+                    phone: phone,
+                    teacher_name: name,
+                    study_count: 1,
+                    study_seconds: studySeconds,
+                    attempts_count: 0,
+                    highest_reading: "N/A",
+                    highest_listening: "N/A",
+                    highest_speaking: "N/A",
+                    highest_writing: "N/A",
+                    highest_overall_cefr: "N/A",
+                    highest_overall_score: 0,
+                    updated_at: new Date().toISOString()
+                });
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: true, message: 'Ghi nhận tiến trình ôn tập thành công!' }));
+        } catch (error) {
+            console.error("[API record-study] Lỗi:", error);
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: false, error: error.message || 'Lỗi hệ thống' }));
+        }
+    });
+}
+
 module.exports = {
     handleAssess,
     handleSaveResult,
     handleLeaderboard,
     handleRegisterTeacher,
     handleTeacherTimeStats,
+    handleDiligentLeaderboard,
+    handleRecordStudy,
     callGeminiWithRetry,
     checkConfigError
 };

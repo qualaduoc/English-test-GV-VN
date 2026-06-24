@@ -11,6 +11,8 @@ const handleRegisterTeacher = require('./api/register-teacher.js');
 const handleTeacherTimeStats = require('./api/teacher-time-stats.js');
 const handleCoachFeedback = require('./api/coach-feedback.js');
 const handleTts = require('./api/tts.js');
+const handleDiligentLeaderboard = require('./api/diligent-leaderboard.js');
+const handleRecordStudy = require('./api/record-study.js');
 
 const PORT = 3001;
 
@@ -40,6 +42,12 @@ const server = http.createServer((req, res) => {
     }
     if (safeUrl === '/api/leaderboard') {
         return handleLeaderboard(req, res);
+    }
+    if (safeUrl === '/api/diligent-leaderboard') {
+        return handleDiligentLeaderboard(req, res);
+    }
+    if (safeUrl === '/api/record-study') {
+        return handleRecordStudy(req, res);
     }
     if (safeUrl === '/api/register-teacher') {
         return handleRegisterTeacher(req, res);

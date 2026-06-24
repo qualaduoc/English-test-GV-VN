@@ -8,6 +8,8 @@ let teacherName = "Giáo viên phổ thông";
 let teacherPhone = "";
 let leaderboardData = [];
 let currentLeaderboardLimit = 10; // Giới hạn số lượng giáo viên hiển thị mặc định trên bảng vinh danh
+let diligentLeaderboardData = [];
+let currentDiligentLeaderboardLimit = 10; // Giới hạn số lượng giáo viên hiển thị mặc định trên bảng vinh danh chăm chỉ
 let textScale = 2; // 1: small, 2: medium, 3: large
 let globalBilingualMode = false; // Mặc định TẮT song ngữ toàn hệ thống
 let viewingPastStage = null; // Theo dõi lượt cũ đang xem lại
@@ -295,6 +297,7 @@ function startTestFlow() {
         if (res.success) {
             console.log("[Supabase] Đăng ký thông tin giáo viên thành công!", res);
             loadLeaderboard(); // Tải lại bảng vinh danh để cập nhật danh sách
+            loadDiligentLeaderboard(); // Tải lại bảng vinh danh chăm chỉ
         } else {
             console.error("[Supabase] Đăng ký thông tin giáo viên thất bại:", res.error);
         }
@@ -1223,6 +1226,7 @@ function startLeaderboardRealtimeUpdate() {
         if (appState === 'landing') {
             console.log("[Realtime] Tự động làm mới bảng xếp hạng...");
             loadLeaderboard();
+            loadDiligentLeaderboard();
         }
     }, 30000); // Tự động cập nhật mỗi 30 giây
 }
@@ -1360,6 +1364,115 @@ function filterLeaderboard(query) {
         return nameMatch || phoneMatch;
     });
     renderLeaderboardTable(filtered);
+}
+
+// --- BẢNG VINH DANH CHĂM CHỈ HỌC TẬP ---
+
+// Định dạng thời gian học thân thiện
+function formatStudyTime(seconds) {
+    if (!seconds) return "0s";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+}
+
+// Tải bảng xếp hạng chăm chỉ từ backend
+function loadDiligentLeaderboard() {
+    const tbody = document.getElementById('diligentLeaderboardBody');
+    if (!tbody) return;
+
+    fetch(`/api/diligent-leaderboard?limit=${currentDiligentLeaderboardLimit}`)
+    .then(res => res.json())
+    .then(res => {
+        if (res.success && Array.isArray(res.data)) {
+            diligentLeaderboardData = res.data;
+            renderDiligentLeaderboardTable(diligentLeaderboardData);
+        } else {
+            throw new Error(res.error || "Không thể tải dữ liệu");
+        }
+    })
+    .catch(err => {
+        console.warn("[Diligent Leaderboard] Gặp lỗi khi tải:", err);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-rose-500/70 py-4 text-[10px]">Không thể kết nối máy chủ để tải dữ liệu.</td></tr>`;
+    });
+}
+
+// Thay đổi số lượng giáo viên hiển thị trên bảng chăm chỉ
+function changeDiligentLeaderboardLimit(limit) {
+    const limits = [10, 100, 200, 500, 1000];
+    if (!limits.includes(limit)) return;
+    
+    currentDiligentLeaderboardLimit = limit;
+    
+    limits.forEach(l => {
+        const btn = document.getElementById(`btn-dlimit-${l}`);
+        if (!btn) return;
+        if (l === limit) {
+            btn.className = "px-2.5 py-1 rounded bg-teal-600 text-white font-bold transition focus:outline-none text-[9px] shadow shadow-teal-500/20";
+        } else {
+            btn.className = "px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]";
+        }
+    });
+    
+    loadDiligentLeaderboard();
+}
+
+// Render dữ liệu bảng chăm chỉ ra HTML
+function renderDiligentLeaderboardTable(data) {
+    const tbody = document.getElementById('diligentLeaderboardBody');
+    if (!tbody) return;
+
+    let html = "";
+    data.forEach((item, idx) => {
+        let rankIcon = `${idx + 1}`;
+        if (idx === 0) rankIcon = "🏆";
+        else if (idx === 1) rankIcon = "🥈";
+        else if (idx === 2) rankIcon = "🥉";
+
+        const maskedPhone = maskPhone(item.phone);
+        const displayName = maskedPhone ? `${item.teacher_name} (${maskedPhone})` : item.teacher_name;
+        const formattedTime = formatStudyTime(item.study_seconds);
+        const studyCount = item.study_count || 0;
+
+        html += `
+            <tr class="hover:bg-slate-800/20 transition duration-150">
+                <td class="py-2.5 font-bold text-center">${rankIcon}</td>
+                <td class="py-2.5 font-semibold text-slate-350 truncate max-w-[120px] text-teal-400" title="${item.teacher_name}${maskedPhone ? ' - SĐT: ' + maskedPhone : ''}">${displayName}</td>
+                <td class="py-2.5 text-center font-mono text-slate-300 font-bold">${studyCount} lượt</td>
+                <td class="py-2.5 text-right font-mono text-slate-450 pr-2">${formattedTime}</td>
+            </tr>
+        `;
+    });
+
+    if (data.length === 0) {
+        html = `<tr><td colspan="4" class="text-center text-slate-500 py-4 italic">Chưa có dữ liệu giáo viên chăm học.</td></tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+// Lọc bảng chăm học
+function filterDiligentLeaderboard(query) {
+    const q = removeVietnameseTones(query.trim().toLowerCase());
+    if (!q) {
+        renderDiligentLeaderboardTable(diligentLeaderboardData);
+        return;
+    }
+    const filtered = diligentLeaderboardData.filter(item => {
+        const nameMatch = removeVietnameseTones(item.teacher_name || "").toLowerCase().includes(q);
+        const phoneMatch = (item.phone || "").toLowerCase().includes(q);
+        return nameMatch || phoneMatch;
+    });
+    renderDiligentLeaderboardTable(filtered);
+}
+
+// Đăng ký các hàm ra phạm vi Window
+if (typeof window !== 'undefined') {
+    window.loadDiligentLeaderboard = loadDiligentLeaderboard;
+    window.changeDiligentLeaderboardLimit = changeDiligentLeaderboardLimit;
+    window.filterDiligentLeaderboard = filterDiligentLeaderboard;
 }
 
 // Biến lưu trữ dữ liệu thời gian suy nghĩ cho Modal popup
@@ -1578,6 +1691,7 @@ function startLearningFlow() {
         if (res.success) {
             console.log("[Supabase] Đăng ký giáo viên thành công (Ôn Luyện)!");
             loadLeaderboard();
+            loadDiligentLeaderboard();
         }
     })
     .catch(err => console.error("Lỗi đăng ký giáo viên:", err));
@@ -1610,6 +1724,7 @@ window.onload = function() {
         }
         // Tải bảng vinh danh giáo viên
         loadLeaderboard();
+        loadDiligentLeaderboard();
     }
     // Bắt đầu cập nhật bảng xếp hạng theo thời gian thực (real-time update)
     startLeaderboardRealtimeUpdate();

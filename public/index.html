@@ -206,7 +206,7 @@
         <main class="flex-1 p-6 flex flex-col overflow-y-auto">
 
             <!-- SCREEN 1: LANDING/WELCOME PAGE -->
-            <div id="screen-landing" class="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 max-w-5xl mx-auto py-8">
+            <div id="screen-landing" class="flex-1 flex flex-col lg:flex-row items-start justify-center gap-10 max-w-[1300px] mx-auto py-8">
                 <!-- Cột thông tin bên trái -->
                 <div class="flex-1 space-y-6 max-w-lg">
                     <h2 class="text-3xl font-extrabold text-white leading-tight">
@@ -358,9 +358,9 @@
                 </div>
 
                 <!-- Cột phải: Trợ lý ảo Techie đàm thoại hướng dẫn giáo viên & Bảng vinh danh bên dưới -->
-                <div class="w-full sm:w-[350px] flex flex-col items-center shrink-0 space-y-6">
+                <div class="w-full lg:w-[730px] flex flex-col items-center shrink-0 space-y-6">
                     <!-- 1. Trợ lý ảo Techie đàm thoại hướng dẫn giáo viên -->
-                    <div class="flex flex-col items-center space-y-4 w-full">
+                    <div class="flex flex-col items-center space-y-4 w-full max-w-[350px]">
                         <div onclick="nextTechieGreeting()" class="relative bg-[#141b2d] hover:bg-[#192239] cursor-pointer border border-slate-700 hover:border-slate-500 rounded-2xl p-5 shadow-xl w-full transition duration-200 select-none active:scale-[0.99] group" title="Nhấp vào bất kỳ đâu trong cụm Techie để tiếp tục">
                             <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#141b2d] group-hover:bg-[#192239] border-r border-b border-slate-700 group-hover:border-slate-500 transform rotate-45 transition duration-200"></div>
                             <p id="techieText" class="text-xs text-slate-200 leading-relaxed font-medium">
@@ -386,49 +386,95 @@
                             </svg>
                         </div>
                     </div>
+ 
+                    <!-- Vùng 2 bảng vinh danh đặt song song -->
+                    <div class="w-full flex flex-col md:flex-row gap-5 items-start">
+                        <!-- 2. Bảng vinh danh thi đua giáo viên (Di chuyển xuống dưới Techie) -->
+                        <div class="bg-[#141b2d]/60 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3 flex-1 w-full animate-fadeIn">
+                            <span class="text-xs font-bold text-amber-400 block tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-trophy"></i> BẢNG VINH DANH GIÁO VIÊN XUẤT SẮC
+                            </span>
 
-                    <!-- 2. Bảng vinh danh thi đua giáo viên (Di chuyển xuống dưới Techie) -->
-                    <div class="bg-[#141b2d]/60 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3 w-full animate-fadeIn">
-                        <span class="text-xs font-bold text-amber-400 block uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="fa-solid fa-trophy"></i> Bảng Vinh Danh Giáo Viên Xuất Sắc
-                        </span>
+                            <!-- Thanh tìm kiếm giáo viên trên bảng vinh danh -->
+                            <div class="relative w-full">
+                                <input type="text" id="searchLeaderboard" oninput="filterLeaderboard(this.value)" placeholder="Tìm kiếm theo SĐT hoặc Họ tên..." class="w-full pl-8 pr-3 py-1.5 bg-[#0b0f19] border border-slate-800 focus:border-blue-500 rounded-lg text-slate-300 text-[10px] focus:outline-none transition placeholder-slate-500">
+                                <i class="fa-solid fa-magnifying-glass text-slate-500 text-[10px] absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            </div>
 
-                        <!-- Thanh tìm kiếm giáo viên trên bảng vinh danh -->
-                        <div class="relative w-full">
-                            <input type="text" id="searchLeaderboard" oninput="filterLeaderboard(this.value)" placeholder="Tìm kiếm theo SĐT hoặc Họ tên..." class="w-full pl-8 pr-3 py-1.5 bg-[#0b0f19] border border-slate-800 focus:border-blue-500 rounded-lg text-slate-300 text-[10px] focus:outline-none transition placeholder-slate-500">
-                            <i class="fa-solid fa-magnifying-glass text-slate-500 text-[10px] absolute left-3 top-1/2 -translate-y-1/2"></i>
-                        </div>
+                            <div class="overflow-y-auto max-h-[380px] pr-1">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr class="text-slate-500 font-bold border-b border-slate-800 pb-1.5 text-[10px] sticky top-0 bg-[#141b2d] z-10">
+                                            <th class="pb-1.5 w-10 text-center">Hạng</th>
+                                            <th class="pb-1.5">Thầy/Cô (SĐT)</th>
+                                            <th class="pb-1.5 text-center w-14">Bậc đạt</th>
+                                            <th class="pb-1.5 text-center w-16 text-right pr-2">Số lượt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboardBody" class="divide-y divide-slate-800/40">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-slate-500 py-3 italic">Đang tải bảng vinh danh...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        <div class="overflow-y-auto max-h-[380px] pr-1">
-                            <table class="w-full text-left text-xs border-collapse">
-                                <thead>
-                                    <tr class="text-slate-500 font-bold border-b border-slate-800 pb-1.5 text-[10px] sticky top-0 bg-[#141b2d] z-10">
-                                        <th class="pb-1.5 w-10 text-center">Hạng</th>
-                                        <th class="pb-1.5">Thầy/Cô (SĐT)</th>
-                                        <th class="pb-1.5 text-center w-14">Bậc đạt</th>
-                                        <th class="pb-1.5 text-center w-16 text-right pr-2">Số lượt</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="leaderboardBody" class="divide-y divide-slate-800/40">
-                                    <tr>
-                                        <td colspan="4" class="text-center text-slate-500 py-3 italic">Đang tải bảng vinh danh...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Bộ chọn TOP hiển thị bảng vinh danh -->
-                        <div class="flex items-center justify-between border-t border-slate-800/80 pt-3.5 mt-2 text-[10px]">
-                            <span class="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-list-ol text-blue-400"></i> Xem TOP:</span>
-                            <div class="flex items-center gap-1.5" id="leaderboardLimitSelectors">
-                                <button onclick="changeLeaderboardLimit(10)" id="btn-limit-10" class="px-2.5 py-1 rounded bg-blue-600 text-white font-bold transition focus:outline-none text-[9px] shadow shadow-blue-500/20" title="Xem Top 10 giáo viên xuất sắc nhất">10</button>
-                                <button onclick="changeLeaderboardLimit(100)" id="btn-limit-100" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 100 giáo viên">100</button>
-                                <button onclick="changeLeaderboardLimit(200)" id="btn-limit-200" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 200 giáo viên">200</button>
-                                <button onclick="changeLeaderboardLimit(500)" id="btn-limit-500" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 500 giáo viên">500</button>
-                                <button onclick="changeLeaderboardLimit(1000)" id="btn-limit-1000" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 1000 giáo viên">1000</button>
+                            <!-- Bộ chọn TOP hiển thị bảng vinh danh -->
+                            <div class="flex items-center justify-between border-t border-slate-800/80 pt-3.5 mt-2 text-[10px]">
+                                <span class="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-list-ol text-blue-400"></i> Xem TOP:</span>
+                                <div class="flex items-center gap-1.5" id="leaderboardLimitSelectors">
+                                    <button onclick="changeLeaderboardLimit(10)" id="btn-limit-10" class="px-2.5 py-1 rounded bg-blue-600 text-white font-bold transition focus:outline-none text-[9px] shadow shadow-blue-500/20" title="Xem Top 10 giáo viên xuất sắc nhất">10</button>
+                                    <button onclick="changeLeaderboardLimit(100)" id="btn-limit-100" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 100 giáo viên">100</button>
+                                    <button onclick="changeLeaderboardLimit(200)" id="btn-limit-200" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 200 giáo viên">200</button>
+                                    <button onclick="changeLeaderboardLimit(500)" id="btn-limit-500" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 500 giáo viên">500</button>
+                                    <button onclick="changeLeaderboardLimit(1000)" id="btn-limit-1000" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]" title="Xem Top 1000 giáo viên">1000</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+ 
+                        <!-- 3. Bảng vinh danh giáo viên chăm chỉ học tập -->
+                        <div class="bg-[#141b2d]/60 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3 flex-1 w-full animate-fadeIn">
+                            <span class="text-xs font-bold text-teal-400 block tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-hourglass-half text-teal-400"></i> BẢNG VINH DANH GIÁO VIÊN CHĂM CHỈ
+                            </span>
+ 
+                            <!-- Thanh tìm kiếm giáo viên trên bảng chăm học -->
+                            <div class="relative w-full">
+                                <input type="text" id="searchDiligentLeaderboard" oninput="filterDiligentLeaderboard(this.value)" placeholder="Tìm kiếm theo SĐT hoặc Họ tên..." class="w-full pl-8 pr-3 py-1.5 bg-[#0b0f19] border border-slate-800 focus:border-teal-500 rounded-lg text-slate-300 text-[10px] focus:outline-none transition placeholder-slate-500">
+                                <i class="fa-solid fa-magnifying-glass text-slate-500 text-[10px] absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            </div>
+ 
+                            <div class="overflow-y-auto max-h-[380px] pr-1">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr class="text-slate-500 font-bold border-b border-slate-800 pb-1.5 text-[10px] sticky top-0 bg-[#141b2d] z-10">
+                                            <th class="pb-1.5 w-10 text-center">Hạng</th>
+                                            <th class="pb-1.5">Thầy/Cô (SĐT)</th>
+                                            <th class="pb-1.5 text-center w-20">Đã ôn luyện</th>
+                                            <th class="pb-1.5 text-center w-20 text-right pr-2">Thời gian</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="diligentLeaderboardBody" class="divide-y divide-slate-800/40">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-slate-500 py-3 italic">Đang tải bảng chăm chỉ...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+ 
+                            <!-- Bộ chọn TOP hiển thị bảng chăm học -->
+                            <div class="flex items-center justify-between border-t border-slate-800/80 pt-3.5 mt-2 text-[10px]">
+                                <span class="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-list-ol text-teal-400"></i> Xem TOP:</span>
+                                <div class="flex items-center gap-1.5" id="diligentLeaderboardLimitSelectors">
+                                    <button onclick="changeDiligentLeaderboardLimit(10)" id="btn-dlimit-10" class="px-2.5 py-1 rounded bg-teal-600 text-white font-bold transition focus:outline-none text-[9px] shadow shadow-teal-500/20" title="Xem Top 10 giáo viên chăm chỉ nhất">10</button>
+                                    <button onclick="changeDiligentLeaderboardLimit(100)" id="btn-dlimit-100" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]">100</button>
+                                    <button onclick="changeDiligentLeaderboardLimit(200)" id="btn-dlimit-200" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]">200</button>
+                                    <button onclick="changeDiligentLeaderboardLimit(500)" id="btn-dlimit-500" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]">500</button>
+                                    <button onclick="changeDiligentLeaderboardLimit(1000)" id="btn-dlimit-1000" class="px-2.5 py-1 rounded bg-[#0b0f19] text-slate-400 hover:text-white font-bold border border-slate-800 hover:border-slate-700 transition focus:outline-none text-[9px]">1000</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- Đóng thẻ div vùng 2 bảng vinh danh song song -->
                 </div>
             </div>
 

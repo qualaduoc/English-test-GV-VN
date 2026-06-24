@@ -1610,6 +1610,30 @@ async function submitQuizSkill(skillType) {
 
     // Hiển thị giải thích trắc nghiệm
     renderSkillExplanations(skillType, skillData.questions, answersArray);
+    
+    // Gửi thời gian ôn tập lên máy chủ để ghi nhận tích lũy chăm học
+    const currentPhone = typeof teacherPhone !== 'undefined' ? teacherPhone : '';
+    const currentName = typeof teacherName !== 'undefined' ? teacherName : '';
+    if (currentPhone && studySeconds > 0) {
+        fetch('/api/record-study', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: currentPhone,
+                teacher_name: currentName,
+                study_seconds: studySeconds
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success && typeof loadDiligentLeaderboard === 'function') {
+                loadDiligentLeaderboard();
+            }
+        })
+        .catch(err => console.error("Lỗi ghi nhận thời gian học:", err));
+        studySeconds = 0;
+    }
+
     saveLearningState();
 }
 
@@ -1635,6 +1659,68 @@ function renderSkillExplanations(skillType, questions, answersArray) {
     const explanationContent = document.getElementById('learningExplanationContent');
     explanationContent.innerHTML = '';
     document.getElementById('explanationCardHeaderTitle').innerText = "GIẢI THÍCH CHI TIẾT ĐÁP ÁN";
+
+    // Tính điểm số trắc nghiệm
+    let correctCount = 0;
+    questions.forEach((qObj, qIdx) => {
+        if (answersArray[qIdx] === qObj.correct) {
+            correctCount++;
+        }
+    });
+
+    const scorePercentage = ((correctCount / questions.length) * 100).toFixed(0);
+    const score10 = ((correctCount / questions.length) * 10).toFixed(1);
+    
+    let rating = "";
+    let ratingClass = "";
+    let gradientBg = "";
+    
+    if (correctCount === questions.length) {
+        rating = "Excellent (Xuất Sắc)";
+        ratingClass = "text-emerald-400";
+        gradientBg = "from-emerald-500/15 to-teal-500/15 border-emerald-500/20";
+    } else if (score10 >= 8.0) {
+        rating = "Good (Khá Giỏi)";
+        ratingClass = "text-blue-400";
+        gradientBg = "from-blue-500/15 to-indigo-500/15 border-blue-500/20";
+    } else if (score10 >= 5.0) {
+        rating = "Pass (Đạt Yêu Cầu)";
+        ratingClass = "text-amber-400";
+        gradientBg = "from-amber-500/15 to-yellow-500/15 border-amber-500/20";
+    } else {
+        rating = "Needs Improvement (Cần Cố Gắng)";
+        ratingClass = "text-rose-400";
+        gradientBg = "from-rose-500/15 to-red-500/15 border-rose-500/20";
+    }
+
+    const scorecard = document.createElement('div');
+    scorecard.className = `p-4 bg-gradient-to-r ${gradientBg} border rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 shadow-md shadow-black/20`;
+    scorecard.innerHTML = `
+        <div class="flex items-center gap-4">
+            <!-- Vòng tròn điểm số -->
+            <div class="relative flex items-center justify-center h-14 w-14 rounded-full bg-[#0b0f19] border border-slate-800 shrink-0">
+                <span class="text-base font-black text-white">${score10}</span>
+                <span class="text-[8px] text-slate-500 absolute bottom-1">/ 10</span>
+            </div>
+            <div class="space-y-0.5">
+                <div class="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider">KẾT QUẢ ĐẠT ĐƯỢC</div>
+                <div class="text-xs font-black ${ratingClass}">${rating}</div>
+                <div class="text-[10px] text-slate-400">
+                    Đúng <strong class="text-white">${correctCount}/${questions.length}</strong> câu hỏi. Tỷ lệ hoàn thành: <strong class="text-white">${scorePercentage}%</strong>.
+                </div>
+            </div>
+        </div>
+        <div class="w-full sm:w-36 space-y-1">
+            <div class="flex justify-between text-[9px] font-bold text-slate-500">
+                <span>Tiến độ:</span>
+                <span class="${ratingClass}">${scorePercentage}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                <div class="h-full bg-gradient-to-r from-blue-500 to-teal-400" style="width: ${scorePercentage}%"></div>
+            </div>
+        </div>
+    `;
+    explanationContent.appendChild(scorecard);
 
     questions.forEach((qObj, qIdx) => {
         const expDiv = document.createElement('div');
@@ -1766,6 +1852,29 @@ async function submitSpeakingText() {
         document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-rose-400";
     }
 
+    // Gửi thời gian ôn tập lên máy chủ để ghi nhận tích lũy chăm học
+    const currentPhone = typeof teacherPhone !== 'undefined' ? teacherPhone : '';
+    const currentName = typeof teacherName !== 'undefined' ? teacherName : '';
+    if (currentPhone && studySeconds > 0) {
+        fetch('/api/record-study', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: currentPhone,
+                teacher_name: currentName,
+                study_seconds: studySeconds
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success && typeof loadDiligentLeaderboard === 'function') {
+                loadDiligentLeaderboard();
+            }
+        })
+        .catch(err => console.error("Lỗi ghi nhận thời gian học:", err));
+        studySeconds = 0;
+    }
+
     saveLearningState();
 }
 
@@ -1841,6 +1950,29 @@ async function submitWritingText() {
         document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-rose-400";
     }
 
+    // Gửi thời gian ôn tập lên máy chủ để ghi nhận tích lũy chăm học
+    const currentPhone = typeof teacherPhone !== 'undefined' ? teacherPhone : '';
+    const currentName = typeof teacherName !== 'undefined' ? teacherName : '';
+    if (currentPhone && studySeconds > 0) {
+        fetch('/api/record-study', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: currentPhone,
+                teacher_name: currentName,
+                study_seconds: studySeconds
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success && typeof loadDiligentLeaderboard === 'function') {
+                loadDiligentLeaderboard();
+            }
+        })
+        .catch(err => console.error("Lỗi ghi nhận thời gian học:", err));
+        studySeconds = 0;
+    }
+
     saveLearningState();
 }
 
@@ -1853,6 +1985,147 @@ function renderAiDetailedFeedback(skillType, aiResult) {
 
     const feedbackDiv = document.createElement('div');
     feedbackDiv.className = 'space-y-4 animate-fadeIn';
+
+    // 0. Hiển thị Scorecard Chuyên Nghiệp từ AI
+    if (aiResult.score) {
+        const score = aiResult.score;
+        const overallScore = parseFloat(score.overall || 0).toFixed(1);
+        
+        let rating = "";
+        let ratingClass = "";
+        let gradientBg = "";
+        
+        if (overallScore >= 9.0) {
+            rating = "Excellent (Xuất Sắc)";
+            ratingClass = "text-emerald-400";
+            gradientBg = "from-emerald-500/15 to-teal-500/15 border-emerald-500/20";
+        } else if (overallScore >= 8.0) {
+            rating = "Good (Khá Giỏi)";
+            ratingClass = "text-blue-400";
+            gradientBg = "from-blue-500/15 to-indigo-500/15 border-blue-500/20";
+        } else if (overallScore >= 6.5) {
+            rating = "Above Average (Khá)";
+            ratingClass = "text-sky-400";
+            gradientBg = "from-sky-500/15 to-blue-500/15 border-sky-500/20";
+        } else if (overallScore >= 5.0) {
+            rating = "Pass (Đạt Yêu Cầu)";
+            ratingClass = "text-amber-400";
+            gradientBg = "from-amber-500/15 to-yellow-500/15 border-amber-500/20";
+        } else {
+            rating = "Needs Improvement (Cần Cố Gắng)";
+            ratingClass = "text-rose-400";
+            gradientBg = "from-rose-500/15 to-red-500/15 border-rose-500/20";
+        }
+
+        let criteriaHtml = '';
+        if (skillType.toLowerCase() === 'speaking') {
+            const fluency = parseFloat(score.fluency || 0).toFixed(1);
+            const grammar = parseFloat(score.grammar || 0).toFixed(1);
+            const vocabulary = parseFloat(score.vocabulary || 0).toFixed(1);
+            
+            criteriaHtml = `
+                <div class="space-y-1 text-[10px]">
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Độ trôi chảy & mạch lạc (Fluency):</span>
+                            <strong class="text-white">${fluency}/10</strong>
+                        </div>
+                        <div class="w-full h-1 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                            <div class="h-full bg-blue-500" style="width: ${fluency * 10}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Độ chính xác ngữ pháp (Grammar):</span>
+                            <strong class="text-white">${grammar}/10</strong>
+                        </div>
+                        <div class="w-full h-1 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                            <div class="h-full bg-teal-500" style="width: ${grammar * 10}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Vốn từ vựng sử dụng (Vocabulary):</span>
+                            <strong class="text-white">${vocabulary}/10</strong>
+                        </div>
+                        <div class="w-full h-1 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                            <div class="h-full bg-sky-500" style="width: ${vocabulary * 10}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            const task = parseFloat(score.taskAchievement || 0).toFixed(1);
+            const coherence = parseFloat(score.coherence || 0).toFixed(1);
+            const vocabulary = parseFloat(score.vocabulary || 0).toFixed(1);
+            const grammar = parseFloat(score.grammar || 0).toFixed(1);
+            
+            criteriaHtml = `
+                <div class="space-y-1 text-[10px]">
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Đáp ứng yêu cầu đề (Task Response):</span>
+                            <strong class="text-white">${task}/10</strong>
+                        </div>
+                        <div class="w-full h-1 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                            <div class="h-full bg-blue-500" style="width: ${task * 10}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Độ mạch lạc & liên kết (Coherence):</span>
+                            <strong class="text-white">${coherence}/10</strong>
+                        </div>
+                        <div class="w-full h-1 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                            <div class="h-full bg-teal-500" style="width: ${coherence * 10}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Vốn từ vựng sử dụng (Vocabulary):</span>
+                            <strong class="text-white">${vocabulary}/10</strong>
+                        </div>
+                        <div class="w-full h-1 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                            <div class="h-full bg-sky-500" style="width: ${vocabulary * 10}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Độ chính xác ngữ pháp (Grammar):</span>
+                            <strong class="text-white">${grammar}/10</strong>
+                        </div>
+                        <div class="w-full h-1 bg-[#0b0f19] rounded-full overflow-hidden border border-slate-850">
+                            <div class="h-full bg-emerald-500" style="width: ${grammar * 10}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        const scorecard = document.createElement('div');
+        scorecard.className = `p-4 bg-gradient-to-r ${gradientBg} border rounded-2xl flex flex-col sm:flex-row items-stretch justify-between gap-4 mb-4 shadow-md shadow-black/20`;
+        scorecard.innerHTML = `
+            <div class="flex items-center gap-4 sm:border-r sm:border-slate-800/80 pr-4 shrink-0 justify-center sm:justify-start">
+                <!-- Vòng tròn điểm số trung bình -->
+                <div class="relative flex items-center justify-center h-16 w-16 rounded-full bg-[#0b0f19] border border-slate-800 shrink-0">
+                    <span class="text-lg font-black text-white">${overallScore}</span>
+                    <span class="text-[9px] text-slate-500 absolute bottom-1">/ 10</span>
+                </div>
+                <div class="space-y-0.5">
+                    <div class="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider">ĐIỂM TRUNG BÌNH</div>
+                    <div class="text-xs font-black ${ratingClass}">${rating}</div>
+                    <div class="text-[9px] text-slate-450 italic font-medium">Chuẩn CEFR ${selectedLevel}</div>
+                </div>
+            </div>
+            <div class="flex-1 space-y-1">
+                <div class="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-chart-simple text-teal-400"></i> Tiêu chí chi tiết:
+                </div>
+                ${criteriaHtml}
+            </div>
+        `;
+        feedbackDiv.appendChild(scorecard);
+    }
 
     // 1. Hiển thị Lỗi sai phát hiện được
     const errorsCard = document.createElement('div');
