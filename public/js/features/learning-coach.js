@@ -795,21 +795,51 @@ function splitTextForGoogleTTS(text) {
 // Hàm tự động phân tích văn bản hỗn hợp Việt - Anh thành các phân đoạn nhỏ kèm theo ngôn ngữ tương ứng
 function splitMixedText(text) {
     if (!text) return [];
+
+    const viCharsRegex = /[ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ]/;
     
-    // Bước 1: Khớp các từ (gồm chữ cái Latin và ký tự tiếng Việt) cùng dấu câu/khoảng trắng
-    const tokenRegex = /(\p{L}+(?:-\p{L}+)*)|([^\p{L}]+)/gu;
+    // Regex khớp các cụm từ nằm trong dấu nháy đơn, nháy kép, hoặc các ký tự nháy thông dụng
+    const quotedRegex = /(['"“’‘”])([^'"“’‘”\n]+)(['"”’‘”])/g;
+    
+    let lastIndex = 0;
     let match;
-    const tokens = [];
-    
-    while ((match = tokenRegex.exec(text)) !== null) {
-        if (match[1]) {
-            tokens.push({ type: 'word', text: match[1] });
-        } else if (match[2]) {
-            tokens.push({ type: 'non-word', text: match[2] });
+    const initialSegments = [];
+
+    // Bước 1: Tách các cụm từ nằm trong dấu nháy
+    while ((match = quotedRegex.exec(text)) !== null) {
+        const startIndex = match.index;
+        const textBefore = text.substring(lastIndex, startIndex);
+        
+        // Thêm đoạn văn bản trước dấu nháy
+        if (textBefore.trim().length > 0 || textBefore.length > 0) {
+            initialSegments.push({ text: textBefore, isQuoted: false });
         }
+
+        const quotedContent = match[2];
+        const fullQuotedText = match[0];
+
+        // Nếu nội dung trong dấu nháy không chứa tiếng Việt có dấu và có chứa chữ cái Latinh -> Coi là tiếng Anh
+        const isQuotedEnglish = !viCharsRegex.test(quotedContent) && /[a-zA-Z]/.test(quotedContent);
+
+        initialSegments.push({ 
+            text: fullQuotedText, 
+            isQuoted: true, 
+            lang: isQuotedEnglish ? 'en' : 'vi' 
+        });
+
+        lastIndex = quotedRegex.lastIndex;
     }
-    
-    // Danh sách từ tiếng Việt không dấu phổ biến (đã bỏ dấu) để loại trừ nhận nhầm tiếng Anh
+
+    // Thêm đoạn văn bản còn lại ở cuối
+    const remainingText = text.substring(lastIndex);
+    if (remainingText.trim().length > 0 || remainingText.length > 0) {
+        initialSegments.push({ text: remainingText, isQuoted: false });
+    }
+
+    // Bước 2: Với các đoạn không nằm trong dấu nháy (isQuoted = false), ta chạy thuật toán phân tách từ
+    const finalSegments = [];
+
+    // Danh sách từ tiếng Việt không dấu phổ biến để loại trừ nhận nhầm
     const viStopWords = new Set([
         'chao', 'thay', 'co', 'sau', 'day', 'la', 'bai', 'giang', 've', 'cau', 'dieu', 'kien', 
         'loai', 'va', 'ta', 'dung', 'cho', 'tinh', 'huong', 'that', 'hien', 'tai', 'tuong', 
@@ -823,11 +853,9 @@ function splitMixedText(text) {
         'nhieu', 'it', 'moi', 'tung', 'deu', 'chi', 'tên', 'ten', 'câu', 'hỏi', 'hoi'
     ]);
 
-    // Bảng chữ cái tiếng Việt có dấu
-    const viCharsRegex = /[ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ]/;
-
-    // Danh sách whitelist các thuật ngữ tiếng Anh luôn phát âm chuẩn tiếng Anh
+    // Whitelist tiếng Anh (đầy đủ các từ ngắn và phổ biến)
     const englishWhiteList = new Set([
+        'i', 'a', 'an', 'and', 'the', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'about', 'from', 'as',
         'if', 'will', 'would', 'were', 'was', 'should', 'can', 'could', 'may', 'might', 'must',
         'to', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'done', 'go', 'went', 'gone',
         'who', 'whom', 'which', 'that', 'whose', 'where', 'when', 'why', 'how',
@@ -837,7 +865,6 @@ function splitMixedText(text) {
         'v-ing', 'to-infinitive', 'bare-infinitive', 'verbs', 'verb', 'nouns', 'noun', 'adjectives', 'adjective'
     ]);
 
-    // Xác định ngôn ngữ của từ
     const isEnglish = (word) => {
         const lower = word.toLowerCase();
         if (viCharsRegex.test(word)) return false;
@@ -847,62 +874,100 @@ function splitMixedText(text) {
         return false;
     };
 
-    // Gán nhãn ngôn ngữ
-    const labeledTokens = tokens.map(token => {
-        if (token.type === 'word') {
-            return {
-                text: token.text,
-                lang: isEnglish(token.text) ? 'en' : 'vi'
-            };
+    initialSegments.forEach(seg => {
+        if (seg.isQuoted) {
+            finalSegments.push({ text: seg.text, lang: seg.lang });
         } else {
-            return {
-                text: token.text,
-                lang: null
-            };
+            // Phân tách từ trong đoạn văn bản thường
+            const tokenRegex = /(\p{L}+(?:-\p{L}+)*)|([^\p{L}]+)/gu;
+            let m;
+            const tokens = [];
+            
+            while ((m = tokenRegex.exec(seg.text)) !== null) {
+                if (m[1]) {
+                    tokens.push({ type: 'word', text: m[1] });
+                } else if (m[2]) {
+                    tokens.push({ type: 'non-word', text: m[2] });
+                }
+            }
+
+            const labeledTokens = tokens.map(token => {
+                if (token.type === 'word') {
+                    return {
+                        text: token.text,
+                        lang: isEnglish(token.text) ? 'en' : 'vi'
+                    };
+                } else {
+                    return {
+                        text: token.text,
+                        lang: null
+                    };
+                }
+            });
+
+            let currentLang = 'vi';
+            for (let i = 0; i < labeledTokens.length; i++) {
+                if (labeledTokens[i].lang !== null) {
+                    currentLang = labeledTokens[i].lang;
+                } else {
+                    let nextLang = null;
+                    for (let j = i + 1; j < labeledTokens.length; j++) {
+                        if (labeledTokens[j].lang !== null) {
+                            nextLang = labeledTokens[j].lang;
+                            break;
+                        }
+                    }
+                    labeledTokens[i].lang = nextLang || currentLang;
+                }
+            }
+
+            if (labeledTokens.length > 0) {
+                let currentSubSegment = {
+                    text: labeledTokens[0].text,
+                    lang: labeledTokens[0].lang
+                };
+
+                for (let i = 1; i < labeledTokens.length; i++) {
+                    const token = labeledTokens[i];
+                    if (token.lang === currentSubSegment.lang) {
+                        currentSubSegment.text += token.text;
+                    } else {
+                        finalSegments.push(currentSubSegment);
+                        currentSubSegment = {
+                            text: token.text,
+                            lang: token.lang
+                        };
+                    }
+                }
+                finalSegments.push(currentSubSegment);
+            }
         }
     });
 
-    // Điền ngôn ngữ thừa hưởng cho các token không phải từ
-    let currentLang = 'vi';
-    for (let i = 0; i < labeledTokens.length; i++) {
-        if (labeledTokens[i].lang !== null) {
-            currentLang = labeledTokens[i].lang;
-        } else {
-            let nextLang = null;
-            for (let j = i + 1; j < labeledTokens.length; j++) {
-                if (labeledTokens[j].lang !== null) {
-                    nextLang = labeledTokens[j].lang;
-                    break;
-                }
-            }
-            labeledTokens[i].lang = nextLang || currentLang;
-        }
-    }
+    // Gộp lại các segment liên tiếp có cùng ngôn ngữ để tối ưu hóa hàng đợi phát
+    const optimizedSegments = [];
+    if (finalSegments.length === 0) return optimizedSegments;
 
-    // Gộp các phân đoạn liên tiếp cùng ngôn ngữ
-    const segments = [];
-    if (labeledTokens.length === 0) return segments;
-
-    let currentSegment = {
-        text: labeledTokens[0].text,
-        lang: labeledTokens[0].lang
+    let activeSeg = {
+        text: finalSegments[0].text,
+        lang: finalSegments[0].lang
     };
 
-    for (let i = 1; i < labeledTokens.length; i++) {
-        const token = labeledTokens[i];
-        if (token.lang === currentSegment.lang) {
-            currentSegment.text += token.text;
+    for (let i = 1; i < finalSegments.length; i++) {
+        const seg = finalSegments[i];
+        if (seg.lang === activeSeg.lang) {
+            activeSeg.text += seg.text;
         } else {
-            segments.push(currentSegment);
-            currentSegment = {
-                text: token.text,
-                lang: token.lang
+            optimizedSegments.push(activeSeg);
+            activeSeg = {
+                text: seg.text,
+                lang: seg.lang
             };
         }
     }
-    segments.push(currentSegment);
+    optimizedSegments.push(activeSeg);
 
-    return segments;
+    return optimizedSegments;
 }
 
 // Chạy hàng đợi phát Google Translate TTS hỗ trợ đa ngôn ngữ lai (code-switching)
