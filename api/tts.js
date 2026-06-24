@@ -4,14 +4,15 @@ const url = require('url');
 module.exports = function(req, res) {
     const parsedUrl = url.parse(req.url, true);
     const text = parsedUrl.query.text;
+    const lang = parsedUrl.query.lang || 'vi';
 
     if (!text) {
         res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
         return res.end(JSON.stringify({ success: false, error: 'Thiếu văn bản cần phát âm (text)' }));
     }
 
-    // Google Translate TTS API url tiếng Việt
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(text)}`;
+    // Google Translate TTS API với ngôn ngữ tương ứng (mặc định vi)
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(text)}`;
 
     const options = {
         headers: {
