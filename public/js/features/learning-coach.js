@@ -41,7 +41,14 @@ function initLearningCoach() {
     
     const btnBilingual = document.getElementById('btnBilingualTheoryToggle');
     if (btnBilingual) {
-        if (bilingualTheoryActive) btnBilingual.classList.add('active// Render Câu hỏi trắc nghiệm ra giao diện
+        if (bilingualTheoryActive) btnBilingual.classList.add('active');
+        else btnBilingual.classList.remove('active');
+    }
+
+    loadCurrentLevelContent();
+}
+
+// Render Câu hỏi trắc nghiệm ra giao diện
 function renderPracticeQuestions(material) {
     const practiceContainer = document.getElementById('practiceQuestionsContainer');
     practiceContainer.innerHTML = '';
