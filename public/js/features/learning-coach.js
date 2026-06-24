@@ -17,6 +17,7 @@ let currentAudioIndex = 0;
 let currentHtmlAudio = null;
 let isAudioPlaying = false;
 let viSpeechVoice = null;
+let ttsRetryCount = 0;
 
 // Khởi chạy chế độ học tập
 function initLearningCoach() {
@@ -540,22 +541,35 @@ function preloadVietnameseVoice() {
     
     const loadVoices = () => {
         const voices = window.speechSynthesis.getVoices();
-        // Ưu tiên các giọng nữ tiếng Việt chuẩn của Google hoặc Microsoft HoaiMy / An
-        const preferredVoices = [
-            v => v.lang.startsWith('vi') && v.name.includes('Google'),
-            v => v.lang.startsWith('vi') && v.name.includes('Microsoft') && v.name.includes('HoaiMy'),
-            v => v.lang.startsWith('vi') && v.name.includes('Microsoft') && v.name.includes('An'),
-            v => v.lang.startsWith('vi') && v.name.includes('Microsoft'),
-            v => v.lang.startsWith('vi')
-        ];
+        if (!voices || voices.length === 0) return;
 
-        for (let predicate of preferredVoices) {
-            const voice = voices.find(predicate);
-            if (voice) {
-                viSpeechVoice = voice;
-                console.log("Đã nạp giọng nữ tiếng Việt chuẩn:", voice.name);
-                break;
-            }
+        // 1. Lọc tất cả các giọng tiếng Việt (lang bắt đầu bằng "vi")
+        const viVoices = voices.filter(v => v.lang.toLowerCase().replace('_', '-').startsWith('vi'));
+        
+        // 2. Loại bỏ các giọng có tên là giọng nam hoặc chứa từ khóa nam
+        const femaleViVoices = viVoices.filter(v => {
+            const nameLower = v.name.toLowerCase();
+            return !nameLower.includes('an') && 
+                   !nameLower.includes('male') && 
+                   !nameLower.includes('nam') && 
+                   !nameLower.includes('boy') && 
+                   !nameLower.includes('man') &&
+                   !nameLower.includes('david') && 
+                   !nameLower.includes('mark') && 
+                   !nameLower.includes('george') &&
+                   !nameLower.includes('local-male');
+        });
+
+        // 3. Ưu tiên: Google vi-VN (nữ), Microsoft HoaiMy (nữ), rồi đến bất kỳ giọng nữ tiếng Việt nào khác
+        viSpeechVoice = femaleViVoices.find(v => v.name.toLowerCase().includes('google') && !v.name.toLowerCase().includes('local-male')) ||
+                         femaleViVoices.find(v => v.name.toLowerCase().includes('hoaimy')) ||
+                         femaleViVoices.find(v => v.name.toLowerCase().includes('natural')) ||
+                         femaleViVoices[0] || null;
+
+        if (viSpeechVoice) {
+            console.log("Đã nạp giọng nữ tiếng Việt chuẩn chất lượng cao:", viSpeechVoice.name);
+        } else {
+            console.warn("Không tìm thấy giọng nữ tiếng Việt nào phù hợp. Sẽ im lặng khi Google TTS lỗi để tránh giọng nam lỗi.");
         }
     };
 
@@ -654,7 +668,7 @@ function playGoogleTTSQueue(text, onStartCallback, onEndCallback, onErrorCallbac
     }
 
     googleAudioQueue = chunks.map(chunk => {
-        return `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+        return `/api/tts?text=${encodeURIComponent(chunk)}`;
     });
 
     currentAudioIndex = 0;
@@ -670,6 +684,7 @@ function playNextAudioInQueue(onEndCallback, onErrorCallback) {
 
     if (currentAudioIndex >= googleAudioQueue.length) {
         isAudioPlaying = false;
+        ttsRetryCount = 0; // Reset số lần thử lại
         if (onEndCallback) onEndCallback();
         return;
     }
@@ -678,17 +693,32 @@ function playNextAudioInQueue(onEndCallback, onErrorCallback) {
     const ttsPlayer = document.getElementById('learningTtsPlayer');
 
     if (ttsPlayer) {
-        // Ưu tiên sử dụng phần tử audio DOM ẩn để bảo mật và tránh các hạn chế CORS trên Chrome
+        // Sử dụng phần tử audio DOM ẩn
         ttsPlayer.src = url;
         
         ttsPlayer.onended = () => {
             currentAudioIndex++;
+            ttsRetryCount = 0; // Reset số lần thử lại cho đoạn tiếp theo
             playNextAudioInQueue(onEndCallback, onErrorCallback);
         };
 
         ttsPlayer.onerror = (e) => {
-            console.error("Lỗi phát audio Google TTS qua thẻ DOM ẩn:", e);
-            if (onErrorCallback) onErrorCallback();
+            console.error("Lỗi phát audio Google TTS qua DOM:", e);
+            
+            // Cơ chế tự động thử lại 2 lần khi bị ngắt kết nối mạng hoặc lỗi server tạm thời
+            if (ttsRetryCount < 2) {
+                ttsRetryCount++;
+                console.log(`Đang thử lại lần thứ ${ttsRetryCount} cho đoạn âm thanh index ${currentAudioIndex} sau 800ms...`);
+                setTimeout(() => {
+                    if (isAudioPlaying) {
+                        ttsPlayer.src = url;
+                        ttsPlayer.play().catch(err => console.error("Lỗi phát lại audio:", err));
+                    }
+                }, 800);
+            } else {
+                ttsRetryCount = 0; // Reset
+                if (onErrorCallback) onErrorCallback();
+            }
         };
 
         ttsPlayer.play().catch(err => {
@@ -701,12 +731,24 @@ function playNextAudioInQueue(onEndCallback, onErrorCallback) {
 
         currentHtmlAudio.onended = () => {
             currentAudioIndex++;
+            ttsRetryCount = 0;
             playNextAudioInQueue(onEndCallback, onErrorCallback);
         };
 
         currentHtmlAudio.onerror = (e) => {
             console.error("Lỗi phát audio Google TTS động:", e);
-            if (onErrorCallback) onErrorCallback();
+            if (ttsRetryCount < 2) {
+                ttsRetryCount++;
+                setTimeout(() => {
+                    if (isAudioPlaying) {
+                        currentHtmlAudio.src = url;
+                        currentHtmlAudio.play().catch(err => console.error("Lỗi phát lại audio động:", err));
+                    }
+                }, 800);
+            } else {
+                ttsRetryCount = 0;
+                if (onErrorCallback) onErrorCallback();
+            }
         };
 
         currentHtmlAudio.play().catch(err => {
@@ -719,6 +761,13 @@ function playNextAudioInQueue(onEndCallback, onErrorCallback) {
 // Phát giọng nói thông qua Web Speech API (Hàm dự phòng ngoại tuyến)
 function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallback) {
     if (!('speechSynthesis' in window)) {
+        if (onErrorCallback) onErrorCallback();
+        return;
+    }
+
+    // CHỈ phát Web Speech nếu có giọng nữ tiếng Việt chuẩn chất lượng cao để tránh giọng thô nam lỗi
+    if (!viSpeechVoice) {
+        console.warn("Không tìm thấy giọng nữ tiếng Việt chất lượng cao. Bỏ qua phát Web Speech.");
         if (onErrorCallback) onErrorCallback();
         return;
     }
@@ -737,15 +786,8 @@ function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallbac
 
         const sentenceText = sentences[sIdx].trim();
         const utterance = new SpeechSynthesisUtterance(sentenceText);
-        
-        if (viSpeechVoice) {
-            utterance.voice = viSpeechVoice;
-        } else {
-            const voices = window.speechSynthesis.getVoices();
-            const fallbackVoice = voices.find(v => v.lang.startsWith('vi'));
-            if (fallbackVoice) utterance.voice = fallbackVoice;
-        }
-
+        utterance.voice = viSpeechVoice;
+        utterance.lang = "vi-VN"; // Gán cụ thể mã ngôn ngữ tiếng Việt để trình duyệt xử lý tối ưu
         utterance.rate = 0.95;
 
         utterance.onstart = () => {
@@ -759,7 +801,6 @@ function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallbac
 
         utterance.onerror = (e) => {
             console.error("Lỗi Web Speech API ở câu:", sentenceText, e);
-            // CHỈ kích hoạt callback báo lỗi nếu lỗi đó không phải do việc bị hủy chéo hoặc bị dừng đột ngột
             if (e.error !== 'interrupted' && e.error !== 'canceled') {
                 if (onErrorCallback) onErrorCallback();
             }
@@ -775,18 +816,24 @@ function speakWithWebSpeech(text, onStartCallback, onEndCallback, onErrorCallbac
 // Hàm phát giọng nói thông minh kết hợp Google TTS và Web Speech API làm dự phòng
 function speakSmart(text, onStartCallback, onEndCallback) {
     stopAllSpeech(); // Dừng các âm thanh đang phát trước
+    ttsRetryCount = 0; // Reset số lần thử lại
     
-    // Gọi Google TTS với giọng chuẩn tiếng Việt (nữ), nếu lỗi sẽ tự động fallback sang Web Speech
+    // Gọi Google TTS với giọng chuẩn tiếng Việt (nữ), nếu lỗi sẽ tự động fallback sang Web Speech nếu có giọng tốt
     playGoogleTTSQueue(
         text,
         onStartCallback,
         onEndCallback,
         () => {
-            console.warn("Chuyển hướng dự phòng sang Web Speech API của trình duyệt...");
-            speakWithWebSpeech(text, onStartCallback, onEndCallback, () => {
-                alert("Không thể phát âm thanh. Trình duyệt của Thầy/Cô có thể đang chặn phát tự động.");
+            if (viSpeechVoice) {
+                console.warn("Chuyển hướng dự phòng sang Web Speech API chất lượng cao...");
+                speakWithWebSpeech(text, onStartCallback, onEndCallback, () => {
+                    stopAllSpeech();
+                });
+            } else {
+                console.error("Google TTS lỗi và không tìm thấy giọng Web Speech tiếng Việt nữ chất lượng cao để dự phòng.");
+                // Dừng phát và giữ im lặng thay vì phát ra giọng nam lỗi
                 stopAllSpeech();
-            });
+            }
         }
     );
 }
