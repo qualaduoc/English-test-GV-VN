@@ -44,6 +44,16 @@ const learningMaterialsDb = {
                             correct: 1,
                             explanation: "Đoạn văn viết: 'She is Ms. Lan, my colleague' (Cô ấy là cô Lan, đồng nghiệp của tôi).",
                             studyTip: "Mẹo: Từ 'colleague' nghĩa là đồng nghiệp."
+                        },
+                        {
+                            id: "a1_l1_r3",
+                            q: "How do they feel about working together?",
+                            qTranslation: "Họ cảm thấy thế nào về việc làm việc cùng nhau?",
+                            options: ["They are bored.", "They are tired.", "They are excited."],
+                            optionsTranslation: ["Họ chán nản.", "Họ mệt mỏi.", "Họ hào hứng."],
+                            correct: 2,
+                            explanation: "Đoạn văn viết: 'We are very excited to work together' (Chúng tôi rất hào hứng làm việc cùng nhau).",
+                            studyTip: "Mẹo: Từ 'excited' mang nghĩa hào hứng, tích cực."
                         }
                     ]
                 },
@@ -60,6 +70,26 @@ const learningMaterialsDb = {
                             correct: 1,
                             explanation: "Băng nghe nói: 'primary school teacher in Hanoi' (giáo viên tiểu học ở Hà Nội).",
                             studyTip: "Mẹo: Hãy chú ý lắng nghe tên địa danh cụ thể."
+                        },
+                        {
+                            id: "a1_l1_l2",
+                            q: "How old is Peter?",
+                            qTranslation: "Peter bao nhiêu tuổi?",
+                            options: ["Twenty years old", "Thirty years old", "Forty years old"],
+                            optionsTranslation: ["20 tuổi", "30 tuổi", "40 tuổi"],
+                            correct: 1,
+                            explanation: "Băng nghe nói: 'I am thirty years old' (Tôi 30 tuổi).",
+                            studyTip: "Mẹo: Số 30 trong tiếng Anh là thirty."
+                        },
+                        {
+                            id: "a1_l1_l3",
+                            q: "What is his school like?",
+                            qTranslation: "Trường học của anh ấy như thế nào?",
+                            options: ["Big and clean", "Small and noisy", "Old and dark"],
+                            optionsTranslation: ["To và sạch sẽ", "Nhỏ và ồn ào", "Cổ và tối tăm"],
+                            correct: 0,
+                            explanation: "Băng nghe nói: 'My school is very big and clean' (Trường của tôi rất to và sạch sẽ).",
+                            studyTip: "Mẹo: Từ 'big' là to lớn, 'clean' là sạch sẽ."
                         }
                     ]
                 },

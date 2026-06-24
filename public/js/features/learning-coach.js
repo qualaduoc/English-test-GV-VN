@@ -302,10 +302,19 @@ function loadCurrentLesson() {
     stopAllSpeech();
     
     studySeconds = 0;
-    dwellTimes = [0, 0, 0];
-    optionSwitches = [0, 0, 0];
-    currentReadingAnswers = [null, null, null];
-    currentListeningAnswers = [null, null, null];
+
+    const material = learningMaterialsDb[selectedLevel];
+    if (!material || !material.lessons || !material.lessons[selectedLessonIndex]) return;
+
+    const lesson = material.lessons[selectedLessonIndex];
+
+    const readingQCount = (lesson.reading && lesson.reading.questions) ? lesson.reading.questions.length : 0;
+    const listeningQCount = (lesson.listening && lesson.listening.questions) ? lesson.listening.questions.length : 0;
+
+    dwellTimes = Array(Math.max(readingQCount, listeningQCount, 3)).fill(0);
+    optionSwitches = Array(Math.max(readingQCount, listeningQCount, 3)).fill(0);
+    currentReadingAnswers = Array(readingQCount).fill(null);
+    currentListeningAnswers = Array(listeningQCount).fill(null);
     isQuizActive = true;
 
     // Reset bảng hiển thị chỉ số
@@ -327,11 +336,6 @@ function loadCurrentLesson() {
         writingTextarea.value = "";
         updateWritingWordCount();
     }
-    
-    const material = learningMaterialsDb[selectedLevel];
-    if (!material || !material.lessons || !material.lessons[selectedLessonIndex]) return;
-
-    const lesson = material.lessons[selectedLessonIndex];
 
     // 1. Render Lý thuyết
     const theoryContent = document.getElementById('learningTheoryContent');
