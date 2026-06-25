@@ -1613,7 +1613,7 @@ async function submitQuizSkill(skillType) {
     document.getElementById('coachBubbleText').innerHTML = `
         <div class="flex items-center gap-2 text-blue-400">
             <i class="fa-solid fa-spinner animate-spin"></i>
-            <span>Đang gửi kết quả làm bài của Thầy/Cô lên HLV ảo Gemini để phân tích hành vi...</span>
+            <span>Trợ lý ETA đang kiểm tra bài làm của Thầy/Cô... Vui lòng chờ trong ít phút.</span>
         </div>
     `;
 
@@ -1861,7 +1861,7 @@ async function submitSpeakingText() {
     document.getElementById('coachBubbleText').innerHTML = `
         <div class="flex items-center gap-2 text-blue-400">
             <i class="fa-solid fa-spinner animate-spin"></i>
-            <span>Đang gửi bài Nói của Thầy/Cô lên Gemini AI để đánh giá chi tiết lỗi phát âm...</span>
+            <span>Trợ lý ETA đang kiểm tra bài làm của Thầy/Cô... Vui lòng chờ trong ít phút.</span>
         </div>
     `;
 
@@ -1964,7 +1964,7 @@ async function submitWritingText() {
     document.getElementById('coachBubbleText').innerHTML = `
         <div class="flex items-center gap-2 text-blue-400">
             <i class="fa-solid fa-spinner animate-spin"></i>
-            <span>Đang gửi bài Viết của Thầy/Cô lên Gemini AI để kiểm tra lỗi chính tả, ngữ pháp...</span>
+            <span>Trợ lý ETA đang kiểm tra bài làm của Thầy/Cô... Vui lòng chờ trong ít phút.</span>
         </div>
     `;
 
