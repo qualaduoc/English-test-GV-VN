@@ -23,11 +23,18 @@ if (process.env.IS_LOCAL === 'true') {
     }
 }
 
-// Các cấu hình đọc từ biến môi trường
-const GEMINI_KEYS = process.env.GEMINI_KEYS
-    ? process.env.GEMINI_KEYS.split(',').map(k => k.trim()).filter(Boolean)
-    : [];
-let currentKeyIndex = 0;
+// Cache API Keys động nạp từ database
+let cachedGeminiKeys = [];
+let lastKeysCacheTime = 0;
+const KEYS_CACHE_TTL = 60 * 1000; // Cache 1 phút
+let currentDynamicKeyIndex = 0;
+
+function resetKeysCache() {
+    cachedGeminiKeys = [];
+    lastKeysCacheTime = 0;
+    currentDynamicKeyIndex = 0;
+    console.log("[AI Configuration] Đã reset bộ đệm (cache) API Keys.");
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -35,7 +42,6 @@ const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "";
 
 // Các biến môi trường bắt buộc
 const requiredEnvVars = [
-    { key: 'GEMINI_KEYS', desc: 'Danh sách API Keys của Google Gemini (xoay vòng)' },
     { key: 'SUPABASE_URL', desc: 'Địa chỉ URL của dự án Supabase' },
     { key: 'SUPABASE_SERVICE_ROLE_KEY', desc: 'Khóa Service Role của Supabase (để ghi dữ liệu bỏ qua RLS)' },
     { key: 'ENCRYPTION_KEY', desc: 'Khóa mã hóa dữ liệu nhạy cảm AES-256 (bắt buộc dài ĐÚNG 32 ký tự)' }
@@ -109,24 +115,126 @@ function decrypt(text) {
     }
 }
 
-// Lấy API Key tiếp theo
-function getNextApiKey() {
-    if (GEMINI_KEYS.length === 0) return "";
-    const key = GEMINI_KEYS[currentKeyIndex];
-    currentKeyIndex = (currentKeyIndex + 1) % GEMINI_KEYS.length;
-    return key;
+// Hàm nạp API Keys động từ cơ sở dữ liệu Supabase
+async function loadDynamicApiKeys() {
+    const now = Date.now();
+    if (cachedGeminiKeys.length > 0 && (now - lastKeysCacheTime < KEYS_CACHE_TTL)) {
+        return cachedGeminiKeys;
+    }
+
+    try {
+        const url = `${SUPABASE_URL}/rest/v1/gemini_api_keys?is_active=eq.true&order=sort_order.asc,created_at.desc`;
+        const targetUrl = new URL(url);
+        
+        const keys = await new Promise((resolve) => {
+            const options = {
+                hostname: targetUrl.hostname,
+                path: targetUrl.pathname + targetUrl.search,
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+                },
+                timeout: 5000
+            };
+            const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    if (res.statusCode === 200) {
+                        try { resolve(JSON.parse(data)); } catch (e) { resolve([]); }
+                    } else {
+                        resolve([]);
+                    }
+                });
+            });
+            req.on('error', () => resolve([]));
+            req.end();
+        });
+
+        if (keys && keys.length > 0) {
+            cachedGeminiKeys = keys.map(k => ({
+                id: k.id,
+                api_key: k.api_key,
+                label: k.label
+            }));
+            lastKeysCacheTime = now;
+            console.log(`[AI Configuration] Đã nạp thành công ${cachedGeminiKeys.length} API Keys động từ database Supabase.`);
+        } else {
+            // Fallback sang biến môi trường nếu DB chưa có key
+            const envKeys = process.env.GEMINI_KEYS
+                ? process.env.GEMINI_KEYS.split(',').map(k => k.trim()).filter(Boolean)
+                : [];
+            cachedGeminiKeys = envKeys.map((k, idx) => ({
+                id: `env-${idx}`,
+                api_key: k,
+                label: `Env Key ${idx + 1}`
+            }));
+            lastKeysCacheTime = now;
+            console.log(`[AI Configuration] Bảng gemini_api_keys trống hoặc chưa được tạo. Sử dụng ${cachedGeminiKeys.length} keys từ biến môi trường làm dự phòng.`);
+        }
+    } catch (err) {
+        console.error("[AI Configuration] Lỗi khi load API Keys từ database:", err.message);
+        const envKeys = process.env.GEMINI_KEYS
+            ? process.env.GEMINI_KEYS.split(',').map(k => k.trim()).filter(Boolean)
+            : [];
+        cachedGeminiKeys = envKeys.map((k, idx) => ({
+            id: `env-${idx}`,
+            api_key: k,
+            label: `Env Key ${idx + 1}`
+        }));
+    }
+    return cachedGeminiKeys;
 }
 
-// Gọi API Gemini
-function callGeminiWithRetry(payload, attempt = 1) {
-    const maxAttempts = GEMINI_KEYS.length || 1;
-    const apiKey = getNextApiKey();
+// Cập nhật thống kê sử dụng key lên database bất đồng bộ
+function updateKeyStatsAsync(keyId, type) {
+    if (!keyId || keyId.startsWith('env-')) return;
     
-    console.log(`[AI] Đang gọi Gemini API (Lần ${attempt}/${maxAttempts})`);
+    const rpcName = type === 'success' ? 'increment_key_usage' : 'increment_key_error';
+    const url = `${SUPABASE_URL}/rest/v1/rpc/${rpcName}`;
+    const postData = JSON.stringify({ key_id: keyId });
+    const parsedUrl = new URL(url);
+    
+    const options = {
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.pathname,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData),
+            'apikey': SUPABASE_SERVICE_ROLE_KEY,
+            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+        },
+        timeout: 2000
+    };
+    
+    const req = https.request(options);
+    req.on('error', () => {}); // Bỏ qua lỗi thống kê để không chặn luồng chấm bài
+    req.write(postData);
+    req.end();
+}
+
+// Gọi API Gemini xoay vòng Robin động & failover tự động
+async function callGeminiWithRetry(payload, attempt = 1) {
+    const activeKeys = await loadDynamicApiKeys();
+    const maxAttempts = activeKeys.length || 1;
+    
+    if (activeKeys.length === 0) {
+        throw new Error("Hệ thống không có API Key Gemini nào khả dụng. Vui lòng cấu hình trong trang Quản trị.");
+    }
+    
+    // Xoay vòng Robin lấy key tiếp theo
+    const keyObj = activeKeys[currentDynamicKeyIndex];
+    currentDynamicKeyIndex = (currentDynamicKeyIndex + 1) % activeKeys.length;
+    
+    const apiKey = keyObj.api_key;
+    const keyId = keyObj.id;
+    
+    console.log(`[AI] Đang gọi Gemini API dùng key [${keyObj.label}] (Lần thử ${attempt}/${maxAttempts})`);
 
     return new Promise((resolve, reject) => {
-        if (!apiKey) return reject(new Error("Không có API Key Gemini hợp lệ."));
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         const postData = JSON.stringify(payload);
         
         const options = {
@@ -151,6 +259,10 @@ function callGeminiWithRetry(payload, attempt = 1) {
                             else if (aiText.startsWith('```')) aiText = aiText.substring(3);
                             if (aiText.endsWith('```')) aiText = aiText.substring(0, aiText.length - 3);
                             aiText = aiText.trim();
+                            
+                            // Thành công -> Ghi nhận lượt sử dụng key
+                            updateKeyStatsAsync(keyId, 'success');
+                            
                             resolve(JSON.parse(aiText));
                         } else {
                             reject(new Error("Phản hồi từ Gemini API có cấu trúc không mong muốn"));
@@ -169,11 +281,16 @@ function callGeminiWithRetry(payload, attempt = 1) {
         req.write(postData);
         req.end();
     }).catch(async err => {
-        console.error(`[AI] Lần thử ${attempt} thất bại: ${err.message}`);
+        console.error(`[AI] Lần thử ${attempt} dùng key [${keyObj.label}] thất bại: ${err.message}`);
+        
+        // Thất bại -> Ghi nhận lỗi của key này vào DB
+        updateKeyStatsAsync(keyId, 'error');
+        
         if (attempt < maxAttempts) {
+            // Đổi ngay sang key tiếp theo và thử lại
             return await callGeminiWithRetry(payload, attempt + 1);
         } else {
-            throw new Error(`Đã thử toàn bộ ${maxAttempts} API Keys nhưng đều thất bại. Chi tiết: ${err.message}`);
+            throw new Error(`Đã xoay vòng qua toàn bộ ${maxAttempts} keys nhưng đều thất bại. Chi tiết: ${err.message}`);
         }
     });
 }
@@ -827,5 +944,7 @@ module.exports = {
     handleDiligentLeaderboard,
     handleRecordStudy,
     callGeminiWithRetry,
-    checkConfigError
+    checkConfigError,
+    resetKeysCache,
+    loadDynamicApiKeys
 };

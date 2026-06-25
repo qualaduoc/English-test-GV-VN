@@ -13,6 +13,7 @@ const handleCoachFeedback = require('./api/coach-feedback.js');
 const handleTts = require('./api/tts.js');
 const handleDiligentLeaderboard = require('./api/diligent-leaderboard.js');
 const handleRecordStudy = require('./api/record-study.js');
+const handleAdminKeys = require('./api/admin-keys.js');
 
 const PORT = 3001;
 
@@ -61,9 +62,25 @@ const server = http.createServer((req, res) => {
     if (safeUrl === '/api/tts') {
         return handleTts(req, res);
     }
+    if (safeUrl === '/api/admin/keys') {
+        return handleAdminKeys(req, res);
+    }
+    
+    // Redirect /admin sang /admin/
+    if (safeUrl === '/admin') {
+        res.writeHead(301, { 'Location': '/admin/' });
+        res.end();
+        return;
+    }
+
+    // Phục vụ index.html của thư mục admin nếu truy cập /admin/
+    let targetUrlPath = safeUrl;
+    if (targetUrlPath === '/admin/') {
+        targetUrlPath = '/admin/index.html';
+    }
 
     // Serve file tĩnh ở local từ thư mục public
-    let filePath = path.join(__dirname, 'public', safeUrl === '/' ? 'index.html' : safeUrl);
+    let filePath = path.join(__dirname, 'public', targetUrlPath === '/' ? 'index.html' : targetUrlPath);
     
     // Bảo vệ Directory Traversal
     const publicDir = path.join(__dirname, 'public');
