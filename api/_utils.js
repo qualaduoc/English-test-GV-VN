@@ -233,11 +233,11 @@ async function callGeminiWithRetry(payload, attempt = 1) {
     
     console.log(`[AI] Đang gọi Gemini API dùng key [${keyObj.label}] (Lần thử ${attempt}/${maxAttempts})`);
 
-    // Ép kiểu output của Gemini trả về JSON để tránh lỗi cú pháp
-    if (!payload.generationConfig) {
-        payload.generationConfig = {};
+    // Ép kiểu output của Gemini trả về JSON để tránh lỗi cú pháp (sử dụng chuẩn snake_case của REST API Google)
+    if (!payload.generation_config) {
+        payload.generation_config = {};
     }
-    payload.generationConfig.responseMimeType = "application/json";
+    payload.generation_config.response_mime_type = "application/json";
 
     return new Promise((resolve, reject) => {
         const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
