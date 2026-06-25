@@ -1873,7 +1873,7 @@ async function submitSpeakingText() {
         });
 
         const resData = await response.json();
-        if (resData.success && resData.data) {
+        if (resData.success && resData.data && resData.data.success !== false) {
             const aiResult = resData.data;
 
             // Hiển thị hội thoại HLV
@@ -1897,7 +1897,8 @@ async function submitSpeakingText() {
             document.getElementById('statWorkStatus').innerText = "Đã hoàn thành Nói";
             document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-green-450";
         } else {
-            throw new Error(resData.error || "Không kết nối được AI");
+            const errorMsg = (resData.data && resData.data.error) ? resData.data.error : (resData.error || "Không kết nối được AI");
+            throw new Error(errorMsg);
         }
     } catch (err) {
         console.error("Lỗi AI Speaking:", err);
@@ -1976,7 +1977,7 @@ async function submitWritingText() {
         });
 
         const resData = await response.json();
-        if (resData.success && resData.data) {
+        if (resData.success && resData.data && resData.data.success !== false) {
             const aiResult = resData.data;
 
             document.getElementById('coachBubbleText').innerHTML = formatCoachMessage(aiResult.coachMessage);
@@ -1998,7 +1999,8 @@ async function submitWritingText() {
             document.getElementById('statWorkStatus').innerText = "Đã hoàn thành Viết";
             document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-green-450";
         } else {
-            throw new Error(resData.error || "Không kết nối được AI");
+            const errorMsg = (resData.data && resData.data.error) ? resData.data.error : (resData.error || "Không kết nối được AI");
+            throw new Error(errorMsg);
         }
     } catch (err) {
         console.error("Lỗi AI Writing:", err);
