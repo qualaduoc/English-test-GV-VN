@@ -219,13 +219,19 @@ HƯỚNG DẪN ĐÁNH GIÁ HÀNH VI CỦA BẠN:
 
             let parsedResult = null;
             try {
-                let cleaned = result.trim();
-                if (cleaned.startsWith('```')) {
-                    cleaned = cleaned.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim();
+                if (typeof result === 'object' && result !== null) {
+                    parsedResult = result;
+                } else if (typeof result === 'string') {
+                    let cleaned = result.trim();
+                    if (cleaned.startsWith('```')) {
+                        cleaned = cleaned.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim();
+                    }
+                    parsedResult = JSON.parse(cleaned);
+                } else {
+                    throw new Error("Kết quả từ AI có kiểu dữ liệu không hợp lệ: " + typeof result);
                 }
-                parsedResult = JSON.parse(cleaned);
 
-                // Loại bỏ triệt độ dấu sao (*) và dấu thăng (#) trong kết quả phản hồi lỗi phát âm & ngữ pháp
+                // Loại bỏ triệt để các ký tự * hoặc # còn sót lại trong kết quả phản hồi của AI
                 if (parsedResult.grammarErrors && typeof parsedResult.grammarErrors === 'string') {
                     parsedResult.grammarErrors = parsedResult.grammarErrors.replace(/[\*#]/g, '').trim();
                 }

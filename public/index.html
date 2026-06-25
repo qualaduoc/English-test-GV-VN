@@ -624,7 +624,12 @@
 
                                     <!-- Khung text ghi âm nhận diện được -->
                                     <div class="w-full space-y-1.5">
-                                        <label for="speakingTranscriptTextarea" class="text-[10px] text-slate-450 font-bold uppercase">Văn bản nhận dạng giọng nói (Speech-to-Text):</label>
+                                        <div class="flex justify-between items-center">
+                                            <label for="speakingTranscriptTextarea" class="text-[10px] text-slate-450 font-bold uppercase">Văn bản nhận dạng giọng nói (Speech-to-Text):</label>
+                                            <button type="button" onclick="fillSpeakingSampleAnswer()" class="text-[10px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 transition focus:outline-none">
+                                                <i class="fa-solid fa-wand-magic-sparkles"></i> Sử dụng câu mẫu
+                                            </button>
+                                        </div>
                                         <textarea id="speakingTranscriptTextarea" placeholder="Nội dung Thầy/Cô nói sẽ tự động hiển thị tại đây khi thu âm..." class="w-full h-24 p-3 bg-[#0b0f19] border border-slate-800 focus:border-sky-500 rounded-xl text-slate-205 text-xs focus:outline-none transition leading-relaxed resize-none"></textarea>
                                     </div>
                                 </div>
@@ -1412,21 +1417,21 @@
     </div>
 
     <!-- Nạp dữ liệu câu hỏi trước -->
-    <script src="js/data/questions.js"></script>
-    <script src="js/data/tests-extra.js"></script>
-    <script src="js/data/learning-materials.js"></script>
+    <script src="js/data/questions.js?v=2"></script>
+    <script src="js/data/tests-extra.js?v=2"></script>
+    <script src="js/data/learning-materials.js?v=2"></script>
 
     <!-- Nạp các module tính năng -->
-    <script src="js/features/adaptive-exam.js"></script>
-    <script src="js/features/speaking.js"></script>
-    <script src="js/features/writing.js"></script>
-    <script src="js/features/dashboard-review.js"></script>
-    <script src="js/features/learning-coach.js"></script>
+    <script src="js/features/adaptive-exam.js?v=2"></script>
+    <script src="js/features/speaking.js?v=2"></script>
+    <script src="js/features/writing.js?v=2"></script>
+    <script src="js/features/dashboard-review.js?v=2"></script>
+    <script src="js/features/learning-coach.js?v=3"></script>
 
     <!-- Trình phát âm thanh ẩn phục vụ giọng giảng bài Google TTS -->
     <audio id="learningTtsPlayer" class="hidden"></audio>
 
     <!-- Custom app logic script -->
-    <script src="app.js"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>

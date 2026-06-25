@@ -1477,9 +1477,45 @@ function stopCoachSpeakingRecognition() {
     if (icon) icon.className = "fa-solid fa-microphone";
     
     const status = document.getElementById('recordSpeakingStatus');
+    const txtArea = document.getElementById('speakingTranscriptTextarea');
+    const isTextEmpty = !txtArea || !txtArea.value.trim();
+    
     if (status) {
-        status.innerText = "Bấm nút để bắt đầu nói";
-        status.className = "text-xs text-slate-400 font-bold";
+        if (isTextEmpty) {
+            status.innerText = "Không nhận được giọng nói. Thầy/Cô hãy nói to hơn hoặc bấm 'Sử dụng câu mẫu'";
+            status.className = "text-[11px] text-amber-500 font-bold text-center px-1 animate-pulse";
+        } else {
+            status.innerText = "Bấm nút để bắt đầu nói";
+            status.className = "text-xs text-slate-400 font-bold";
+        }
+    }
+}
+
+// Tự động điền câu trả lời mẫu của bài học hiện tại làm phương án dự phòng
+function fillSpeakingSampleAnswer() {
+    if (typeof selectedLevel === 'undefined' || typeof selectedLessonIndex === 'undefined' || !learningMaterialsDb) {
+        alert("Không tìm thấy thông tin bài học hiện tại.");
+        return;
+    }
+    const material = learningMaterialsDb[selectedLevel];
+    if (!material) return;
+    const lesson = material.lessons[selectedLessonIndex];
+    if (!lesson || !lesson.speaking || !lesson.speaking.sampleAnswer) {
+        alert("Bài học này không có câu trả lời mẫu.");
+        return;
+    }
+
+    const textarea = document.getElementById('speakingTranscriptTextarea');
+    if (textarea) {
+        textarea.value = lesson.speaking.sampleAnswer;
+        saveLearningState();
+        
+        // Cập nhật lại status của phần ghi âm để xóa cảnh báo
+        const status = document.getElementById('recordSpeakingStatus');
+        if (status) {
+            status.innerText = "Bấm nút để bắt đầu nói";
+            status.className = "text-xs text-slate-400 font-bold";
+        }
     }
 }
 
@@ -2453,7 +2489,7 @@ if (typeof window !== 'undefined') {
     window.toggleZoomExplanation = toggleZoomExplanation;
     window.stopAllSpeech = stopAllSpeech;
     
-    window.toggleSpeakingRecord = toggleSpeakingRecord;
+    window.toggleCoachSpeakingRecord = toggleCoachSpeakingRecord;
     window.updateWritingWordCount = updateWritingWordCount;
     window.speakSuggestedText = speakSuggestedText;
     
