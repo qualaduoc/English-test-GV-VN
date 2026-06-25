@@ -25,7 +25,10 @@ async function handleCoachFeedback(req, res) {
                 transcript,
                 prompt: questionPrompt,
                 sampleAnswer,
-                suggestedVocab
+                suggestedVocab,
+                studySeconds,
+                charCount,
+                wordCount
             } = data;
 
             if (!level) {
@@ -53,17 +56,33 @@ THÔNG TIN BÀI NÓI:
 - Đề bài Nói (Speaking Prompt): ${questionPrompt}
 - Câu trả lời mẫu (Sample Answer): ${sampleAnswer}
 - Văn bản ghi âm thực tế từ giáo viên (Student Transcript): "${transcript}"
+- Thời gian chuẩn bị và nói: ${studySeconds || 0} giây
+- Số từ nói được: ${wordCount || 0} từ
+- Số ký tự nói được: ${charCount || 0} ký tự
 
-YÊU CẦU ĐÁNH GIÁ & CHẤM ĐIỂM:
+QUY TẮC ĐÁNH GIÁ CHẤT LƯỢNG & SỰ NGHIÊM TÚC:
+1. Đánh giá sự nghiêm túc dựa trên thời gian nói và số lượng từ/ký tự:
+   - Nếu Thời gian chuẩn bị và nói quá ngắn (dưới 10 giây) HOẶC bài phát biểu quá sơ sài (dưới 5 từ hoặc dưới 25 ký tự), đây được coi là hành vi "học đối phó, học cho có".
+   - Trong trường hợp đối phó này:
+     + Hãy hạ điểm tiêu chí "Fluency & Coherence" xuống mức rất thấp (tối đa là 3.0/10).
+     + Ở phần nhận xét "coachMessage", hãy thay đổi giọng điệu: Nhắc nhở Thầy/Cô một cách chân thành nhưng thẳng thắn, khuyên họ nên học tập nghiêm túc, tập phát biểu đầy đủ ý và thật sự cố gắng chứ không nên học cho có lệ, học đối phó.
+     + Điểm trung bình tổng hợp "overall" không được vượt quá 4.0/10.
+2. Nếu Thầy/Cô nói bài đầy đủ và dành thời gian hợp lý (trên 10 giây và từ 5 từ trở lên):
+   - Chấm điểm khách quan và phù hợp với kỳ vọng của trình độ hiện tại (${level}). Trình độ A1 chỉ cần câu ngắn gọn, từ vựng cơ bản và đúng ngữ pháp cơ bản là xứng đáng đạt điểm tối đa (9.0 - 10.0), không được áp đặt tiêu chí từ vựng học thuật phức tạp hay cấu trúc câu ghép phức tạp của B2 để hạ điểm. Khen ngợi và khích lệ nỗ lực của họ.
+
+QUY TẮC ĐỊNH DẠNG ĐẦU RA (TUYỆT ĐỐI KHÔNG DÙNG MARKDOWN):
+- Tuyệt đối KHÔNG được sử dụng bất kỳ ký tự Markdown nào như dấu sao (*), dấu thăng (#), dấu gạch dưới (_), hoặc dấu sao kép (**) trong toàn bộ các chuỗi văn bản trả về (coachMessage, grammarErrors, suggestedText, v.v.).
+- Nếu cần định dạng, hãy sử dụng các thẻ HTML cơ bản như <b>...</b> để in đậm, <br> để xuống dòng, hoặc các danh sách đánh số dạng văn bản thường (ví dụ: "1. Lỗi ... \n Cách sửa ...").
+
+YÊU CẦU ĐÁNH GIÁ & CHẤM ĐIỂM CHI TIẾT:
 1. Chấm điểm bài nói trên thang điểm 10 (từ 0.0 đến 10.0, lấy 1 chữ số thập phân) cho 3 tiêu chí cốt lõi:
    - Fluency & Coherence (Độ trôi chảy & mạch lạc)
    - Grammatical Range & Accuracy (Ngữ pháp: sự phong phú & độ chính xác)
    - Lexical Resource / Vocabulary (Vốn từ vựng sử dụng)
    - Overall Score: Điểm tổng hợp trung bình cộng của 3 tiêu chí trên.
-   *LƯU Ý QUAN TRỌNG VỀ ĐIỂM SỐ: Phải chấm điểm một cách khách quan và phù hợp với kỳ vọng của trình độ hiện tại (level là ${level}). Ví dụ, học viên ở trình độ A1 chỉ cần nói được các câu ngắn gọn, đúng ngữ pháp cơ bản và từ vựng quen thuộc của A1 là xứng đáng đạt điểm tối đa (9.0 - 10.0), không được áp đặt tiêu chí từ vựng học thuật phức tạp của B2 hay C1 để hạ điểm.*
 2. Đọc và phân tích văn bản ghi âm của giáo viên. Chỉ ra các lỗi sai ngữ pháp, dùng từ không chuẩn, hoặc cách phát âm có thể bị nhận dạng sai (nếu có).
-3. Viết phản hồi ấm áp, động viên Thầy/Cô. Khen ngợi nỗ lực nói của họ trước.
-4. Đưa ra 2-3 gợi ý cụ thể để nói trôi chảy, tự nhiên và chuyên nghiệp hơn (như cách nối âm, từ vựng đắt giá).
+3. Viết phản hồi ấm áp (hoặc nhắc nhở nghiêm túc tùy thuộc hành vi học đối phó ở trên).
+4. Đưa ra 2-3 gợi ý cụ thể để nói trôi chảy, tự nhiên và chuyên nghiệp hơn.
 5. Viết lại một đoạn văn nói đề xuất (Suggested Speech) dựa trên ý tưởng của họ nhưng mượt mà hơn và phù hợp với trình độ ${level}.
 
 ĐẦU RA: Bạn chỉ được phép trả về một chuỗi JSON duy nhất, không định dạng markdown, khớp hoàn toàn cấu trúc sau:
@@ -74,11 +93,11 @@ YÊU CẦU ĐÁNH GIÁ & CHẤM ĐIỂM:
     "vocabulary": 8.0,
     "overall": 7.8
   },
-  "coachMessage": "Lời nhận xét tổng quan ấm áp, khích lệ nỗ lực nói của Thầy/Cô và phân tích ngắn gọn (dài khoảng 3-4 câu)...",
+  "coachMessage": "Lời nhận xét tổng quan ấm áp (hoặc nhắc nhở nghiêm túc nếu làm bài sơ sài)...",
   "grammarErrors": "Danh sách các lỗi sai ngữ pháp, cấu trúc câu hoặc từ vựng bị dùng sai trong bài nói và cách sửa (viết bằng tiếng Việt kèm ví dụ)...",
   "suggestedText": "Đoạn văn nói đề xuất hoàn chỉnh được viết lại tự nhiên, trôi chảy bằng tiếng Anh...",
   "suggestions": [
-    "Gợi ý cụ thể 1 (ví dụ: Chú ý nối âm giữa 'first' và 'of' thành 'fơ-stớp')",
+    "Gợi ý cụ thể 1",
     "Gợi ý cụ thể 2..."
   ]
 }
@@ -98,17 +117,34 @@ THÔNG TIN BÀI VIẾT:
 - Đề bài Viết (Writing Prompt): ${questionPrompt}
 - Từ vựng gợi ý (Suggested Vocabulary): ${suggestedVocab || 'Không có'}
 - Bài viết thực tế của giáo viên: "${essay}"
+- Thời gian làm bài (suy nghĩ và viết): ${studySeconds || 0} giây
+- Số từ viết được: ${wordCount || 0} từ
+- Số ký tự viết được: ${charCount || 0} ký tự
 
-YÊU CẦU ĐÁNH GIÁ & CHẤM ĐIỂM:
+QUY TẮC ĐÁNH GIÁ CHẤT LƯỢNG & SỰ NGHIÊM TÚC:
+1. Đánh giá sự nghiêm túc dựa trên thời gian viết, số từ và số ký tự để phát hiện học đối phó hoặc copy-paste:
+   - Nếu Thời gian viết quá ngắn (dưới 15 giây) HOẶC bài viết quá sơ sài (dưới 10 từ hoặc dưới 50 ký tự).
+   - Hoặc nếu số lượng từ nhiều (trên 15 từ) nhưng thời gian viết cực kỳ nhanh (dưới 10 giây), chứng tỏ hành vi copy-paste từ nguồn khác mà không tự suy nghĩ và viết.
+   - Trong các trường hợp đối phó hoặc sơ sài này:
+     + Hãy hạ điểm tiêu chí "Task Achievement / Response" xuống mức rất thấp (tối đa là 3.0/10).
+     + Ở phần nhận xét "coachMessage", hãy thay đổi giọng điệu: Nhắc nhở Thầy/Cô một cách chân thành nhưng thẳng thắn và nghiêm túc, khuyên họ nên học tập nghiêm túc, dành thời gian đầu tư suy nghĩ viết bài và thật sự cố gắng chứ không nên học cho có lệ, học đối phó để đối phó với hệ thống. Hãy nhấn mạnh tầm quan trọng của việc tự lực rèn luyện để đạt hiệu quả thực tế cho bản thân.
+     + Điểm trung bình tổng hợp "overall" không được vượt quá 4.0/10.
+2. Nếu Thầy/Cô viết bài đầy đủ và dành thời gian hợp lý (trên 15 giây và từ 10 từ trở lên):
+   - Chấm điểm khách quan và phù hợp với kỳ vọng của trình độ hiện tại (${level}). Ví dụ, học viên ở trình độ A1 chỉ cần viết các câu đơn giản đúng cấu trúc ngữ pháp A1, hoàn thành đủ số từ yêu cầu và dùng từ vựng cơ bản là xứng đáng đạt điểm tối đa (9.0 - 10.0), không được áp đặt tiêu chí từ vựng học thuật phức tạp hay cấu trúc câu ghép phức tạp của B2 để hạ điểm. Khen ngợi và khích lệ nỗ lực của họ.
+
+QUY TẮC ĐỊNH DẠNG ĐẦU RA (TUYỆT ĐỐI KHÔNG DÙNG MARKDOWN):
+- Tuyệt đối KHÔNG được sử dụng bất kỳ ký tự Markdown nào như dấu sao (*), dấu thăng (#), dấu gạch dưới (_), hoặc dấu sao kép (**) trong toàn bộ các chuỗi văn bản trả về (coachMessage, grammarErrors, suggestedText, v.v.).
+- Nếu cần định dạng, hãy sử dụng các thẻ HTML cơ bản như <b>...</b> để in đậm, <br> để xuống dòng, hoặc các danh sách đánh số dạng văn bản thường (ví dụ: "1. Lỗi ... \n Cách sửa ...").
+
+YÊU CẦU ĐÁNH GIÁ & CHẤM ĐIỂM CHI TIẾT:
 1. Chấm điểm bài viết trên thang điểm 10 (từ 0.0 đến 10.0, lấy 1 chữ số thập phân) cho 4 tiêu chí cốt lõi:
    - Task Achievement / Response (Đáp ứng yêu cầu đề bài)
    - Coherence & Cohesion (Độ mạch lạc và liên kết của các ý)
    - Lexical Resource / Vocabulary (Vốn từ vựng phong phú & chính xác)
    - Grammatical Range & Accuracy (Ngữ pháp: sự phong phú & độ chính xác)
    - Overall Score: Điểm tổng hợp trung bình cộng của 4 tiêu chí trên.
-   *LƯU Ý QUAN TRỌNG VỀ ĐIỂM SỐ: Phải chấm điểm một cách khách quan và phù hợp với kỳ vọng của trình độ hiện tại (level là ${level}). Ví dụ, học viên ở trình độ A1 chỉ cần viết các câu đơn giản đúng cấu trúc ngữ pháp A1, hoàn thành đủ số từ yêu cầu và dùng từ vựng cơ bản là xứng đáng đạt điểm tối đa (9.0 - 10.0), không được áp đặt tiêu chí từ vựng học thuật phức tạp hay cấu trúc câu ghép phức tạp của B2 để hạ điểm.*
 2. Sửa chi tiết tất cả các lỗi chính tả (spelling), ngữ pháp (grammar), dấu câu (punctuation), cách dùng từ (word choice).
-3. Nhận xét cực kỳ ấm áp sư phạm, tránh phán xét tiêu cực gây nản lòng, tôn vinh những câu viết hay.
+3. Nhận xét cực kỳ ấm áp sư phạm (hoặc nhắc nhở nghiêm túc tùy thuộc hành vi học đối phó ở trên).
 4. Biên soạn một bài mẫu đề xuất (Suggested Essay) được nâng cấp từ chính ý tưởng bài viết của giáo viên, đảm bảo tự nhiên và chuẩn CEFR ${level}.
 
 ĐẦU RA: Bạn chỉ được phép trả về một chuỗi JSON duy nhất, không định dạng markdown, khớp hoàn toàn cấu trúc sau:
@@ -120,11 +156,11 @@ YÊU CẦU ĐÁNH GIÁ & CHẤM ĐIỂM:
     "grammar": 8.0,
     "overall": 7.9
   },
-  "coachMessage": "Lời nhận xét tổng quát ấm áp, đánh giá sự mạch lạc và cấu trúc bài viết của Thầy/Cô (dài khoảng 3-4 câu)...",
+  "coachMessage": "Lời nhận xét tổng quát (ấm áp hoặc nhắc nhở nghiêm túc nếu làm bài sơ sài)...",
   "grammarErrors": "Danh sách chi tiết các lỗi chính tả, ngữ pháp, dấu câu kèm cách sửa lỗi rõ ràng (viết bằng tiếng Việt)...",
   "suggestedText": "Bài viết đề xuất hoàn chỉnh được viết lại trơn tru và chuẩn xác bằng tiếng Anh...",
   "suggestions": [
-    "Gợi ý nâng cấp từ vựng 1 (ví dụ: Thay vì dùng 'very friendly', Thầy/Cô có thể dùng 'extremely hospitable')",
+    "Gợi ý nâng cấp từ vựng 1",
     "Gợi ý nâng cấp 2..."
   ]
 }
@@ -155,7 +191,7 @@ KẾT QUẢ BÀI TẬP:
 CHỈ SỐ HÀNH VI (METRICS):
 - Thời gian làm từng câu (giây): ${JSON.stringify(metrics.dwellTimePerQ)}
 - Số lần thay đổi/đắn đo đáp án từng câu (lần): ${JSON.stringify(metrics.optionSwitchesPerQ)}
-- Cảnh báo làm ẩu (Rushing Flag): ${metrics.rushingFlag ? 'BẬT (Trả lời quá nhanh dưới 5 giây mà lại sai)' : 'TẮT'}
+- Cảnh báo làm ẩu (Rushing Flag): ${metrics.rushingFlag ? 'BẬT (Trả lời quá nhanh dưới 5 giây mà lại sai)' : 'TẤT'}
 
 HƯỚNG DẪN ĐÁNH GIÁ HÀNH VI CỦA BẠN:
 1. Nếu Rushing Flag là BẬT: Hãy cảnh báo nhẹ nhàng nhưng nghiêm túc rằng Thầy/Cô đang có xu hướng "nhấp chuột đại khái" hoặc đoán bừa mà chưa đọc kỹ nội dung. Hãy khuyên Thầy/Cô kiên nhẫn, tận dụng chức năng dịch song ngữ để đọc hiểu sâu hơn.
@@ -176,14 +212,40 @@ HƯỚNG DẪN ĐÁNH GIÁ HÀNH VI CỦA BẠN:
             }
 
             const payload = {
-                contents: [{ role: "user", parts: [{ text: promptText }] }],
-                generationConfig: { responseMimeType: "application/json" }
+                contents: [{ role: "user", parts: [{ text: promptText }] }]
             };
 
             const result = await callGeminiWithRetry(payload, 1);
 
+            let parsedResult = null;
+            try {
+                let cleaned = result.trim();
+                if (cleaned.startsWith('```')) {
+                    cleaned = cleaned.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim();
+                }
+                parsedResult = JSON.parse(cleaned);
+
+                // Loại bỏ triệt độ dấu sao (*) và dấu thăng (#) trong kết quả phản hồi lỗi phát âm & ngữ pháp
+                if (parsedResult.grammarErrors && typeof parsedResult.grammarErrors === 'string') {
+                    parsedResult.grammarErrors = parsedResult.grammarErrors.replace(/[\*#]/g, '').trim();
+                }
+                if (parsedResult.coachMessage && typeof parsedResult.coachMessage === 'string') {
+                    parsedResult.coachMessage = parsedResult.coachMessage.replace(/[\*#]/g, '').trim();
+                }
+                if (parsedResult.suggestedText && typeof parsedResult.suggestedText === 'string') {
+                    parsedResult.suggestedText = parsedResult.suggestedText.replace(/[\*#]/g, '').trim();
+                }
+            } catch (jsonErr) {
+                console.error("[API coach-feedback] Lỗi parse JSON kết quả AI:", jsonErr, "Kết quả thô:", result);
+                // Fallback nếu không parse được JSON
+                parsedResult = {
+                    success: false,
+                    error: 'Không thể phân tích dữ liệu phản hồi từ AI.'
+                };
+            }
+
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end(JSON.stringify({ success: true, data: result }));
+            res.end(JSON.stringify({ success: true, data: parsedResult }));
 
         } catch (error) {
             console.error("[API coach-feedback] Lỗi hệ thống:", error);

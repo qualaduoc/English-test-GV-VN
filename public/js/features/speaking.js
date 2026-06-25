@@ -5,7 +5,7 @@ let speechRecognitionText = "";
 let isVideoPlayable = true; // Biến kiểm tra video giám khảo có hoạt động được không
 
 // Khởi tạo nhận diện giọng nói tiếng Anh
-function initSpeechRecognition() {
+function initExamSpeechRecognition() {
     if (speechRecognitionObj) return;
     
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -57,7 +57,7 @@ function initSpeakingExam() {
     isVideoPlayable = true;
     
     // Khởi tạo Speech Recognition
-    initSpeechRecognition();
+    initExamSpeechRecognition();
     
     // Gán sự kiện timeupdate cho video phát câu hỏi
     const exVideo = document.getElementById('examinerVideo');

@@ -33,8 +33,8 @@ let dwellTimes = [0, 0, 0];
 let optionSwitches = [0, 0, 0];
 
 // Ghi âm nói
-let recognition = null;
-let isRecordingSpeaking = false;
+let coachSpeechRecognitionObj = null;
+let isCoachRecordingSpeaking = false;
 
 // Bản đồ từ điển phiên âm các từ tiếng Anh thường dùng trong học liệu sang tiếng Việt gần đúng
 const englishToViPronunciationMap = {
@@ -1381,20 +1381,20 @@ function toggleZoomExplanation() {
     }
 }
 
-// Khởi tạo Web Speech API Recognition cho kỹ năng Nói
-function initSpeechRecognition() {
+// Khởi tạo Web Speech API Recognition cho kỹ năng Nói (Coach)
+function initCoachSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         console.warn("Trình duyệt không hỗ trợ Web Speech API Recognition.");
         return;
     }
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    coachSpeechRecognitionObj = new SpeechRecognition();
+    coachSpeechRecognitionObj.continuous = true;
+    coachSpeechRecognitionObj.interimResults = true;
+    coachSpeechRecognitionObj.lang = 'en-US';
 
-    recognition.onstart = () => {
-        isRecordingSpeaking = true;
+    coachSpeechRecognitionObj.onstart = () => {
+        isCoachRecordingSpeaking = true;
         const pulse = document.getElementById('speakingRecordPulse');
         if (pulse) pulse.classList.remove('hidden');
         
@@ -1408,7 +1408,7 @@ function initSpeechRecognition() {
         }
     };
 
-    recognition.onresult = (event) => {
+    coachSpeechRecognitionObj.onresult = (event) => {
         let finalTranscript = '';
         let interimTranscript = '';
         for (let i = 0; i < event.results.length; ++i) {
@@ -1425,7 +1425,7 @@ function initSpeechRecognition() {
         }
     };
 
-    recognition.onerror = (event) => {
+    coachSpeechRecognitionObj.onerror = (event) => {
         console.error("Lỗi nhận diện giọng nói:", event.error);
         let errorMsg = "Gặp lỗi nhận diện giọng nói.";
         if (event.error === 'not-allowed') {
@@ -1440,36 +1440,36 @@ function initSpeechRecognition() {
             errorMsg = `Lỗi thiết bị thu âm: ${event.error}. Thầy/Cô vui lòng kiểm tra micro hoặc tự nhập câu trả lời nhé!`;
         }
         alert(errorMsg);
-        stopSpeakingRecognition();
+        stopCoachSpeakingRecognition();
     };
 
-    recognition.onend = () => {
-        stopSpeakingRecognition();
+    coachSpeechRecognitionObj.onend = () => {
+        stopCoachSpeakingRecognition();
     };
 }
 
 // Bật/tắt trạng thái ghi âm
-function toggleSpeakingRecord() {
-    if (!recognition) {
-        initSpeechRecognition();
+function toggleCoachSpeakingRecord() {
+    if (!coachSpeechRecognitionObj) {
+        initCoachSpeechRecognition();
     }
-    if (!recognition) {
+    if (!coachSpeechRecognitionObj) {
         alert("Rất tiếc, trình duyệt của Thầy/Cô không hỗ trợ chức năng thu âm nhận diện giọng nói. Hãy dùng trình duyệt Chrome mới nhất nhé!");
         return;
     }
 
-    if (isRecordingSpeaking) {
-        recognition.stop();
+    if (isCoachRecordingSpeaking) {
+        coachSpeechRecognitionObj.stop();
     } else {
         const area = document.getElementById('speakingTranscriptTextarea');
         if (area) area.value = "";
-        recognition.start();
+        coachSpeechRecognitionObj.start();
     }
 }
 
 // Dừng ghi âm
-function stopSpeakingRecognition() {
-    isRecordingSpeaking = false;
+function stopCoachSpeakingRecognition() {
+    isCoachRecordingSpeaking = false;
     const pulse = document.getElementById('speakingRecordPulse');
     if (pulse) pulse.classList.add('hidden');
     
@@ -1592,14 +1592,14 @@ async function submitQuizSkill(skillType) {
         if (resData.success && resData.data) {
             const aiResult = resData.data;
 
-            document.getElementById('coachBubbleText').innerText = aiResult.coachMessage;
+            document.getElementById('coachBubbleText').innerHTML = formatCoachMessage(aiResult.coachMessage);
             
             const suggestionsList = document.getElementById('coachSuggestionsList');
             suggestionsList.innerHTML = '';
             if (Array.isArray(aiResult.suggestions)) {
                 aiResult.suggestions.forEach(sug => {
                     const li = document.createElement('li');
-                    li.innerText = sug;
+                    li.innerHTML = formatCoachMessage(sug);
                     suggestionsList.appendChild(li);
                 });
                 document.getElementById('coachSuggestionsContainer').classList.remove('hidden');
@@ -1797,8 +1797,8 @@ async function submitSpeakingText() {
         return;
     }
 
-    if (isRecordingSpeaking) {
-        recognition.stop();
+    if (isCoachRecordingSpeaking) {
+        coachSpeechRecognitionObj.stop();
     }
 
     stopLearningTimers();
@@ -1816,7 +1816,10 @@ async function submitSpeakingText() {
         lessonTitle: lesson.title,
         prompt: lesson.speaking.prompt,
         sampleAnswer: lesson.speaking.sampleAnswer,
-        transcript: transcriptText
+        transcript: transcriptText,
+        studySeconds: studySeconds,
+        charCount: transcriptText.length,
+        wordCount: transcriptText.split(/\s+/).filter(Boolean).length
     };
 
     document.getElementById('coachBubbleText').innerHTML = `
@@ -1838,7 +1841,7 @@ async function submitSpeakingText() {
             const aiResult = resData.data;
 
             // Hiển thị hội thoại HLV
-            document.getElementById('coachBubbleText').innerText = aiResult.coachMessage;
+            document.getElementById('coachBubbleText').innerHTML = formatCoachMessage(aiResult.coachMessage);
 
             // Hiển thị suggestions
             const suggestionsList = document.getElementById('coachSuggestionsList');
@@ -1846,7 +1849,7 @@ async function submitSpeakingText() {
             if (Array.isArray(aiResult.suggestions)) {
                 aiResult.suggestions.forEach(sug => {
                     const li = document.createElement('li');
-                    li.innerText = sug;
+                    li.innerHTML = formatCoachMessage(sug);
                     suggestionsList.appendChild(li);
                 });
                 document.getElementById('coachSuggestionsContainer').classList.remove('hidden');
@@ -1916,7 +1919,10 @@ async function submitWritingText() {
         lessonTitle: lesson.title,
         prompt: lesson.writing.prompt,
         suggestedVocab: lesson.writing.suggestedVocab,
-        essay: essayText
+        essay: essayText,
+        studySeconds: studySeconds,
+        charCount: essayText.length,
+        wordCount: essayText.split(/\s+/).filter(Boolean).length
     };
 
     document.getElementById('coachBubbleText').innerHTML = `
@@ -1937,14 +1943,14 @@ async function submitWritingText() {
         if (resData.success && resData.data) {
             const aiResult = resData.data;
 
-            document.getElementById('coachBubbleText').innerText = aiResult.coachMessage;
+            document.getElementById('coachBubbleText').innerHTML = formatCoachMessage(aiResult.coachMessage);
 
             const suggestionsList = document.getElementById('coachSuggestionsList');
             suggestionsList.innerHTML = '';
             if (Array.isArray(aiResult.suggestions)) {
                 aiResult.suggestions.forEach(sug => {
                     const li = document.createElement('li');
-                    li.innerText = sug;
+                    li.innerHTML = formatCoachMessage(sug);
                     suggestionsList.appendChild(li);
                 });
                 document.getElementById('coachSuggestionsContainer').classList.remove('hidden');
@@ -1989,6 +1995,39 @@ async function submitWritingText() {
     }
 
     saveLearningState();
+}
+
+// Hiển thị phản hồi chi tiết từ AI (chỉ lỗi sai chính tả/ngữ pháp và văn bản đề xuất)
+// Hàm helper làm sạch Markdown thành HTML đẹp mắt cho bong bóng chat và phản hồi AI
+function formatCoachMessage(text) {
+    if (!text) return "";
+    let html = text;
+    
+    // Chuyển in đậm **text** thành <b>text</b>
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    
+    // Chuyển in nghiêng *text* thành <i>text</i>
+    html = html.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+    
+    // Thay thế các dòng bắt đầu bằng dấu * hoặc - thành dấu đầu dòng • đẹp mắt
+    html = html.split('\n').map(line => {
+        let trimmed = line.trim();
+        if (trimmed.startsWith('* ')) {
+            return '• ' + trimmed.substring(2);
+        }
+        if (trimmed.startsWith('- ')) {
+            return '• ' + trimmed.substring(2);
+        }
+        return line;
+    }).join('\n');
+    
+    // Loại bỏ triệt để các ký tự * hoặc # còn sót lại
+    html = html.replace(/[\*#]/g, '').trim();
+    
+    // Thay thế xuống dòng \n thành <br> để hiển thị tốt trong HTML
+    html = html.replace(/\n/g, '<br>');
+    
+    return html;
 }
 
 // Hiển thị phản hồi chi tiết từ AI (chỉ lỗi sai chính tả/ngữ pháp và văn bản đề xuất)
@@ -2142,15 +2181,17 @@ function renderAiDetailedFeedback(skillType, aiResult) {
         feedbackDiv.appendChild(scorecard);
     }
 
-    // 1. Hiển thị Lỗi sai phát hiện được
+    // 1. Hiển thị Lỗi sai phát hiện được (Dọn dẹp ký tự Markdown và render HTML)
+    let cleanGrammarErrors = formatCoachMessage(aiResult.grammarErrors || 'Chúc mừng Thầy/Cô! Bài làm rất tốt và không phát hiện lỗi ngữ pháp hay từ vựng cơ bản nào.');
+
     const errorsCard = document.createElement('div');
     errorsCard.className = 'p-3.5 bg-rose-950/15 border border-rose-500/20 rounded-xl space-y-2';
     errorsCard.innerHTML = `
         <strong class="text-rose-400 text-xs flex items-center gap-1.5">
             <i class="fa-solid fa-triangle-exclamation"></i> Lỗi ngữ pháp & chính tả phát hiện:
         </strong>
-        <div class="text-[11px] text-slate-300 leading-relaxed whitespace-pre-line pl-3 border-l border-rose-500/30">
-            ${aiResult.grammarErrors || 'Chúc mừng Thầy/Cô! Bài làm rất tốt và không phát hiện lỗi ngữ pháp hay từ vựng cơ bản nào.'}
+        <div class="text-[11px] text-slate-300 leading-relaxed pl-3 border-l border-rose-500/30">
+            ${cleanGrammarErrors}
         </div>
     `;
     feedbackDiv.appendChild(errorsCard);

@@ -357,8 +357,7 @@ Do not include any markdown format like \`\`\`json outside the JSON object.`;
     }
 
     const payload = {
-        contents: [{ role: "user", parts: [{ text: `System Instructions:\n${systemInstruction}\n\nUser Content:\n${userContent}` }] }],
-        generationConfig: { responseMimeType: "application/json" }
+        contents: [{ role: "user", parts: [{ text: `System Instructions:\n${systemInstruction}\n\nUser Content:\n${userContent}` }] }]
     };
 
     return await callGeminiWithRetry(payload, 1);
