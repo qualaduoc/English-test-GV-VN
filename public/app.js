@@ -296,6 +296,20 @@ function startTestFlow() {
     .then(res => {
         if (res.success) {
             console.log("[Supabase] Đăng ký thông tin giáo viên thành công!", res);
+            if (res.phone && res.phone !== teacherPhone) {
+                teacherPhone = res.phone;
+                localStorage.setItem('teacherPhone', teacherPhone);
+                console.log("[Supabase] Đã gộp SĐT giáo viên sang SĐT sẵn có:", teacherPhone);
+                const inputPhone = document.getElementById('teacherPhone');
+                if (inputPhone) inputPhone.value = teacherPhone;
+            }
+            if (res.teacher_name && res.teacher_name !== teacherName) {
+                teacherName = res.teacher_name;
+                localStorage.setItem('teacherName', teacherName);
+                document.getElementById('userDisplayName').innerText = `Thầy/Cô ${teacherName}`;
+                const inputName = document.getElementById('teacherName');
+                if (inputName) inputName.value = teacherName;
+            }
             loadLeaderboard(); // Tải lại bảng vinh danh để cập nhật danh sách
             loadDiligentLeaderboard(); // Tải lại bảng vinh danh chăm chỉ
         } else {
@@ -1689,7 +1703,21 @@ function startLearningFlow() {
     .then(res => res.json())
     .then(res => {
         if (res.success) {
-            console.log("[Supabase] Đăng ký giáo viên thành công (Ôn Luyện)!");
+            console.log("[Supabase] Đăng ký giáo viên thành công (Ôn Luyện)!", res);
+            if (res.phone && res.phone !== teacherPhone) {
+                teacherPhone = res.phone;
+                localStorage.setItem('teacherPhone', teacherPhone);
+                console.log("[Supabase] Đã gộp SĐT giáo viên sang SĐT sẵn có:", teacherPhone);
+                const inputPhone = document.getElementById('teacherPhone');
+                if (inputPhone) inputPhone.value = teacherPhone;
+            }
+            if (res.teacher_name && res.teacher_name !== teacherName) {
+                teacherName = res.teacher_name;
+                localStorage.setItem('teacherName', teacherName);
+                document.getElementById('userDisplayName').innerText = `Thầy/Cô ${teacherName}`;
+                const inputName = document.getElementById('teacherName');
+                if (inputName) inputName.value = teacherName;
+            }
             loadLeaderboard();
             loadDiligentLeaderboard();
         }

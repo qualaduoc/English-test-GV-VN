@@ -159,6 +159,16 @@ function sendExamResultToSupabase(overall, reading, listening, speaking, writing
     .then(res => {
         if (res.success) {
             console.log("[Supabase] Lưu kết quả thi lên Supabase thành công!", res.data);
+            if (res.phone && res.phone !== teacherPhone) {
+                teacherPhone = res.phone;
+                localStorage.setItem('teacherPhone', teacherPhone);
+                console.log("[Supabase] Đã gộp SĐT giáo viên sau thi:", teacherPhone);
+            }
+            if (res.teacher_name && res.teacher_name !== teacherName) {
+                teacherName = res.teacher_name;
+                localStorage.setItem('teacherName', teacherName);
+                console.log("[Supabase] Đã gộp tên giáo viên sau thi:", teacherName);
+            }
         } else {
             console.error("[Supabase] Lưu kết quả thi thất bại:", res.error);
         }

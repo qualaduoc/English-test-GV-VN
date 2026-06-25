@@ -435,6 +435,91 @@ function getTeacherFromLeaderboard(phone) {
     });
 }
 
+// Tìm giáo viên theo SĐT hoặc trùng Họ tên để lọc trùng (gộp kết quả)
+function findTeacherByPhoneOrName(phone, name) {
+    return new Promise((resolve) => {
+        // 1. Tìm theo SĐT trước
+        if (phone) {
+            const url = `${SUPABASE_URL}/rest/v1/teachers?phone=eq.${encodeURIComponent(phone)}`;
+            const parsedUrl = new URL(url);
+            const options = {
+                hostname: parsedUrl.hostname,
+                path: parsedUrl.pathname + parsedUrl.search,
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+                },
+                timeout: 5000
+            };
+            const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    if (res.statusCode === 200) {
+                        try {
+                            const list = JSON.parse(data);
+                            if (list && list.length > 0) {
+                                return resolve(list[0]);
+                            }
+                            searchByName();
+                        } catch (e) {
+                            searchByName();
+                        }
+                    } else {
+                        searchByName();
+                    }
+                });
+            });
+            req.on('error', () => searchByName());
+            req.end();
+        } else {
+            searchByName();
+        }
+
+        // 2. Tìm theo Họ tên nếu không tìm thấy theo SĐT
+        function searchByName() {
+            if (!name || name === "Giáo viên phổ thông" || name.trim() === "") {
+                return resolve(null);
+            }
+            const url = `${SUPABASE_URL}/rest/v1/teachers?teacher_name=eq.${encodeURIComponent(name.trim())}`;
+            const parsedUrl = new URL(url);
+            const options = {
+                hostname: parsedUrl.hostname,
+                path: parsedUrl.pathname + parsedUrl.search,
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+                },
+                timeout: 5000
+            };
+            const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    if (res.statusCode === 200) {
+                        try {
+                            const list = JSON.parse(data);
+                            if (list && list.length > 0) {
+                                resolve(list[0]);
+                            } else {
+                                resolve(null);
+                            }
+                        } catch (e) {
+                            resolve(null);
+                        }
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
+            req.on('error', () => resolve(null));
+            req.end();
+        }
+    });
+}
+
 // Upsert giáo viên lên leaderboard
 function saveTeacherToLeaderboard(teacherData) {
     return new Promise((resolve, reject) => {
@@ -527,6 +612,19 @@ async function handleSaveResult(req, res) {
         try {
             const data = JSON.parse(body);
             console.log(`[API save-result] Nhận yêu cầu lưu cho SĐT: ${data.phone}`);
+
+            // Tìm kiếm giáo viên đã tồn tại trước (theo SĐT hoặc trùng Họ tên để lọc trùng)
+            let finalPhone = data.phone || "";
+            let finalName = data.teacher_name || "Giáo viên phổ thông";
+            try {
+                const existingTeacher = await findTeacherByPhoneOrName(finalPhone, finalName);
+                if (existingTeacher) {
+                    finalPhone = existingTeacher.phone; // Gộp vào SĐT hiện có trong DB
+                    finalName = existingTeacher.teacher_name; // Dùng Họ tên trong DB
+                }
+            } catch (err) {
+                console.error("[SaveResult] Lỗi tra cứu giáo viên trùng:", err.message);
+            }
             
             const encryptedSpeaking = data.speaking_feedback 
                 ? { encrypted_data: encrypt(JSON.stringify(data.speaking_feedback)) } 
@@ -537,8 +635,8 @@ async function handleSaveResult(req, res) {
                 : null;
 
             const result = await saveResultToSupabaseDB({
-                teacher_name: data.teacher_name || "Giáo viên phổ thông",
-                phone: data.phone || "",
+                teacher_name: finalName,
+                phone: finalPhone,
                 overall_cefr: data.overall_cefr,
                 reading_cefr: data.reading_cefr,
                 listening_cefr: data.listening_cefr,
@@ -551,7 +649,7 @@ async function handleSaveResult(req, res) {
             });
             
             // Cập nhật bảng xếp hạng
-            const teacherPhone = data.phone;
+            const teacherPhone = finalPhone;
             const overallScore = getCEFRNumericValue(data.overall_cefr);
             
             if (teacherPhone) {
@@ -561,7 +659,7 @@ async function handleSaveResult(req, res) {
                         const newAttempts = (existingTeacher.attempts_count || 1) + 1;
                         let updateData = {
                             phone: teacherPhone,
-                            teacher_name: data.teacher_name || existingTeacher.teacher_name,
+                            teacher_name: finalName,
                             attempts_count: newAttempts,
                             updated_at: new Date().toISOString()
                         };
@@ -585,7 +683,7 @@ async function handleSaveResult(req, res) {
                     } else {
                         const newTeacherData = {
                             phone: teacherPhone,
-                            teacher_name: data.teacher_name || "Giáo viên phổ thông",
+                            teacher_name: finalName,
                             attempts_count: 1,
                             highest_reading: data.reading_cefr,
                             highest_listening: data.listening_cefr,
@@ -603,7 +701,7 @@ async function handleSaveResult(req, res) {
             }
             
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end(JSON.stringify({ success: true, data: result }));
+            res.end(JSON.stringify({ success: true, data: result, phone: finalPhone, teacher_name: finalName }));
         } catch (error) {
             console.error("[API save-result] Lỗi:", error);
             res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -708,19 +806,31 @@ async function handleRegisterTeacher(req, res) {
 
             console.log(`[API register-teacher] Khởi tạo đăng ký/cập nhật thông tin cho SĐT: ${phone}`);
             
-            const existingTeacher = await getTeacherFromLeaderboard(phone);
+            // Tìm giáo viên trùng SĐT hoặc Họ tên để gộp tài khoản
+            const existingTeacher = await findTeacherByPhoneOrName(phone, name);
+            let finalPhone = phone;
+            let finalName = name;
+            
             if (existingTeacher) {
+                finalPhone = existingTeacher.phone;
+                // Nếu trùng SĐT thực tế nhưng đổi tên, lấy tên mới. Ngược lại, lấy tên cũ.
+                if (existingTeacher.phone === phone) {
+                    finalName = name;
+                } else {
+                    finalName = existingTeacher.teacher_name;
+                }
+                
                 // Đã tồn tại -> Chỉ cập nhật tên
                 await saveTeacherToLeaderboard({
-                    phone: phone,
-                    teacher_name: name,
+                    phone: finalPhone,
+                    teacher_name: finalName,
                     updated_at: new Date().toISOString()
                 });
             } else {
                 // Chưa tồn tại -> Tạo mới với điểm mặc định N/A hoặc rỗng
                 await saveTeacherToLeaderboard({
-                    phone: phone,
-                    teacher_name: name,
+                    phone: finalPhone,
+                    teacher_name: finalName,
                     attempts_count: 0,
                     highest_reading: "N/A",
                     highest_listening: "N/A",
@@ -733,7 +843,12 @@ async function handleRegisterTeacher(req, res) {
             }
 
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end(JSON.stringify({ success: true, message: 'Đăng ký thông tin giáo viên thành công' }));
+            res.end(JSON.stringify({ 
+                success: true, 
+                message: 'Đăng ký thông tin giáo viên thành công',
+                phone: finalPhone,
+                teacher_name: finalName
+            }));
         } catch (error) {
             console.error("[API register-teacher] Lỗi:", error);
             res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -895,22 +1010,33 @@ async function handleRecordStudy(req, res) {
 
             console.log(`[API record-study] Ghi nhận thời gian học cho SĐT: ${phone}, Số giây: ${studySeconds}s`);
             
-            const existingTeacher = await getTeacherFromLeaderboard(phone);
+            // Tìm giáo viên trùng SĐT hoặc trùng Họ tên để gộp thời gian học
+            const existingTeacher = await findTeacherByPhoneOrName(phone, name);
+            let finalPhone = phone;
+            let finalName = name;
+            
             if (existingTeacher) {
+                finalPhone = existingTeacher.phone;
+                if (existingTeacher.phone === phone) {
+                    finalName = name;
+                } else {
+                    finalName = existingTeacher.teacher_name;
+                }
+                
                 const newStudyCount = (existingTeacher.study_count || 0) + 1;
                 const newStudySeconds = (existingTeacher.study_seconds || 0) + studySeconds;
                 
                 await saveTeacherToLeaderboard({
-                    phone: phone,
-                    teacher_name: name || existingTeacher.teacher_name,
+                    phone: finalPhone,
+                    teacher_name: finalName,
                     study_count: newStudyCount,
                     study_seconds: newStudySeconds,
                     updated_at: new Date().toISOString()
                 });
             } else {
                 await saveTeacherToLeaderboard({
-                    phone: phone,
-                    teacher_name: name,
+                    phone: finalPhone,
+                    teacher_name: finalName,
                     study_count: 1,
                     study_seconds: studySeconds,
                     attempts_count: 0,
@@ -925,7 +1051,7 @@ async function handleRecordStudy(req, res) {
             }
 
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end(JSON.stringify({ success: true, message: 'Ghi nhận tiến trình ôn tập thành công!' }));
+            res.end(JSON.stringify({ success: true, message: 'Ghi nhận tiến trình ôn tập thành công!', phone: finalPhone, teacher_name: finalName }));
         } catch (error) {
             console.error("[API record-study] Lỗi:", error);
             res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
