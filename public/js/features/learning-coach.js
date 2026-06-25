@@ -1410,21 +1410,36 @@ function initSpeechRecognition() {
 
     recognition.onresult = (event) => {
         let finalTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        let interimTranscript = '';
+        for (let i = 0; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
+                finalTranscript += event.results[i][0].transcript + ' ';
+            } else {
+                interimTranscript += event.results[i][0].transcript + ' ';
             }
         }
-        if (finalTranscript) {
-            const txtArea = document.getElementById('speakingTranscriptTextarea');
-            if (txtArea) {
-                txtArea.value = (txtArea.value + ' ' + finalTranscript).trim();
-            }
+        
+        const txtArea = document.getElementById('speakingTranscriptTextarea');
+        if (txtArea) {
+            txtArea.value = (finalTranscript + interimTranscript).trim();
         }
     };
 
     recognition.onerror = (event) => {
         console.error("Lỗi nhận diện giọng nói:", event.error);
+        let errorMsg = "Gặp lỗi nhận diện giọng nói.";
+        if (event.error === 'not-allowed') {
+            errorMsg = "Trình duyệt chưa được cấp quyền truy cập Micro. Thầy/Cô vui lòng click vào biểu tượng ổ khóa ở thanh địa chỉ trình duyệt, chọn 'Cho phép (Allow)' quyền truy cập Micro và tải lại trang nhé!";
+        } else if (event.error === 'no-speech') {
+            // Không ngắt thu âm khi giáo viên chỉ tạm dừng suy nghĩ
+            console.warn("Không phát hiện âm thanh nói.");
+            return;
+        } else if (event.error === 'network') {
+            errorMsg = "Lỗi kết nối mạng đến dịch vụ Speech-to-Text của Google. Thầy/Cô có thể tự gõ (nhập trực tiếp) câu trả lời Tiếng Anh vào ô văn bản ở dưới nhé!";
+        } else {
+            errorMsg = `Lỗi thiết bị thu âm: ${event.error}. Thầy/Cô vui lòng kiểm tra micro hoặc tự nhập câu trả lời nhé!`;
+        }
+        alert(errorMsg);
         stopSpeakingRecognition();
     };
 
