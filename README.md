@@ -169,14 +169,18 @@ CREATE POLICY "Allow Service Role Full Access API Keys" ON public.gemini_api_key
 
 ```env
 # 1. Khóa API của Google Gemini (nếu có nhiều key thì cách nhau bằng dấu phẩy)
-GEMINI_KEYS="AIzaSyYourGeminiKey1,AIzaSyYourGeminiKey2"
+GEMINI_KEYS="your_gemini_api_key_1,your_gemini_api_key_2"
 
 # 2. Cấu hình kết nối Supabase
 SUPABASE_URL="https://your-project-id.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
 
 # 3. Khóa mã hóa bảo mật dữ liệu nhạy cảm AES-256 (BẮT BUỘC ĐỦ ĐÚNG 32 KÝ TỰ)
-ENCRYPTION_KEY="12345678901234567890123456789012"
+ENCRYPTION_KEY="your-32-character-encryption-key"
+
+# 4. Tài khoản & Mật khẩu đăng nhập trang Quản trị (/admin)
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="your_admin_password"
 ```
 
 > ⚠️ **LƯU Ý QUAN TRỌNG VỀ `ENCRYPTION_KEY`:**
@@ -209,8 +213,8 @@ Màn hình xuất hiện thông báo:
 ### BƯỚC 5: Đăng Nhập Trang Quản Trị (`/admin`)
 
 * **Đường dẫn**: `http://localhost:3001/admin`
-* **Tài khoản**: `admin`
-* **Mật khẩu mặc định**: `Matkhau@khodoan`
+* **Tài khoản**: Giá trị bạn đặt trong biến `ADMIN_USERNAME` (Mặc định: `admin`)
+* **Mật khẩu**: Giá trị bạn đặt trong biến `ADMIN_PASSWORD` (Mặc định: `admin123`)
 * **Chức năng Admin**: Thêm nhiều Gemini Key cùng lúc, kiểm tra sức khỏe của từng Key, xem số lượt gọi thành công / lỗi, bật/tắt Key linh hoạt.
 
 ---
@@ -221,11 +225,13 @@ Dự án được thiết kế chuẩn cấu trúc **Serverless API** trong thư
 
 1. Đẩy mã nguồn lên tài khoản GitHub của Thầy/Cô.
 2. Đăng nhập [Vercel.com](https://vercel.com) -> Chọn **Add New Project** -> Chọn kho mã nguồn.
-3. Trong phần **Environment Variables**, thêm 4 biến:
+3. Trong phần **Environment Variables**, thêm các biến:
    * `SUPABASE_URL`
    * `SUPABASE_SERVICE_ROLE_KEY`
    * `ENCRYPTION_KEY`
    * `GEMINI_KEYS`
+   * `ADMIN_USERNAME`
+   * `ADMIN_PASSWORD`
 4. Bấm **Deploy**. Sau 30 giây, Thầy/Cô sẽ có link website hoạt động 24/24 trên toàn thế giới!
 
 ---

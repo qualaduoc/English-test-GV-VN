@@ -101,9 +101,13 @@ function getRawKeyFromSupabase(keyId) {
 async function handleAdminKeys(req, res) {
     if (checkConfigError(res)) return;
 
-    // 1. Xác thực Basic Auth (admin / Matkhau@khodoan)
+    // 1. Xác thực Basic Auth (Lấy từ biến môi trường ADMIN_USERNAME và ADMIN_PASSWORD, mặc định: admin / admin123)
+    const adminUser = process.env.ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+    const expectedAuth = 'Basic ' + Buffer.from(`${adminUser}:${adminPass}`).toString('base64');
+
     const authHeader = req.headers['authorization'];
-    if (!authHeader || authHeader !== 'Basic YWRtaW46TWF0a2hhdUBraG9kb2Fu') {
+    if (!authHeader || authHeader !== expectedAuth) {
         res.writeHead(401, { 
             'WWW-Authenticate': 'Basic realm="Khu vuc Quan tri API Keys"',
             'Content-Type': 'application/json; charset=utf-8' 
