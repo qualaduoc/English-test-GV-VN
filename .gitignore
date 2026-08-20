@@ -24,6 +24,4 @@ Thumbs.db
 
 # Brain / Temp files
 .gemini/
-.agent/tasks/
-.agent/workflows/
-/.agent/
+.agent/

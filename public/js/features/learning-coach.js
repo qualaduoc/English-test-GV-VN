@@ -1825,6 +1825,15 @@ function renderSkillExplanations(skillType, questions, answersArray) {
     }
 }
 
+// Helper định dạng thông báo lỗi AI thân thiện cho người dùng
+function getFriendlyAiErrorMessage(err) {
+    const msg = (err && err.message) ? err.message.toLowerCase() : "";
+    if (msg.includes("429") || msg.includes("quota") || msg.includes("keys") || msg.includes("xoay vòng") || msg.includes("exhausted") || msg.includes("limit")) {
+        return "Hiện tại hệ thống HLV ảo Gemini đang tạm thời hết hạn mức đánh giá miễn phí (cạn Quota của API Key). Thầy/Cô vui lòng thử lại sau ít phút hoặc liên hệ Admin để cập nhật API Key mới nhé!";
+    }
+    return "Rất tiếc do kết nối mạng nên HLV ảo chưa thể chấm điểm bài làm trực tuyến. Thầy/Cô hãy thử lại nhé!";
+}
+
 // 3. Nộp bài Nói (Speaking)
 async function submitSpeakingText() {
     const transcriptText = document.getElementById('speakingTranscriptTextarea').value.trim();
@@ -1902,7 +1911,7 @@ async function submitSpeakingText() {
         }
     } catch (err) {
         console.error("Lỗi AI Speaking:", err);
-        document.getElementById('coachBubbleText').innerText = "Rất tiếc do kết nối mạng nên HLV ảo chưa thể trả về bài sửa chi tiết trực tuyến. Thầy/Cô hãy thử lại nhé!";
+        document.getElementById('coachBubbleText').innerText = getFriendlyAiErrorMessage(err);
         document.getElementById('statWorkStatus').innerText = "Lỗi kết nối";
         document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-rose-400";
     }
@@ -2004,7 +2013,7 @@ async function submitWritingText() {
         }
     } catch (err) {
         console.error("Lỗi AI Writing:", err);
-        document.getElementById('coachBubbleText').innerText = "Rất tiếc do kết nối mạng nên HLV ảo chưa thể chấm điểm bài viết chi tiết trực tuyến. Thầy/Cô hãy thử lại nhé!";
+        document.getElementById('coachBubbleText').innerText = getFriendlyAiErrorMessage(err);
         document.getElementById('statWorkStatus').innerText = "Lỗi kết nối";
         document.getElementById('statWorkStatus').className = "text-[10px] font-extrabold text-rose-400";
     }
